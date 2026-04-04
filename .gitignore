@@ -1,0 +1,96 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# ── Node / npm ────────────────────────────────────────────────
+**/node_modules/
+/.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ── Build outputs ─────────────────────────────────────────────
+**/build/
+**/dist/
+**/coverage/
+**/.cache/
+
+# ── Environment / secrets ─────────────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ── Flutter ───────────────────────────────────────────────────
+frontend/user/build/
+frontend/user/.dart_tool/
+frontend/user/.flutter-plugins
+frontend/user/.flutter-plugins-dependencies
+frontend/user/pubspec.lock
+frontend/user/.packages
+
+# Android
+frontend/user/android/.gradle/
+frontend/user/android/**/local.properties
+frontend/user/android/**/GeneratedPluginRegistrant.java
+frontend/user/android/key.properties
+
+# iOS
+frontend/user/ios/Flutter/Flutter.framework
+frontend/user/ios/Flutter/Flutter.podspec
+frontend/user/ios/Pods/
+frontend/user/ios/.symlinks/
+
+# macOS
+frontend/user/macos/Flutter/Flutter-Release.framework
+frontend/user/macos/Pods/
+
+# Windows
+frontend/user/windows/flutter/generated_plugin_registrant.cc
+frontend/user/windows/flutter/generated_plugins.cmake
+
+# Linux
+frontend/user/linux/flutter/generated_plugin_registrant.cc
+frontend/user/linux/flutter/generated_plugins.cmake
+
+# ── IDE / Editor ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Python ────────────────────────────────────────────────────
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# ── Temporary / Test files ────────────────────────────────────
+temp_*.js
+*_old.*
+*_new.*
+*_clean.*
+*_backup.*
+*.tmp
+
+# Local curl test payloads
+tmp_*.json
+
+# ── Stash/merge artifacts ─────────────────────────────────────
+.wip_*.patch
+.wip_unmerged_files.txt
