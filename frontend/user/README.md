@@ -8,7 +8,7 @@ PowerShell:
 
 This sets the environment variable `FLUTTER_WEB_USE_SKIA=false` and starts `flutter run -d chrome` so CanvasKit won't be fetched from the gstatic CDN.
 
-## Run on Android (always sets adb reverse)
+## Run on Android
 
 If you run on a physical phone and your backend is on your PC at port `5000`, use:
 
@@ -20,9 +20,9 @@ Or let it auto-pick the first connected device:
 
     scripts\run_android.ps1
 
-This script finds `adb.exe` even if it isn't on PATH, runs `adb reverse tcp:5000 tcp:5000`, then runs `flutter run`.
+This script finds `adb.exe` even if it isn't on PATH, runs `adb reverse tcp:5000 tcp:5000` (only needed if you point the app to a local backend), then runs `flutter run`.
 
-This app's default API base URL is the Render backend: `https://german-bharatham-backend.onrender.com`.
+This app's default API base URL is: `https://german-bharatham-vhjx.onrender.com`.
 
 A new Flutter project.
 

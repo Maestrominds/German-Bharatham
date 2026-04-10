@@ -5,7 +5,7 @@ import '../models/rating_model.dart';
 import 'api_config.dart';
 
 class RatingService {
-  static String get baseUrl => 'https://german-bharatham-backend.onrender.com';
+  static String get baseUrl => ApiConfig.baseUrl;
 
   // Generate or retrieve guest ID
   static Future<String> _getGuestId() async {

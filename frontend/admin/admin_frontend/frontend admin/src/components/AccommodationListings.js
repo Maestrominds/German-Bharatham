@@ -18,7 +18,7 @@ const AccommodationListings = () => {
   const fetchAccommodations = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://german-bharatham-backend.onrender.com/api/accommodation/admin', {
+      const response = await fetch('https://german-bharatham-vhjx.onrender.com/api/accommodation/admin', {
         headers: {
           'x-user-role': 'admin',
           'x-user-id': 'admin123'
@@ -53,7 +53,7 @@ const AccommodationListings = () => {
     if (!window.confirm(`Delete "${title}"?`)) return;
 
     try {
-      const response = await fetch(`https://german-bharatham-backend.onrender.com/api/accommodation/admin/${id}`, {
+      const response = await fetch(`https://german-bharatham-vhjx.onrender.com/api/accommodation/admin/${id}`, {
         method: 'DELETE',
         headers: {
           'x-user-role': 'admin',

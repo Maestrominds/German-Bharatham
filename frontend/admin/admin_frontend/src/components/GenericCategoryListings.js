@@ -3,6 +3,7 @@ import { Plus, Trash2, Edit, Eye, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SkeletonLoader from './SkeletonLoader';
 import AddListingModal from './AddListingModal';
+import API_URL from '../config';
 
 const Badge = ({ label, active }) => (
   <span style={{
@@ -43,7 +44,7 @@ const ViewModal = ({ item, category, fields, onClose }) => {
       if (src.startsWith('data:') || src.startsWith('http')) {
         return src;
       }
-      return `https://german-bharatham-backend.onrender.com${src}`;
+      return `${API_URL}${src}`;
     });
   return (
     <div className="modal-overlay">
@@ -520,7 +521,7 @@ const GenericCategoryListings = ({ category, apiBase, icon, viewFields }) => {
                   <td>
                     {(() => {
                       const imgSrc = item.companyLogo
-                        ? (item.companyLogo.startsWith('data:') || item.companyLogo.startsWith('http') ? item.companyLogo : `https://german-bharatham-backend.onrender.com${item.companyLogo}`)
+                        ? (item.companyLogo.startsWith('data:') || item.companyLogo.startsWith('http') ? item.companyLogo : `${API_URL}${item.companyLogo}`)
                         : (item.media?.images?.[0] || item.images?.[0] || item.image || null);
                       if (imgSrc) {
                         return <img src={imgSrc} alt="" style={{ width: 56, height: 44, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />;

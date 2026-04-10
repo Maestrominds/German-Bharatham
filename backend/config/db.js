@@ -19,7 +19,7 @@ const connectDB = async () => {
     const mongoUri = String(process.env.MONGO_URI || "").trim();
     if (!mongoUri) {
       console.error(
-        "DB connection failed: MONGO_URI is missing. Set it in your .env (local) or in Render Environment Variables (production)."
+        "DB connection failed: MONGO_URI is missing. Set it in your .env (local) or in your production environment variables."
       );
       process.exit(1);
     }

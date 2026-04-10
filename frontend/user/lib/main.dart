@@ -117,32 +117,12 @@ class WelcomeScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Small location marker circle (white disc with slight shadow)
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color.fromRGBO(0, 0, 0, 0.12),
-                            blurRadius: 6,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Padding(
-                          padding: const EdgeInsets.all(6),
-                          child: Image.asset(
-                            'assets/images/app_logo.jpeg',
-                            width: 44,
-                            height: 44,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
+                    // App logo (no background)
+                    Image.asset(
+                      'assets/images/logo.png',
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.contain,
                     ),
 
                     const SizedBox(height: 14),
@@ -1635,7 +1615,7 @@ class _SplashScreenState extends State<SplashScreen>
           child: AnimatedBuilder(
             animation: _logoController,
             child: Image.asset(
-              'assets/images/app_logo.jpeg',
+              'assets/images/logo.png',
               width: screen.width,
               height: screen.height,
               fit: BoxFit.contain,
