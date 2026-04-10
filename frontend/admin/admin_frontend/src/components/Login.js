@@ -43,7 +43,7 @@ const Login = ({ onLogin }) => {
       <div className="login-sidebar">
         <div className="login-brand">
           <div className="brand-logo-wrap brand-logo-wrap--lg" aria-hidden="true">
-            <img className="brand-logo" src="/app_logo.jpeg" alt="" />
+            <img className="brand-logo" src="/logo.png" alt="" />
           </div>
           <h1>German Bharatham</h1>
           <p>Admin Panel</p>

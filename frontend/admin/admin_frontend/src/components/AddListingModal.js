@@ -786,7 +786,7 @@ const API_MAP = {
   Services: `${API_URL}/api/services/admin`,
 };
 
-const LOCAL_JOBS_API = 'http://127.0.0.1:5000/api/jobs/admin';
+const LOCAL_JOBS_API = `${API_URL}/api/jobs/admin`;
 
 const mapItemToFormData = (category, item) => {
   if (!item) return DEFAULTS[category];
