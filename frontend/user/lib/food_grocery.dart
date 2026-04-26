@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'food_details.dart';
 import 'food_filter_page.dart';
 import 'models/food_grocery_model.dart';
@@ -214,14 +214,18 @@ class _FoodGroceryPageState extends State<FoodGroceryPage> {
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     )
-                  : ListView.builder(
-                      itemCount: filteredItems.length,
-                      itemBuilder: (context, index) {
-                        return FoodCard(
-                          item: filteredItems[index],
-                          onRefresh: _loadFoodItems,
-                        );
-                      },
+                  : RefreshIndicator(
+                      onRefresh: _loadFoodItems,
+                      child: ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: filteredItems.length,
+                        itemBuilder: (context, index) {
+                          return FoodCard(
+                            item: filteredItems[index],
+                            onRefresh: _loadFoodItems,
+                          );
+                        },
+                      ),
                     ),
             ),
           ],

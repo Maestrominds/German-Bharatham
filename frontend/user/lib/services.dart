@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'models/service_model.dart';
@@ -302,14 +302,18 @@ class _ServicesPageState extends State<ServicesPage> {
                                 style: TextStyle(fontSize: 16, color: Colors.grey),
                               ),
                             )
-                          : ListView.builder(
-                              itemCount: filteredItems.length,
-                              itemBuilder: (context, index) {
-                                return ServiceCard(
-                                  item: filteredItems[index],
-                                  onRefresh: _loadServices,
-                                );
-                              },
+                          : RefreshIndicator(
+                              onRefresh: _loadServices,
+                              child: ListView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                itemCount: filteredItems.length,
+                                itemBuilder: (context, index) {
+                                  return ServiceCard(
+                                    item: filteredItems[index],
+                                    onRefresh: _loadServices,
+                                  );
+                                },
+                              ),
                             ),
             ),
           ],

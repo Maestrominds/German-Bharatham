@@ -245,14 +245,18 @@ class _JobsPageState extends State<JobsPage> {
                   ? const Center(child: CircularProgressIndicator(color: Color(0xFF4E7F6D)))
                   : filteredItems.isEmpty
                       ? const Center(child: Text('No jobs available'))
-                      : ListView.builder(
-                          itemCount: filteredItems.length,
-                          itemBuilder: (context, index) {
-                            return JobCard(
-                              item: filteredItems[index],
-                              onRefresh: _loadJobs,
-                            );
-                          },
+                      : RefreshIndicator(
+                          onRefresh: _loadJobs,
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: filteredItems.length,
+                            itemBuilder: (context, index) {
+                              return JobCard(
+                                item: filteredItems[index],
+                                onRefresh: _loadJobs,
+                              );
+                            },
+                          ),
                         ),
             ),
           ],

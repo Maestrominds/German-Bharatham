@@ -59,7 +59,7 @@ router.get("/", async (req, res) => {
     const { search, subCategory, city } = req.query;
     
     // Build query - only show Active items to users
-    let query = { status: 'Active' };
+    let query = { status: { $regex: /^active$/i } };
     
     // Add search filter
     if (search) {
@@ -105,7 +105,7 @@ router.get("/:id", async (req, res) => {
     }
     
     // Only return Active listings to users
-    if (listing.status !== 'Active') {
+    if (!listing.status || listing.status.toLowerCase() !== 'active') {
       return res.status(404).json({ message: 'Listing not available' });
     }
     
@@ -136,7 +136,7 @@ router.post("/:id/rating", protectOrGuest, async (req, res) => {
     if (!listing) {
       return res.status(404).json({ message: 'Listing not found' });
     }
-    if (listing.status !== 'Active') {
+    if (!listing.status || listing.status.toLowerCase() !== 'active') {
       return res.status(400).json({ message: 'Cannot rate inactive listing' });
     }
 

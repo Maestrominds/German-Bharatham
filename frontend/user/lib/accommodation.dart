@@ -521,34 +521,38 @@ class _AccommodationPageState extends State<AccommodationPage> {
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filteredAccommodations.length,
-                    itemBuilder: (context, index) {
-                      final item = filteredAccommodations[index];
-
-                      return AccommodationCard(
-                        accommodation: item,
-                        onBookmarkTap: () {
-                          setState(() {
-                            SavedManager.instance.toggle(item);
-                          });
-                        },
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AccommodationDetailPage(
-                                item: item,
-                                onRefresh: fetchAccommodations,
+                : RefreshIndicator(
+                    onRefresh: fetchAccommodations,
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: filteredAccommodations.length,
+                      itemBuilder: (context, index) {
+                        final item = filteredAccommodations[index];
+  
+                        return AccommodationCard(
+                          accommodation: item,
+                          onBookmarkTap: () {
+                            setState(() {
+                              SavedManager.instance.toggle(item);
+                            });
+                          },
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AccommodationDetailPage(
+                                  item: item,
+                                  onRefresh: fetchAccommodations,
+                                ),
                               ),
-                            ),
-                          );
-                          // Refresh after returning from details
-                          fetchAccommodations();
-                        },
-                      );
-                    },
+                            );
+                            // Refresh after returning from details
+                            fetchAccommodations();
+                          },
+                        );
+                      },
+                    ),
                   ),
           ),
         ],

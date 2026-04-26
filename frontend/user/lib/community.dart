@@ -223,24 +223,28 @@ class _CommunityPageState extends State<CommunityPage> {
                           ? const Center(
                               child: Text("No community posts found"),
                             )
-                          : ListView.builder(
-                              itemCount: guides.length,
-                              itemBuilder: (context, index) {
-                                final guide = guides[index];
-
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            GuideDetailsPage(guide: guide),
-                                      ),
-                                    );
-                                  },
-                                  child: _communityCard(guide),
-                                );
-                              },
+                          : RefreshIndicator(
+                              onRefresh: fetchGuides,
+                              child: ListView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                itemCount: guides.length,
+                                itemBuilder: (context, index) {
+                                  final guide = guides[index];
+  
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              GuideDetailsPage(guide: guide),
+                                        ),
+                                      );
+                                    },
+                                    child: _communityCard(guide),
+                                  );
+                                },
+                              ),
                             ),
             ),
           ],

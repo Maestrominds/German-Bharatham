@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'main.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -190,10 +191,9 @@ class InfoPage extends StatelessWidget {
               height: 56,
               child: ElevatedButton(
                 onPressed: () {
-                  // This is the tricky part, AuthPage is in main.dart
-                  // But we can use the root navigator or just import main.dart
-                  // For now, let's just make it pop back or use a named route
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const AuthPage()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryGreen,

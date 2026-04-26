@@ -267,7 +267,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     );
   }
 
-  bool get _hasActiveUser => currentIndex >= 0 && currentIndex < users.length;
+  bool get _hasActiveUser => users.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -419,8 +419,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 : MediaQuery.sizeOf(context).height * 0.65;
 
             final deckHeight = availableHeight.clamp(460.0, 640.0);
-            final remaining = users.length - currentIndex;
-            final visibleCount = remaining.clamp(0, 3);
+            final visibleCount = math.min(3, users.length);
 
             if (visibleCount <= 0) {
               return const Center(
@@ -465,9 +464,12 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 clipBehavior: Clip.none,
                 children: [
                   for (int depth = visibleCount - 1; depth >= 0; depth--)
-                    AnimatedPositioned(
-                      key: ValueKey(users[currentIndex + depth].id),
-                      duration: const Duration(milliseconds: 240),
+                    Builder(
+                      builder: (context) {
+                        final itemIndex = (currentIndex + depth) % users.length;
+                        return AnimatedPositioned(
+                          key: ValueKey('${users[itemIndex].id}_$depth'),
+                          duration: const Duration(milliseconds: 240),
                       curve: Curves.easeOutCubic,
                       top: stepY * depth,
                       left: stepX * depth,
@@ -504,8 +506,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                                     if (!_isAnimatingCard) return;
 
                                     if (_isDismissingCard) {
-                                      final nextIndex =
-                                          (currentIndex + 1).clamp(0, users.length);
+                                      final nextIndex = (currentIndex + 1) % users.length;
                                       setState(() {
                                         currentIndex = nextIndex;
                                         _cardOffset = Offset.zero;
@@ -540,27 +541,29 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                                       curve: Curves.easeOutBack,
                                       scale: _pulseNewTopCard ? 0.97 : 1.0,
                                       child: _profileCard(
-                                        user: users[currentIndex],
+                                        user: users[itemIndex],
                                         liked: LikedUserManager.instance
-                                            .isLiked(users[currentIndex].id),
+                                            .isLiked(users[itemIndex].id),
                                         onLikePressed: () =>
-                                            _toggleLike(users[currentIndex]),
+                                            _toggleLike(users[itemIndex]),
                                       ),
                                     ),
                                   ),
                                 ),
                               )
-                            : Transform.scale(
-                                scale: (1 - (depth * 0.03)).clamp(0.92, 1.0),
-                                child: _profileCard(
-                                  user: users[currentIndex + depth],
-                                  liked: LikedUserManager.instance
-                                      .isLiked(users[currentIndex + depth].id),
-                                  onLikePressed: null,
+                              : Transform.scale(
+                                  scale: (1 - (depth * 0.03)).clamp(0.92, 1.0),
+                                  child: _profileCard(
+                                    user: users[itemIndex],
+                                    liked: LikedUserManager.instance
+                                        .isLiked(users[itemIndex].id),
+                                    onLikePressed: null,
+                                  ),
                                 ),
-                              ),
                       ),
-                    ),
+                    );
+                  },
+                ),
                 ],
               ),
             );

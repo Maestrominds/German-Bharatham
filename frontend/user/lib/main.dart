@@ -22,6 +22,7 @@ import 'forgot_password.dart';
 import 'services/api_config.dart';
 import 'services/prefetch_service.dart';
 import 'profile_pages/subscriptions.dart';
+import 'profile_pages/personal_info.dart';
 import 'utils/subscription_utils.dart';
 import 'blocked_account_page.dart';
 import 'utils/account_status_utils.dart';
@@ -1160,6 +1161,46 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
   bool _busy = false;
 
   Future<void> _goNext() async {
+    final token = UserSession.instance.token;
+    
+    // First check if profile is complete
+    if (token != null) {
+      try {
+        final profileRes = await http.get(
+          Uri.parse(ApiConfig.profileEndpoint),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+        if (profileRes.statusCode == 200) {
+          final data = jsonDecode(profileRes.body) as Map<String, dynamic>;
+          bool hasMissingMandatory = false;
+          final req = ['name', 'phone', 'dob', 'gender', 'location', 'preferredCity', 'education', 'profession', 'germanLevel', 'passport'];
+          for (var field in req) {
+             if (data[field] == null || data[field].toString().trim().isEmpty) {
+                 hasMissingMandatory = true;
+                 break;
+             }
+          }
+          if (hasMissingMandatory) {
+            if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PersonalInformationPage(
+                  isInitialSetup: true,
+                  onSetupComplete: _checkSubscriptionAndNavigate,
+                ),
+              ),
+            );
+            return;
+          }
+        }
+      } catch (_) {}
+    }
+
+    await _checkSubscriptionAndNavigate();
+  }
+
+  Future<void> _checkSubscriptionAndNavigate() async {
     // Load user subscription status to decide where to go next
     final token = UserSession.instance.token;
     if (token != null) {
@@ -1174,14 +1215,10 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         if (res.statusCode == 200) {
           final statusJson = jsonDecode(res.body);
           final user = statusJson['user'] as Map?;
-          final freeTrialCompleted = user?['freeTrialCompleted'] == true;
           final status = user?['subscriptionStatus']?.toString();
-          // Treat a subscription as present only when its status is explicitly
-          // 'active' or 'trial'. If the trial has completed (freeTrialCompleted)
-          // or expiry passed, the backend will report 'none' and we should
-          // direct the user to the SubscriptionsPage after location flow.
           final hasAnySubscription = (status == 'active' || status == 'trial');
           if (hasAnySubscription) {
+            if (!mounted) return;
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => UserProfilesPage()),
@@ -1191,6 +1228,7 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         }
       } catch (_) {}
     }
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(

@@ -2,11 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
 import '../user_session.dart';
 import '../services/api_config.dart';
 
 class PersonalInformationPage extends StatefulWidget {
-  const PersonalInformationPage({super.key});
+  final bool isInitialSetup;
+  final VoidCallback? onSetupComplete;
+
+  const PersonalInformationPage({
+    super.key,
+    this.isInitialSetup = false,
+    this.onSetupComplete,
+  });
 
   @override
   State<PersonalInformationPage> createState() =>
@@ -27,6 +36,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   final TextEditingController profession = TextEditingController();
   final TextEditingController germanLevel = TextEditingController();
   final TextEditingController passport = TextEditingController();
+
+  String? _photoBase64;
+  final ImagePicker _picker = ImagePicker();
 
   static const Color primaryGreen = Color(0xFF4E7F6D);
 
@@ -53,6 +65,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       profession.text = prefs.getString(key('profession')) ?? '';
       germanLevel.text = prefs.getString(key('germanLevel')) ?? '';
       passport.text = prefs.getString(key('passport')) ?? '';
+      _photoBase64 = prefs.getString(key('photo')) ?? UserSession.instance.photoBase64;
     });
 
     // Then fetch from backend if logged in
@@ -77,6 +90,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
           profession.text = data['profession'] ?? profession.text;
           germanLevel.text = data['germanLevel'] ?? germanLevel.text;
           passport.text = data['passport'] ?? passport.text;
+          _photoBase64 = data['photo'] ?? _photoBase64;
         });
         // Update local cache
         await prefs.setString(key('name'), name.text);
@@ -90,6 +104,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
         await prefs.setString(key('profession'), profession.text);
         await prefs.setString(key('germanLevel'), germanLevel.text);
         await prefs.setString(key('passport'), passport.text);
+        await prefs.setString(key('photo'), _photoBase64 ?? '');
       }
     } catch (_) {}
   }
@@ -115,6 +130,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
             'profession': profession.text,
             'germanLevel': germanLevel.text,
             'passport': passport.text,
+            'photo': _photoBase64 ?? '',
           }),
         );
         if (res.statusCode != 200 && mounted) {
@@ -148,11 +164,16 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     await prefs.setString(key('profession'), profession.text);
     await prefs.setString(key('germanLevel'), germanLevel.text);
     await prefs.setString(key('passport'), passport.text);
+    await prefs.setString(key('photo'), _photoBase64 ?? '');
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile Updated Successfully")),
-      );
+      if (widget.isInitialSetup && widget.onSetupComplete != null) {
+        widget.onSetupComplete!();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Profile Updated Successfully")),
+        );
+      }
     }
   }
 
@@ -167,16 +188,18 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   foregroundColor: Colors.black,
   elevation: 0,
 
-  leading: IconButton(
-    onPressed: () {
-      Navigator.pop(context);
-    },
-    icon: Image.asset(
-      'assets/images/left-arrow.png',
-      width: 22,
-      height: 22,
-    ),
-  ),
+  leading: widget.isInitialSetup
+      ? const SizedBox.shrink()
+      : IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Image.asset(
+            'assets/images/left-arrow.png',
+            width: 22,
+            height: 22,
+          ),
+        ),
 ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -187,6 +210,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
             key: _formKey,
             child: Column(
               children: [
+                _profilePicture(),
+                const SizedBox(height: 24),
                 _input("Full Name", name),
                 _input("Phone Number", phone),
                 _input("Email", email),
@@ -205,7 +230,21 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      if (_formKey.currentState!.validate()) {
+                      bool isValid = _formKey.currentState!.validate();
+                      if (_selectedGender == null || _selectedGender!.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please select your gender')),
+                        );
+                        isValid = false;
+                      }
+                      if (dob.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please select your date of birth')),
+                        );
+                        isValid = false;
+                      }
+
+                      if (isValid) {
                         _saveData();
                       }
                     },
@@ -244,7 +283,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
+          maxLength: 100,
           decoration: InputDecoration(
+            counterText: "",
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
@@ -392,5 +433,59 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
         ),
       ],
     );
+  }
+
+  Widget _profilePicture() {
+    ImageProvider imageProvider;
+    if (_photoBase64 != null && _photoBase64!.trim().isNotEmpty) {
+      try {
+        final raw = _photoBase64!.contains(',') ? _photoBase64!.split(',').last : _photoBase64!;
+        imageProvider = MemoryImage(base64Decode(raw));
+      } catch (_) {
+        imageProvider = const AssetImage('assets/images/person.jpeg');
+      }
+    } else {
+      imageProvider = const AssetImage('assets/images/person.jpeg');
+    }
+
+    return Center(
+      child: GestureDetector(
+        onTap: _pickImage,
+        child: Stack(
+          children: [
+            CircleAvatar(
+              radius: 56,
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: imageProvider,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 4,
+              child: CircleAvatar(
+                backgroundColor: primaryGreen,
+                radius: 16,
+                child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 60);
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _photoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      }
+    }
   }
 }
