@@ -23,19 +23,19 @@ const CategoryFormModal = ({ title, initial, onClose, onSave }) => {
         <div className="add-listing-form">
           <div className="form-group">
             <label>Icon (emoji)</label>
-            <input value={form.icon} onChange={set('icon')} placeholder="📋" style={{ width: 80 }} />
+            <input value={form.icon} onChange={set('icon')} placeholder="📋" style={{ width: 80 }} maxLength={10} />
           </div>
           <div className="form-group">
             <label>Name <span style={{ color: 'red' }}>*</span></label>
-            <input value={form.name} onChange={set('name')} placeholder="Category name" />
+            <input value={form.name} onChange={set('name')} placeholder="Category name" required maxLength={50} />
           </div>
           <div className="form-group">
             <label>Description <span style={{ color: 'red' }}>*</span></label>
-            <textarea rows={2} value={form.description} onChange={set('description')} placeholder="Short description…" />
+            <textarea rows={2} value={form.description} onChange={set('description')} placeholder="Short description…" required maxLength={200} />
           </div>
           <div className="form-group">
             <label>Status</label>
-            <select value={form.status} onChange={set('status')}>
+            <select value={form.status} onChange={set('status')} required>
               <option value="active">Active</option>
               <option value="disabled">Disabled</option>
             </select>

@@ -21,6 +21,7 @@ import 'package:http/http.dart' as http;
 import 'services/api_config.dart';
 import 'services/prefetch_service.dart';
 import 'utils/open_subscriptions_page.dart';
+import 'utils/account_status_utils.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -43,6 +44,9 @@ class _HomePageState extends State<HomePage> {
     // Warm up Render backend and prefetch all module data in background
     // Fire-and-forget — doesn't block UI
     PrefetchService.warmUpAndPrefetch();
+
+    // 🛡️ Check if account was deactivated while app was in background
+    checkAccountStatus(context);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeShowSubscriptionPrompt();

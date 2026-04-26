@@ -199,6 +199,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   placeholder="e.g., Indian, Italian, Organic, Veg/Non-Veg"
                   value={formData.type}
                   onChange={handleChange}
+                  maxLength={100}
                 />
               </div>
               <div className="form-group">
@@ -207,6 +208,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   name="priceRange"
                   value={formData.priceRange}
                   onChange={handleChange}
+                  required
                 >
                   <option value="$">$ - Budget Friendly</option>
                   <option value="$$">$$ - Moderate</option>
@@ -233,6 +235,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                 value={formData.address}
                 onChange={handleChange}
                 required
+                maxLength={200}
               />
             </div>
 
@@ -246,6 +249,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   value={formData.city}
                   onChange={handleChange}
                   required
+                  maxLength={50}
                 />
               </div>
               <div className="form-group">
@@ -256,6 +260,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   placeholder="Bavaria"
                   value={formData.state}
                   onChange={handleChange}
+                  maxLength={50}
                 />
               </div>
               <div className="form-group">
@@ -266,6 +271,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   placeholder="80331"
                   value={formData.zipCode}
                   onChange={handleChange}
+                  maxLength={20}
                 />
               </div>
             </div>
@@ -287,6 +293,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   placeholder="+49 123 456 7890"
                   value={formData.phone}
                   onChange={handleChange}
+                  maxLength={20}
                 />
               </div>
               <div className="form-group">
@@ -297,6 +304,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   placeholder="contact@restaurant.com"
                   value={formData.email}
                   onChange={handleChange}
+                  maxLength={100}
                 />
               </div>
             </div>
@@ -309,6 +317,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                 placeholder="https://www.restaurant.com"
                 value={formData.website}
                 onChange={handleChange}
+                maxLength={200}
               />
             </div>
           </div>
@@ -325,6 +334,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
+                maxLength={5000}
               />
             </div>
 
@@ -339,6 +349,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                 placeholder="e.g., Mon-Fri: 9:00 AM - 10:00 PM, Sat-Sun: 10:00 AM - 11:00 PM"
                 value={formData.openingHours}
                 onChange={handleChange}
+                maxLength={200}
               />
             </div>
           </div>
@@ -356,6 +367,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   value={cuisineInput}
                   onChange={(e) => setCuisineInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAddCuisine(e)}
+                  maxLength={50}
                 />
                 <button 
                   type="button" 
@@ -389,6 +401,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   value={specialtyInput}
                   onChange={(e) => setSpecialtyInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAddSpecialty(e)}
+                  maxLength={50}
                 />
                 <button 
                   type="button" 
@@ -473,6 +486,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                 placeholder="https://example.com/image.jpg"
                 value={formData.image}
                 onChange={handleChange}
+                maxLength={500}
               />
               <p className="form-help">Enter the URL of the restaurant/store image</p>
               {formData.image && (

@@ -52,8 +52,10 @@ exports.getAllUsers = async (req, res) => {
 // ✅ Activate User
 exports.activateUser = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.params.id, { isActive: true });
-    res.json({ message: "User activated" });
+    const user = await User.findByIdAndUpdate(req.params.id, { isActive: true }, { new: true });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    console.log(`🟢 [ADMIN] User activated: ${user.email} (${user._id})`);
+    res.json({ message: "User activated", isActive: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -62,8 +64,10 @@ exports.activateUser = async (req, res) => {
 // ❌ Deactivate User
 exports.deactivateUser = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.params.id, { isActive: false });
-    res.json({ message: "User deactivated" });
+    const user = await User.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    console.log(`🔴 [ADMIN] User deactivated: ${user.email} (${user._id})`);
+    res.json({ message: "User deactivated", isActive: false });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

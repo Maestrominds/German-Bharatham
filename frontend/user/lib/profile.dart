@@ -24,6 +24,7 @@ import 'saved_job_manager.dart';
 import 'saved_guides_manager.dart';
 import 'saved_service_manager.dart';
 import 'main.dart';
+import 'welcome_screen.dart';
 import 'user_profiles_page.dart';
 import 'utils/open_subscriptions_page.dart';
 

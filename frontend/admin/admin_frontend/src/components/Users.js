@@ -122,8 +122,8 @@ const fetchUsers = async () => {
         let list = Array.isArray(users) ? [...users] : [];
 
         // filter by status
-        if (filterBy === 'active')   list = list.filter(u => u.isActive);
-        if (filterBy === 'inactive') list = list.filter(u => !u.isActive);
+        if (filterBy === 'active')   list = list.filter(u => u.isActive !== false);
+        if (filterBy === 'inactive') list = list.filter(u => u.isActive === false);
 
         // Sort is now handled by backend
 
@@ -165,12 +165,12 @@ const fetchUsers = async () => {
                       <td>{user.email}</td>
                       <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                       <td>
-                        <span className={`status ${user.isActive ? 'active' : 'inactive'}`}>
-                          {user.isActive ? 'Active' : 'Inactive'}
+                        <span className={`status ${user.isActive !== false ? 'active' : 'inactive'}`}>
+                          {user.isActive !== false ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td>
-                        {user.isActive ? (
+                        {user.isActive !== false ? (
                           <button className="action-btn deactivate-btn" onClick={() => handleUserAction(user._id, 'deactivate')}>Deactivate</button>
                         ) : (
                           <button className="action-btn activate-btn" onClick={() => handleUserAction(user._id, 'activate')}>Activate</button>

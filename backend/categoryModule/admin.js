@@ -34,9 +34,28 @@ router.post('/', adminCheck, async (req, res) => {
   try {
     const { name, description, icon, status } = req.body;
     if (!name?.trim()) return res.status(400).json({ message: 'Category name is required' });
-    console.log(`🔍 [DB QUERY] creating new category: ${name}`);
+
+    const cleanName = name.trim();
+    const BUILT_IN = ['Accommodation', 'Food', 'Services', 'Jobs', 'Community', 'Help Center'];
+    
+    if (BUILT_IN.some(c => c.toLowerCase() === cleanName.toLowerCase())) {
+      console.warn(`⚠️ [RESERVED] category name is built-in: ${cleanName}`);
+      return res.status(400).json({ message: `Category '${cleanName}' is a built-in category and cannot be duplicated` });
+    }
+
+    console.log(`🔍 [DB QUERY] checking for existing category: ${cleanName}`);
+    const existing = await Category.findOne({ 
+      name: { $regex: new RegExp(`^${cleanName}$`, "i") } 
+    });
+    
+    if (existing) {
+      console.warn(`⚠️ [DUPLICATE] category already exists: ${cleanName}`);
+      return res.status(400).json({ message: `Category '${cleanName}' already exists` });
+    }
+
+    console.log(`🔍 [DB QUERY] creating new category: ${cleanName}`);
     const createStart = Date.now();
-    const cat = await Category.create({ name: name.trim(), description: description || '', icon: icon || '📋', status: status || 'active' });
+    const cat = await Category.create({ name: cleanName, description: description || '', icon: icon || '📋', status: status || 'active' });
     console.log(`✅ [DB RESULT] category created in ${Date.now() - createStart}ms`);
     console.log(`📤 [RESPONSE] sending 201 response after ${Date.now() - start}ms`);
     res.status(201).json(cat);

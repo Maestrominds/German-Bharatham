@@ -9,9 +9,9 @@ const REQ = <span style={{ color: 'red' }}>*</span>;
 const ImageUpload = ({ images, onChange }) => (
   <div className="form-group">
     <label>Photos <span style={{ color: 'red' }}>*</span> <span style={{ color: '#6b7280', fontSize: 12 }}>(JPG, JPEG, PNG — at least 1 required)</span></label>
-    <input type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple onChange={e => {
-      const valid = Array.from(e.target.files).filter(f => /\.(jpg|jpeg|png)$/i.test(f.name));
-      if (valid.length !== e.target.files.length) alert('Only JPG, JPEG, and PNG files are allowed.');
+    <input type="file" accept="image/*" multiple onChange={e => {
+      const valid = Array.from(e.target.files).filter(f => /^image\//.test(f.type));
+      if (valid.length !== e.target.files.length) alert('Only image files are allowed.');
       valid.forEach(f => {
         const r = new FileReader();
         r.onloadend = () => onChange(prev => [...prev, r.result]);
@@ -48,7 +48,7 @@ const ChipsInput = ({ label, options, selected, onToggle, onTypeAdd }) => {
       </div>
       {onTypeAdd && (
         <div style={{ display: 'flex', gap: 6 }}>
-          <input value={typed} onChange={e => setTyped(e.target.value)} placeholder="Type custom…" style={{ flex: 1 }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (typed.trim()) { onTypeAdd(typed.trim()); setTyped(''); } } }} />
+          <input value={typed} onChange={e => setTyped(e.target.value)} placeholder="Type custom…" style={{ flex: 1 }} maxLength={50} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (typed.trim()) { onTypeAdd(typed.trim()); setTyped(''); } } }} />
           <button type="button" onClick={() => { if (typed.trim()) { onTypeAdd(typed.trim()); setTyped(''); } }} style={{ padding: '6px 12px', background: '#6b9976', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Add</button>
         </div>
       )}
@@ -68,11 +68,11 @@ const AccommodationForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Title {REQ}</label>
-            <input value={data.title} onChange={e => set(p => ({...p, title: e.target.value}))} placeholder="Cozy 2-Bedroom Apartment" />
+            <input value={data.title} onChange={e => set(p => ({...p, title: e.target.value}))} placeholder="Cozy 2-Bedroom Apartment" required maxLength={100} />
           </div>
           <div className="form-group">
             <label>Property Type {REQ}</label>
-            <select value={data.propertyType} onChange={e => set(p => ({...p, propertyType: e.target.value}))}>
+            <select value={data.propertyType} onChange={e => set(p => ({...p, propertyType: e.target.value}))} required>
               <option value="apartment">Apartment</option>
               <option value="temporary_stays">Temporary Stays</option>
               <option value="shared_rooms">Shared Rooms</option>
@@ -87,21 +87,21 @@ const AccommodationForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>City {REQ}</label>
-            <input value={data.city} onChange={e => set(p => ({...p, city: e.target.value}))} placeholder="Munich" />
+            <input value={data.city} onChange={e => set(p => ({...p, city: e.target.value}))} placeholder="Munich" required maxLength={50} />
           </div>
           <div className="form-group">
             <label>Postal Code {REQ}</label>
-            <input value={data.postalCode} onChange={e => set(p => ({...p, postalCode: e.target.value}))} placeholder="80331" />
+            <input value={data.postalCode} onChange={e => set(p => ({...p, postalCode: e.target.value}))} placeholder="80331" required maxLength={20} />
           </div>
         </div>
         <div className="form-row">
           <div className="form-group">
             <label>Area</label>
-            <input value={data.area} onChange={e => set(p => ({...p, area: e.target.value}))} placeholder="Schwabing" />
+            <input value={data.area} onChange={e => set(p => ({...p, area: e.target.value}))} placeholder="Schwabing" maxLength={100} />
           </div>
           <div className="form-group">
             <label>Address</label>
-            <input value={data.address} onChange={e => set(p => ({...p, address: e.target.value}))} placeholder="Leopoldstraße 1" />
+            <input value={data.address} onChange={e => set(p => ({...p, address: e.target.value}))} placeholder="Leopoldstraße 1" maxLength={200} />
           </div>
         </div>
       </div>
@@ -111,11 +111,11 @@ const AccommodationForm = ({ data, set }) => {
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>📞 Contact & Description</h4>
         <div className="form-group">
           <label>Contact Phone {REQ}</label>
-          <input value={data.contactPhone} onChange={e => set(p => ({...p, contactPhone: e.target.value}))} placeholder="+49 170 1234567" />
+          <input value={data.contactPhone} onChange={e => set(p => ({...p, contactPhone: e.target.value}))} placeholder="+49 170 1234567" required maxLength={20} />
         </div>
         <div className="form-group">
           <label>Description {REQ}</label>
-          <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={3} placeholder="Detailed description…" />
+          <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={3} placeholder="Detailed description…" required maxLength={5000} />
         </div>
       </div>
 
@@ -125,15 +125,15 @@ const AccommodationForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Cold Rent (€) {REQ}</label>
-            <input type="number" value={data.coldRent} onChange={e => set(p => ({...p, coldRent: e.target.value}))} placeholder="800" />
+            <input type="number" value={data.coldRent} onChange={e => set(p => ({...p, coldRent: e.target.value}))} placeholder="800" required />
           </div>
           <div className="form-group">
             <label>Warm Rent (€) {REQ}</label>
-            <input type="number" value={data.warmRent} onChange={e => set(p => ({...p, warmRent: e.target.value}))} placeholder="1000" />
+            <input type="number" value={data.warmRent} onChange={e => set(p => ({...p, warmRent: e.target.value}))} placeholder="1000" required />
           </div>
           <div className="form-group">
             <label>Deposit (€) {REQ}</label>
-            <input type="number" value={data.deposit} onChange={e => set(p => ({...p, deposit: e.target.value}))} placeholder="2400" />
+            <input type="number" value={data.deposit} onChange={e => set(p => ({...p, deposit: e.target.value}))} placeholder="2400" required />
           </div>
         </div>
       </div>
@@ -144,15 +144,15 @@ const AccommodationForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Size (sqm) {REQ}</label>
-            <input type="number" value={data.sizeSqm} onChange={e => set(p => ({...p, sizeSqm: e.target.value}))} placeholder="50" />
+            <input type="number" value={data.sizeSqm} onChange={e => set(p => ({...p, sizeSqm: e.target.value}))} placeholder="50" required />
           </div>
           <div className="form-group">
             <label>Bedrooms {REQ}</label>
-            <input type="number" value={data.bedrooms} onChange={e => set(p => ({...p, bedrooms: e.target.value}))} placeholder="2" />
+            <input type="number" value={data.bedrooms} onChange={e => set(p => ({...p, bedrooms: e.target.value}))} placeholder="2" required />
           </div>
           <div className="form-group">
             <label>Bathrooms {REQ}</label>
-            <input type="number" value={data.bathrooms} onChange={e => set(p => ({...p, bathrooms: e.target.value}))} placeholder="1" />
+            <input type="number" value={data.bathrooms} onChange={e => set(p => ({...p, bathrooms: e.target.value}))} placeholder="1" required />
           </div>
         </div>
       </div>
@@ -212,11 +212,11 @@ const FoodForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Name {REQ}</label>
-            <input value={data.title} onChange={e => set(p => ({...p, title: e.target.value}))} placeholder="Restaurant or Grocery Store name" />
+            <input value={data.title} onChange={e => set(p => ({...p, title: e.target.value}))} placeholder="Restaurant or Grocery Store name" required maxLength={100} />
           </div>
           <div className="form-group">
             <label>Category {REQ}</label>
-            <select value={data.subCategory} onChange={e => set(p => ({...p, subCategory: e.target.value}))}>
+            <select value={data.subCategory} onChange={e => set(p => ({...p, subCategory: e.target.value}))} required>
               <option value="Restaurant">Restaurant</option>
               <option value="Grocery Store">Grocery Store</option>
               <option value="Bakery">Bakery</option>
@@ -230,11 +230,11 @@ const FoodForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Type</label>
-            <input value={data.type} onChange={e => set(p => ({...p, type: e.target.value}))} placeholder="e.g., Indian, Italian, Organic, Veg/Non-Veg" />
+            <input value={data.type} onChange={e => set(p => ({...p, type: e.target.value}))} placeholder="e.g., Indian, Italian, Organic, Veg/Non-Veg" maxLength={100} />
           </div>
           <div className="form-group">
             <label>Price Range</label>
-            <select value={data.priceRange} onChange={e => set(p => ({...p, priceRange: e.target.value}))}>
+            <select value={data.priceRange} onChange={e => set(p => ({...p, priceRange: e.target.value}))} required>
               <option value="$">$ - Budget Friendly</option>
               <option value="$$">$$ - Moderate</option>
               <option value="$$$">$$$ - Expensive</option>
@@ -249,20 +249,20 @@ const FoodForm = ({ data, set }) => {
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>📍 Location Details</h4>
         <div className="form-group">
           <label>Address {REQ}</label>
-          <input value={data.address} onChange={e => set(p => ({...p, address: e.target.value}))} placeholder="Street address" />
+          <input value={data.address} onChange={e => set(p => ({...p, address: e.target.value}))} placeholder="Street address" required maxLength={200} />
         </div>
         <div className="form-row">
           <div className="form-group">
             <label>City {REQ}</label>
-            <input value={data.city} onChange={e => set(p => ({...p, city: e.target.value}))} placeholder="Munich" />
+            <input value={data.city} onChange={e => set(p => ({...p, city: e.target.value}))} placeholder="Munich" required maxLength={50} />
           </div>
           <div className="form-group">
             <label>State/Region</label>
-            <input value={data.state} onChange={e => set(p => ({...p, state: e.target.value}))} placeholder="Bavaria" />
+            <input value={data.state} onChange={e => set(p => ({...p, state: e.target.value}))} placeholder="Bavaria" maxLength={50} />
           </div>
           <div className="form-group">
             <label>Zip Code</label>
-            <input value={data.zipCode} onChange={e => set(p => ({...p, zipCode: e.target.value}))} placeholder="80331" />
+            <input value={data.zipCode} onChange={e => set(p => ({...p, zipCode: e.target.value}))} placeholder="80331" maxLength={20} />
           </div>
         </div>
       </div>
@@ -273,16 +273,16 @@ const FoodForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Phone</label>
-            <input value={data.phone} onChange={e => set(p => ({...p, phone: e.target.value}))} placeholder="+49 123 456 7890" />
+            <input value={data.phone} onChange={e => set(p => ({...p, phone: e.target.value}))} placeholder="+49 123 456 7890" maxLength={20} />
           </div>
           <div className="form-group">
             <label>Email</label>
-            <input type="email" value={data.email} onChange={e => set(p => ({...p, email: e.target.value}))} placeholder="contact@restaurant.com" />
+            <input type="email" value={data.email} onChange={e => set(p => ({...p, email: e.target.value}))} placeholder="contact@restaurant.com" maxLength={100} />
           </div>
         </div>
         <div className="form-group">
           <label>Website</label>
-          <input value={data.website} onChange={e => set(p => ({...p, website: e.target.value}))} placeholder="https://www.restaurant.com" />
+          <input value={data.website} onChange={e => set(p => ({...p, website: e.target.value}))} placeholder="https://www.restaurant.com" maxLength={200} />
         </div>
       </div>
 
@@ -291,11 +291,11 @@ const FoodForm = ({ data, set }) => {
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Details</h4>
         <div className="form-group">
           <label>Description</label>
-          <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={4} placeholder="Enter a detailed description..." />
+          <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={4} placeholder="Enter a detailed description..." maxLength={5000} />
         </div>
         <div className="form-group">
           <label>🕐 Opening Hours</label>
-          <input value={data.openingHours} onChange={e => set(p => ({...p, openingHours: e.target.value}))} placeholder="e.g., Mon-Fri: 9:00 AM - 10:00 PM, Sat-Sun: 10:00 AM - 11:00 PM" />
+          <input value={data.openingHours} onChange={e => set(p => ({...p, openingHours: e.target.value}))} placeholder="e.g., Mon-Fri: 9:00 AM - 10:00 PM, Sat-Sun: 10:00 AM - 11:00 PM" maxLength={200} />
         </div>
       </div>
 
@@ -311,6 +311,7 @@ const FoodForm = ({ data, set }) => {
               onKeyPress={e => e.key === 'Enter' && handleAddCuisine(e)}
               placeholder="Add cuisine type (e.g., Indian, Italian)" 
               style={{ flex: 1 }}
+              maxLength={50}
             />
             <button type="button" onClick={handleAddCuisine} style={{ padding: '8px 20px', background: '#6b9976', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>Add</button>
           </div>
@@ -334,6 +335,7 @@ const FoodForm = ({ data, set }) => {
               onKeyPress={e => e.key === 'Enter' && handleAddSpecialty(e)}
               placeholder="Add specialty item" 
               style={{ flex: 1 }}
+              maxLength={50}
             />
             <button type="button" onClick={handleAddSpecialty} style={{ padding: '8px 20px', background: '#6b9976', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>Add</button>
           </div>
@@ -378,7 +380,7 @@ const FoodForm = ({ data, set }) => {
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>📤 Image</h4>
         <div className="form-group">
           <label>Image URL</label>
-          <input value={data.image || ''} onChange={e => set(p => ({...p, image: e.target.value}))} placeholder="https://example.com/image.jpg" />
+          <input value={data.image || ''} onChange={e => set(p => ({...p, image: e.target.value}))} placeholder="https://example.com/image.jpg" maxLength={500} />
           <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Enter the URL of the restaurant/store image</p>
           {data.image && (
             <div style={{ marginTop: 8 }}>
@@ -400,17 +402,17 @@ const JobsForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Title {REQ}</label>
-            <input value={data.title} onChange={e => set(p => ({...p, title: e.target.value}))} placeholder="Job Title" />
+            <input value={data.title} onChange={e => set(p => ({...p, title: e.target.value}))} placeholder="Job Title" required maxLength={100} />
           </div>
           <div className="form-group">
             <label>Location {REQ}</label>
-            <input value={data.location} onChange={e => set(p => ({...p, location: e.target.value}))} placeholder="Munich" />
+            <input value={data.location} onChange={e => set(p => ({...p, location: e.target.value}))} placeholder="Munich" required maxLength={100} />
           </div>
         </div>
         <div className="form-row">
           <div className="form-group">
             <label>Contact</label>
-            <input value={data.contact} onChange={e => set(p => ({...p, contact: e.target.value}))} placeholder="+49 52148 765397" />
+            <input value={data.contact} onChange={e => set(p => ({...p, contact: e.target.value}))} placeholder="+49 52148 765397" maxLength={50} />
           </div>
         </div>
       </div>
@@ -420,7 +422,7 @@ const JobsForm = ({ data, set }) => {
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Description</h4>
         <div className="form-group">
           <label>Description</label>
-          <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={3} placeholder="Enter Description" />
+          <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={3} placeholder="Enter Description" maxLength={5000} />
         </div>
       </div>
 
@@ -430,13 +432,13 @@ const JobsForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Salary</label>
-            <input value={data.salary} onChange={e => set(p => ({...p, salary: e.target.value}))} placeholder="€3,000/month" />
+            <input value={data.salary} onChange={e => set(p => ({...p, salary: e.target.value}))} placeholder="€3,000/month" maxLength={50} />
           </div>
         </div>
         <div className="form-row">
           <div className="form-group">
             <label>Company Name</label>
-            <input value={data.companyName} onChange={e => set(p => ({...p, companyName: e.target.value}))} placeholder="Company Name" />
+            <input value={data.companyName} onChange={e => set(p => ({...p, companyName: e.target.value}))} placeholder="Company Name" maxLength={100} />
           </div>
           <div className="form-group">
             <label>Company Logo</label>
@@ -456,7 +458,7 @@ const JobsForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Type {REQ}</label>
-            <select value={data.type} onChange={e => set(p => ({...p, type: e.target.value}))}>
+            <select value={data.type} onChange={e => set(p => ({...p, type: e.target.value}))} required>
               <option>Full Time</option>
               <option>Part Time</option>
               <option>Contract</option>
@@ -472,11 +474,11 @@ const JobsForm = ({ data, set }) => {
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Requirements & Benefits</h4>
         <div className="form-group">
           <label>Requirements</label>
-          <textarea value={data.requirements} onChange={e => set(p => ({...p, requirements: e.target.value}))} rows={3} placeholder="Enter required skills and qualifications (comma-separated)" />
+          <textarea value={data.requirements} onChange={e => set(p => ({...p, requirements: e.target.value}))} rows={3} placeholder="Enter required skills and qualifications (comma-separated)" maxLength={2000} />
         </div>
         <div className="form-group">
           <label>Benefits</label>
-          <textarea value={data.benefits} onChange={e => set(p => ({...p, benefits: e.target.value}))} rows={3} placeholder="Enter job benefits (comma-separated)" />
+          <textarea value={data.benefits} onChange={e => set(p => ({...p, benefits: e.target.value}))} rows={3} placeholder="Enter job benefits (comma-separated)" maxLength={2000} />
         </div>
       </div>
 
@@ -485,7 +487,7 @@ const JobsForm = ({ data, set }) => {
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>📝 Application</h4>
         <div className="form-group">
           <label>Apply URL</label>
-          <input value={data.applyUrl} onChange={e => set(p => ({...p, applyUrl: e.target.value}))} placeholder="https://company.com/apply" />
+          <input value={data.applyUrl} onChange={e => set(p => ({...p, applyUrl: e.target.value}))} placeholder="https://company.com/apply" maxLength={500} />
         </div>
       </div>
     </>
@@ -499,83 +501,83 @@ const ServicesForm = ({ data, set }) => {
       <div className="form-row">
         <div className="form-group">
           <label>Service Name {REQ}</label>
-          <input value={data.serviceName} onChange={e => set(p => ({...p, serviceName: e.target.value}))} placeholder="Visa Consultation" />
+          <input value={data.serviceName} onChange={e => set(p => ({...p, serviceName: e.target.value}))} placeholder="Visa Consultation" required maxLength={100} />
         </div>
         <div className="form-group">
           <label>Provider Name {REQ}</label>
-          <input value={data.providerName} onChange={e => set(p => ({...p, providerName: e.target.value}))} placeholder="Max Mustermann" />
+          <input value={data.providerName} onChange={e => set(p => ({...p, providerName: e.target.value}))} placeholder="Max Mustermann" required maxLength={100} />
         </div>
       </div>
       <div className="form-row">
         <div className="form-group">
           <label>City {REQ}</label>
-          <input value={data.city} onChange={e => set(p => ({...p, city: e.target.value}))} placeholder="Munich" />
+          <input value={data.city} onChange={e => set(p => ({...p, city: e.target.value}))} placeholder="Munich" required maxLength={50} />
         </div>
         <div className="form-group">
           <label>Postal Code {REQ}</label>
-          <input value={data.postalCode} onChange={e => set(p => ({...p, postalCode: e.target.value}))} placeholder="80331" />
+          <input value={data.postalCode} onChange={e => set(p => ({...p, postalCode: e.target.value}))} placeholder="80331" required maxLength={20} />
         </div>
       </div>
       <div className="form-row">
         <div className="form-group">
           <label>Area</label>
-          <input value={data.area} onChange={e => set(p => ({...p, area: e.target.value}))} placeholder="Maxvorstadt" />
+          <input value={data.area} onChange={e => set(p => ({...p, area: e.target.value}))} placeholder="Maxvorstadt" maxLength={100} />
         </div>
         <div className="form-group">
           <label>Address</label>
-          <input value={data.address} onChange={e => set(p => ({...p, address: e.target.value}))} placeholder="Street, No." />
+          <input value={data.address} onChange={e => set(p => ({...p, address: e.target.value}))} placeholder="Street, No." maxLength={200} />
         </div>
       </div>
       <div className="form-row">
         <div className="form-group">
           <label>Contact Phone {REQ}</label>
-          <input value={data.contactPhone} onChange={e => set(p => ({...p, contactPhone: e.target.value}))} placeholder="+49 170 1234567" />
+          <input value={data.contactPhone} onChange={e => set(p => ({...p, contactPhone: e.target.value}))} placeholder="+49 170 1234567" required maxLength={20} />
         </div>
         <div className="form-group">
           <label>Price Range</label>
-          <input value={data.priceRange} onChange={e => set(p => ({...p, priceRange: e.target.value}))} placeholder="€50/hour" />
+          <input value={data.priceRange} onChange={e => set(p => ({...p, priceRange: e.target.value}))} placeholder="€50/hour" maxLength={100} />
         </div>
       </div>
 
       <div className="form-row">
         <div className="form-group">
           <label>WhatsApp</label>
-          <input value={data.whatsapp} onChange={e => set(p => ({...p, whatsapp: e.target.value}))} placeholder="+49 170 1234567" />
+          <input value={data.whatsapp} onChange={e => set(p => ({...p, whatsapp: e.target.value}))} placeholder="+49 170 1234567" maxLength={20} />
         </div>
         <div className="form-group">
           <label>Email</label>
-          <input value={data.email} onChange={e => set(p => ({...p, email: e.target.value}))} placeholder="name@example.com" />
+          <input value={data.email} onChange={e => set(p => ({...p, email: e.target.value}))} placeholder="name@example.com" maxLength={100} />
         </div>
       </div>
 
       <div className="form-row">
         <div className="form-group">
           <label>Website</label>
-          <input value={data.website} onChange={e => set(p => ({...p, website: e.target.value}))} placeholder="https://example.com" />
+          <input value={data.website} onChange={e => set(p => ({...p, website: e.target.value}))} placeholder="https://example.com" maxLength={200} />
         </div>
         <div className="form-group">
           <label>Latitude</label>
-          <input value={data.latitude} onChange={e => set(p => ({...p, latitude: e.target.value}))} placeholder="48.137154" />
+          <input value={data.latitude} onChange={e => set(p => ({...p, latitude: e.target.value}))} placeholder="48.137154" maxLength={20} />
         </div>
       </div>
 
       <div className="form-row">
         <div className="form-group">
           <label>Longitude</label>
-          <input value={data.longitude} onChange={e => set(p => ({...p, longitude: e.target.value}))} placeholder="11.576124" />
+          <input value={data.longitude} onChange={e => set(p => ({...p, longitude: e.target.value}))} placeholder="11.576124" maxLength={20} />
         </div>
         <div className="form-group" />
       </div>
       <div className="form-group">
         <label>Service Type</label>
-        <select value={data.serviceType} onChange={e => set(p => ({...p, serviceType: e.target.value}))}>
+        <select value={data.serviceType} onChange={e => set(p => ({...p, serviceType: e.target.value}))} required>
           <option value="">— select —</option>
           {serviceTypes.map(t => <option key={t}>{t}</option>)}
         </select>
       </div>
       <div className="form-group">
         <label>Description {REQ}</label>
-        <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={3} placeholder="What you offer…" />
+        <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={3} placeholder="What you offer…" required maxLength={5000} />
       </div>
 
       <div className="form-group">
@@ -585,6 +587,8 @@ const ServicesForm = ({ data, set }) => {
           onChange={e => set(p => ({ ...p, amenitiesText: e.target.value }))}
           rows={3}
           placeholder="Accommodation search assistance, Moving & settling support, Temporary housing arrangement"
+          required
+          maxLength={2000}
         />
         <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
           Enter as comma-separated values (or one per line).

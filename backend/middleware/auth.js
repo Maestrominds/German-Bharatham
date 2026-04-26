@@ -29,8 +29,13 @@ exports.protect = async (req, res, next) => {
     }
 
     // Check if user is active
+    // We check explicitly for false to allow existing users (where field might be undefined) to remain active.
     if (user.isActive === false) {
-      return res.status(403).json({ message: "Account deactivated. Please contact support." });
+      console.warn(`🛑 [AUTH] Blocked access for deactivated user: ${user.email} (${user._id})`);
+      return res.status(403).json({
+        message: "Account deactivated. Please contact support.",
+        code: "ACCOUNT_DEACTIVATED"
+      });
     }
 
     req.user = user; // attach full user object

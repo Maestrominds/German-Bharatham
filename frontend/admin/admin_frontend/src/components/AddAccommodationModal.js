@@ -37,9 +37,9 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
 
   const handleImageUpload = e => {
     const files = Array.from(e.target.files).filter(f =>
-      ['image/png', 'image/jpeg', 'image/jpg'].includes(f.type)
+      /^image\//.test(f.type)
     );
-    if (files.length !== e.target.files.length) alert('Only JPG, JPEG, and PNG files are allowed.');
+    if (files.length !== e.target.files.length) alert('Only image files are allowed.');
     setImages(files);
     setPreviews(files.map(f => URL.createObjectURL(f)));
     e.target.value = '';
@@ -111,11 +111,11 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
           <div className="form-row">
             <div className="form-group">
               <label>Title <span style={{ color: 'red' }}>*</span></label>
-              <input name="title" value={form.title} onChange={handleChange} placeholder="Room" />
+              <input name="title" value={form.title} onChange={handleChange} placeholder="Room" required maxLength={100} />
             </div>
             <div className="form-group">
               <label>Property Type <span style={{ color: 'red' }}>*</span></label>
-              <select name="propertyType" value={form.propertyType} onChange={handleChange}>
+              <select name="propertyType" value={form.propertyType} onChange={handleChange} required>
                 <option value="Apartment">Apartment</option>
                 <option value="Shared Room">Shared Room</option>
                 <option value="Temporary Stays">Temporary Stays</option>
@@ -127,29 +127,29 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
           <div className="form-row">
             <div className="form-group">
               <label>Location <span style={{ color: 'red' }}>*</span></label>
-              <input name="location" value={form.location} onChange={handleChange} placeholder="Munich" />
+              <input name="location" value={form.location} onChange={handleChange} placeholder="Munich" required maxLength={100} />
             </div>
             <div className="form-group">
               <label>Contact <span style={{ color: 'red' }}>*</span></label>
-              <input name="contact" value={form.contact} onChange={handleChange} placeholder="+49 52148 765397" />
+              <input name="contact" value={form.contact} onChange={handleChange} placeholder="+49 52148 765397" required maxLength={50} />
             </div>
           </div>
 
           {/* Description */}
           <div className="form-group">
             <label>Description <span style={{ color: 'red' }}>*</span></label>
-            <textarea name="description" rows={3} value={form.description} onChange={handleChange} placeholder="Enter Description" />
+            <textarea name="description" rows={3} value={form.description} onChange={handleChange} placeholder="Enter Description" required maxLength={5000} />
           </div>
 
           {/* Price + Status */}
           <div className="form-row">
             <div className="form-group">
               <label>Price <span style={{ color: 'red' }}>*</span></label>
-              <input name="price" value={form.price} onChange={handleChange} placeholder="€1,000/month" />
+              <input name="price" value={form.price} onChange={handleChange} placeholder="€1,000/month" required maxLength={50} />
             </div>
             <div className="form-group">
               <label>Status</label>
-              <select name="status" value={form.status} onChange={handleChange}>
+              <select name="status" value={form.status} onChange={handleChange} required>
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
                 <option value="inactive">Inactive</option>
@@ -175,6 +175,7 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
             <div style={{ display: 'flex', gap: 8 }}>
               <input value={customAmenity} onChange={e => setCustomAmenity(e.target.value)}
                 placeholder="Type custom amenity…" style={{ flex: 1 }}
+                maxLength={50}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }} />
               <button type="button" onClick={addCustom}
                 style={{ padding: '7px 14px', background: '#6b9976', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>
@@ -186,7 +187,7 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
           {/* Photos */}
           <div className="form-group">
             <label>Photos <span style={{ color: '#6b7280', fontSize: 12 }}>(JPG, JPEG, PNG — optional)</span></label>
-            <input type="file" multiple accept=".png,.jpg,.jpeg,image/jpeg,image/png" onChange={handleImageUpload} />
+            <input type="file" multiple accept="image/*" onChange={handleImageUpload} />
             {previews.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                 {previews.map((src, i) => (

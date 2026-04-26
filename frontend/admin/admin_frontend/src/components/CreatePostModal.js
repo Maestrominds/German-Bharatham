@@ -83,6 +83,7 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
               value={postData.title}
               onChange={(e) => setPostData({ ...postData, title: e.target.value })}
               required
+              maxLength={200}
             />
           </div>
 
@@ -120,6 +121,7 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
               value={postData.description}
               onChange={(e) => setPostData({ ...postData, description: e.target.value })}
               required
+              maxLength={1000}
             />
           </div>
 
@@ -130,6 +132,7 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
               value={postData.keyPoints}
               onChange={(e) => setPostData({ ...postData, keyPoints: e.target.value })}
               placeholder="Point 1&#10;Point 2&#10;Point 3"
+              maxLength={2000}
             />
           </div>
 
@@ -141,6 +144,7 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
                 value={postData.officialWebsites}
                 onChange={(e) => setPostData({ ...postData, officialWebsites: e.target.value })}
                 placeholder="https://..."
+                maxLength={500}
               />
             </div>
             <div className="form-group">
@@ -150,6 +154,7 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
                 value={postData.communityDiscussions}
                 onChange={(e) => setPostData({ ...postData, communityDiscussions: e.target.value })}
                 placeholder="https://..."
+                maxLength={500}
               />
             </div>
           </div>
@@ -160,6 +165,8 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
               type="text"
               value={postData.author}
               onChange={(e) => setPostData({ ...postData, author: e.target.value })}
+              required
+              maxLength={100}
             />
           </div>
 

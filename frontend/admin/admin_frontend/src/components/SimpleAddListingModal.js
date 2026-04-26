@@ -52,10 +52,10 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files).filter((f) =>
-      ["image/png", "image/jpeg", "image/jpg"].includes(f.type)
+      /^image\//.test(f.type)
     );
     if (files.length !== e.target.files.length) {
-      alert("Only JPG, JPEG, and PNG files are allowed.");
+      alert("Only image files are allowed.");
     }
     setImages(files);
     setPreviews(files.map((f) => URL.createObjectURL(f)));
@@ -161,11 +161,13 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 placeholder="Room"
                 value={form.title}
                 onChange={handleChange}
+                required
+                maxLength={100}
               />
             </div>
             <div className="form-group">
               <label>Category</label>
-              <select name="category" value={form.category} onChange={handleCategoryChange}>
+              <select name="category" value={form.category} onChange={handleCategoryChange} required>
                 <option>Accommodation</option>
                 <option>Food</option>
                 <option>Jobs</option>
@@ -181,7 +183,7 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 <label>
                   Property Type <span style={{ color: "red" }}>*</span>
                 </label>
-                <select name="propertyType" value={form.propertyType} onChange={handleChange}>
+                <select name="propertyType" value={form.propertyType} onChange={handleChange} required>
                   <option value="Apartment">Apartment</option>
                   <option value="Shared Room">Shared Room</option>
                   <option value="Temporary Stays">Temporary Stays</option>
@@ -201,6 +203,8 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 placeholder="Munich"
                 value={form.location}
                 onChange={handleChange}
+                required
+                maxLength={100}
               />
             </div>
             <div className="form-group">
@@ -212,6 +216,8 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 placeholder="+49 52148 765397"
                 value={form.contact}
                 onChange={handleChange}
+                required
+                maxLength={50}
               />
             </div>
           </div>
@@ -227,6 +233,8 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
               placeholder="Enter Description"
               value={form.description}
               onChange={handleChange}
+              required
+              maxLength={5000}
             />
           </div>
 
@@ -241,11 +249,13 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 placeholder="€1,000/month"
                 value={form.price}
                 onChange={handleChange}
+                required
+                maxLength={50}
               />
             </div>
             <div className="form-group">
               <label>Status</label>
-              <select name="status" value={form.status} onChange={handleChange}>
+              <select name="status" value={form.status} onChange={handleChange} required>
                 <option value="Active">Active</option>
                 <option value="Pending">Pending</option>
                 <option value="Inactive">Inactive</option>
@@ -287,6 +297,7 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 placeholder="Type custom amenity…"
                 value={customAmenity}
                 onChange={(e) => setCustomAmenity(e.target.value)}
+                maxLength={50}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") { e.preventDefault(); addCustomAmenity(); }
                 }}
@@ -321,7 +332,7 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
             <input
               type="file"
               multiple
-              accept=".png,.jpg,.jpeg,image/jpeg,image/png"
+              accept="image/*"
               onChange={handleImageUpload}
             />
             {previews.length > 0 && (
