@@ -213,9 +213,12 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
               </label>
               <input
                 name="contact"
-                placeholder="+49 52148 765397"
+                placeholder="4952148765397"
                 value={form.contact}
-                onChange={handleChange}
+                onChange={(e) => {
+                  e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                  handleChange(e);
+                }}
                 required
                 maxLength={50}
               />

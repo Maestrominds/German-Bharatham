@@ -193,13 +193,14 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Type</label>
+                <label>Type <span className="required">*</span></label>
                 <input
                   type="text"
                   name="type"
                   placeholder="e.g., Indian, Italian, Organic, Veg/Non-Veg"
                   value={formData.type}
                   onChange={handleChange}
+                  required
                   maxLength={100}
                 />
               </div>
@@ -254,24 +255,29 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                 />
               </div>
               <div className="form-group">
-                <label>State/Region</label>
+                <label>State/Region <span className="required">*</span></label>
                 <input
                   type="text"
                   name="state"
                   placeholder="Bavaria"
                   value={formData.state}
                   onChange={handleChange}
+                  required
                   maxLength={50}
                 />
               </div>
               <div className="form-group">
-                <label>Zip Code</label>
+                <label>Zip Code <span className="required">*</span></label>
                 <input
                   type="text"
                   name="zipCode"
                   placeholder="80331"
                   value={formData.zipCode}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    handleChange(e);
+                  }}
+                  required
                   maxLength={20}
                 />
               </div>
@@ -287,37 +293,43 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
             
             <div className="form-row">
               <div className="form-group">
-                <label>Phone</label>
+                <label>Phone <span className="required">*</span></label>
                 <input
                   type="tel"
                   name="phone"
-                  placeholder="+49 123 456 7890"
+                  placeholder="491234567890"
                   value={formData.phone}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    handleChange(e);
+                  }}
+                  required
                   maxLength={20}
                 />
               </div>
               <div className="form-group">
-                <label>Email</label>
+                <label>Email <span className="required">*</span></label>
                 <input
                   type="email"
                   name="email"
                   placeholder="contact@restaurant.com"
                   value={formData.email}
                   onChange={handleChange}
+                  required
                   maxLength={100}
                 />
               </div>
             </div>
 
             <div className="form-group">
-              <label>Website</label>
+              <label>Website <span className="required">*</span></label>
               <input
                 type="url"
                 name="website"
                 placeholder="https://www.restaurant.com"
                 value={formData.website}
                 onChange={handleChange}
+                required
                 maxLength={200}
               />
             </div>
@@ -328,13 +340,14 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
             <h3 className="section-title">Details</h3>
             
             <div className="form-group">
-              <label>Description</label>
+              <label>Description <span className="required">*</span></label>
               <textarea
                 name="description"
                 placeholder="Enter a detailed description..."
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
+                required
                 maxLength={5000}
               />
             </div>
@@ -342,7 +355,7 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
             <div className="form-group">
               <label>
                 <Clock size={18} />
-                Opening Hours
+                Opening Hours <span className="required">*</span>
               </label>
               <input
                 type="text"
@@ -350,6 +363,7 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                 placeholder="e.g., Mon-Fri: 9:00 AM - 10:00 PM, Sat-Sun: 10:00 AM - 11:00 PM"
                 value={formData.openingHours}
                 onChange={handleChange}
+                required
                 maxLength={200}
               />
             </div>
@@ -480,13 +494,14 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
             </h3>
             
             <div className="form-group">
-              <label>Image URL</label>
+              <label>Image URL <span className="required">*</span></label>
               <input
                 type="url"
                 name="image"
                 placeholder="https://example.com/image.jpg"
                 value={formData.image}
                 onChange={handleChange}
+                required
                 maxLength={500}
               />
               <p className="form-help">Enter the URL of the restaurant/store image</p>

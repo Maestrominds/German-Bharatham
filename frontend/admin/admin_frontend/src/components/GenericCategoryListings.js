@@ -259,16 +259,25 @@ const EditModal = ({ item, category, apiBase, onClose, onSuccess }) => {
     finally { setSaving(false); }
   };
 
-  const field = (label, key, type = 'text') => (
-    <div className="form-group" key={key}>
-      <label>{label}</label>
-      {type === 'textarea' ? (
-        <textarea rows={3} value={data[key] ?? ''} onChange={e => setData(p => ({ ...p, [key]: e.target.value }))} />
-      ) : (
-        <input type={type} value={data[key] ?? ''} onChange={e => setData(p => ({ ...p, [key]: e.target.value }))} />
-      )}
-    </div>
-  );
+  const field = (label, key, type = 'text') => {
+    const isNumeric = ['contactPhone', 'phone', 'whatsapp', 'zipCode', 'postalCode'].includes(key);
+    const handleChange = e => {
+      let val = e.target.value;
+      if (isNumeric) val = val.replace(/[^0-9]/g, '');
+      setData(p => ({ ...p, [key]: val }));
+    };
+
+    return (
+      <div className="form-group" key={key}>
+        <label>{label} <span style={{ color: 'red' }}>*</span></label>
+        {type === 'textarea' ? (
+          <textarea rows={3} value={data[key] ?? ''} onChange={handleChange} required maxLength={5000} />
+        ) : (
+          <input type={type} value={data[key] ?? ''} onChange={handleChange} required maxLength={200} />
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="modal-overlay">
@@ -315,6 +324,8 @@ const EditModal = ({ item, category, apiBase, onClose, onSuccess }) => {
                 value={data.amenitiesText ?? ''}
                 onChange={e => setData(p => ({ ...p, amenitiesText: e.target.value }))}
                 placeholder="Accommodation search assistance, Moving & settling support"
+                required
+                maxLength={5000}
               />
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
                 Enter as comma-separated values (or one per line).

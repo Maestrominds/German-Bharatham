@@ -131,7 +131,10 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
             </div>
             <div className="form-group">
               <label>Contact <span style={{ color: 'red' }}>*</span></label>
-              <input name="contact" value={form.contact} onChange={handleChange} placeholder="+49 52148 765397" required maxLength={50} />
+              <input name="contact" value={form.contact} onChange={(e) => {
+                  e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                  handleChange(e);
+                }} placeholder="4952148765397" required maxLength={50} />
             </div>
           </div>
 

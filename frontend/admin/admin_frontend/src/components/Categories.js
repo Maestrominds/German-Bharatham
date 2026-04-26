@@ -22,8 +22,8 @@ const CategoryFormModal = ({ title, initial, onClose, onSave }) => {
         </div>
         <div className="add-listing-form">
           <div className="form-group">
-            <label>Icon (emoji)</label>
-            <input value={form.icon} onChange={set('icon')} placeholder="📋" style={{ width: 80 }} maxLength={10} />
+            <label>Icon (emoji) <span style={{ color: 'red' }}>*</span></label>
+            <input value={form.icon} onChange={set('icon')} placeholder="📋" required style={{ width: 80 }} maxLength={10} />
           </div>
           <div className="form-group">
             <label>Name <span style={{ color: 'red' }}>*</span></label>
