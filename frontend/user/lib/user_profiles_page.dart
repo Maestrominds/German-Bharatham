@@ -308,11 +308,12 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Expanded(
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Expanded(
                     child: isLoading
                         ? const Center(
                             child:
@@ -402,6 +403,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 ],
               ),
             ),
+            ),
           ],
         ),
       ),
@@ -436,6 +438,13 @@ class _UserProfilesPageState extends State<UserProfilesPage>
             final stepY = -24.0;
 
             void animateBack() {
+              if (_cardOffset == Offset.zero) {
+                setState(() {
+                  _isAnimatingCard = false;
+                  _isDismissingCard = false;
+                });
+                return;
+              }
               setState(() {
                 _isAnimatingCard = true;
                 _isDismissingCard = false;
@@ -479,6 +488,9 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                         ignoring: depth != 0,
                         child: (depth == 0)
                             ? GestureDetector(
+                                onDoubleTap: () {
+                                  _toggleLike(users[itemIndex]);
+                                },
                                 onPanUpdate: (details) {
                                   if (_isAnimatingCard) return;
                                   setState(() {

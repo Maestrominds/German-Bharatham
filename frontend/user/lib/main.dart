@@ -1173,7 +1173,7 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         if (profileRes.statusCode == 200) {
           final data = jsonDecode(profileRes.body) as Map<String, dynamic>;
           bool hasMissingMandatory = false;
-          final req = ['name', 'phone', 'dob', 'gender', 'location', 'preferredCity', 'education', 'profession', 'germanLevel', 'passport'];
+          final req = ['name', 'phone', 'dob', 'gender', 'location', 'preferredCity', 'education', 'profession', 'germanLevel', 'passport', 'photo'];
           for (var field in req) {
              if (data[field] == null || data[field].toString().trim().isEmpty) {
                  hasMissingMandatory = true;
@@ -1197,10 +1197,10 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
       } catch (_) {}
     }
 
-    await _checkSubscriptionAndNavigate();
+    await _checkSubscriptionAndNavigate(context);
   }
 
-  Future<void> _checkSubscriptionAndNavigate() async {
+  Future<void> _checkSubscriptionAndNavigate(BuildContext currentContext) async {
     // Load user subscription status to decide where to go next
     final token = UserSession.instance.token;
     if (token != null) {
@@ -1218,9 +1218,9 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
           final status = user?['subscriptionStatus']?.toString();
           final hasAnySubscription = (status == 'active' || status == 'trial');
           if (hasAnySubscription) {
-            if (!mounted) return;
+            if (!currentContext.mounted) return;
             Navigator.pushReplacement(
-              context,
+              currentContext,
               MaterialPageRoute(builder: (_) => UserProfilesPage()),
             );
             return;
@@ -1228,9 +1228,9 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         }
       } catch (_) {}
     }
-    if (!mounted) return;
+    if (!currentContext.mounted) return;
     Navigator.pushReplacement(
-      context,
+      currentContext,
       MaterialPageRoute(
         builder: (_) => const SubscriptionsPage(autoNavigateOnActivation: true),
       ),

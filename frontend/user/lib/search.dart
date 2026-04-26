@@ -104,6 +104,9 @@ class _SearchPageState extends State<SearchPage> {
     setState(() {
       isLoading = false;
     });
+
+    // Fire lazy fetch for full data
+    _ensureFullDataLoaded();
   }
 
   Future<void> _loadAll() async {
@@ -455,11 +458,12 @@ class _SearchPageState extends State<SearchPage> {
     return TextField(
       onChanged: (value) {
         _searchDebounce?.cancel();
-        _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+        _searchDebounce = Timer(const Duration(milliseconds: 200), () {
           if (!mounted) return;
           setState(() {
             searchQuery = value;
           });
+          _ensureFullDataLoaded();
         });
       },
       decoration: InputDecoration(

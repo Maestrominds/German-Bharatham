@@ -152,7 +152,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  ImageProvider _avatarProvider(String? photoBase64) {
+  ImageProvider? _avatarProvider(String? photoBase64) {
     if (photoBase64 != null && photoBase64.trim().isNotEmpty) {
       try {
         final raw = photoBase64.contains(',')
@@ -161,7 +161,7 @@ class _HomePageState extends State<HomePage> {
         return MemoryImage(base64Decode(raw));
       } catch (_) {}
     }
-    return const AssetImage("assets/images/person.jpeg");
+    return null;
   }
 
   @override
@@ -366,7 +366,11 @@ class _HomePageState extends State<HomePage> {
       children: [
         CircleAvatar(
           radius: 22,
+          backgroundColor: Colors.grey.shade300,
           backgroundImage: _avatarProvider(session.photoBase64),
+          child: _avatarProvider(session.photoBase64) == null
+              ? const Icon(Icons.person, color: Colors.white)
+              : null,
         ),
         const SizedBox(width: 12),
 
@@ -492,11 +496,19 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(width: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(9),
-            child: Image.asset(
-              "assets/images/person.jpeg", // change to your image name
-              width: 90,
-              fit: BoxFit.cover,
-            ),
+            child: _avatarProvider(UserSession.instance.photoBase64) != null
+                ? Image(
+                    image: _avatarProvider(UserSession.instance.photoBase64)!,
+                    width: 90,
+                    height: 90,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    width: 90,
+                    height: 90,
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.person, color: Colors.white, size: 50),
+                  ),
           ),
         ],
       ),

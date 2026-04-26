@@ -58,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage>
     super.dispose();
   }
 
-  ImageProvider _avatarProvider(String? photoBase64) {
+  ImageProvider? _avatarProvider(String? photoBase64) {
     if (photoBase64 != null && photoBase64.trim().isNotEmpty) {
       try {
         final raw = photoBase64.contains(',')
@@ -67,7 +67,7 @@ class _ProfilePageState extends State<ProfilePage>
         return MemoryImage(base64Decode(raw));
       } catch (_) {}
     }
-    return const AssetImage('assets/images/profile.png');
+    return null;
   }
 
   @override
@@ -124,7 +124,11 @@ class _ProfilePageState extends State<ProfilePage>
                 children: [
                   CircleAvatar(
                     radius: 28,
+                    backgroundColor: Colors.grey.shade300,
                     backgroundImage: _avatarProvider(session.photoBase64),
+                    child: _avatarProvider(session.photoBase64) == null
+                        ? const Icon(Icons.person, color: Colors.white, size: 32)
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -154,7 +158,7 @@ class _ProfilePageState extends State<ProfilePage>
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const EditProfilePage(),
+                          builder: (_) => const PersonalInformationPage(),
                         ),
                       );
                       if (!mounted) return;

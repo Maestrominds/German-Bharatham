@@ -4,12 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 import '../user_session.dart';
 import '../services/api_config.dart';
 
 class PersonalInformationPage extends StatefulWidget {
   final bool isInitialSetup;
-  final VoidCallback? onSetupComplete;
+  final void Function(BuildContext context)? onSetupComplete;
 
   const PersonalInformationPage({
     super.key,
@@ -37,7 +38,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   final TextEditingController germanLevel = TextEditingController();
   final TextEditingController passport = TextEditingController();
 
-  String? _photoBase64;
+  String? _photoBase64 = UserSession.instance.photoBase64;
   final ImagePicker _picker = ImagePicker();
 
   static const Color primaryGreen = Color(0xFF4E7F6D);
@@ -166,9 +167,16 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     await prefs.setString(key('passport'), passport.text);
     await prefs.setString(key('photo'), _photoBase64 ?? '');
 
+    // Update global session cache so the UI updates immediately
+    await UserSession.instance.updateProfile(
+      name: name.text,
+      phone: phone.text,
+      photoBase64: _photoBase64,
+    );
+
     if (mounted) {
       if (widget.isInitialSetup && widget.onSetupComplete != null) {
-        widget.onSetupComplete!();
+        widget.onSetupComplete!(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Profile Updated Successfully")),
@@ -243,6 +251,12 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                         );
                         isValid = false;
                       }
+                      if (_photoBase64 == null || _photoBase64!.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please upload a profile picture')),
+                        );
+                        isValid = false;
+                      }
 
                       if (isValid) {
                         _saveData();
@@ -267,25 +281,36 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   }
 
   Widget _input(String label, TextEditingController controller) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
+    bool isPhone = label.toLowerCase().contains("phone");
+    bool isPassport = label.toLowerCase().contains("passport");
+    bool isGerman = label.toLowerCase().contains("german");
+
+    int limit = 100;
+    if (isPhone) limit = 15;
+    else if (isPassport) limit = 20;
+    else if (isGerman) limit = 15;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: controller,
-          maxLength: 100,
-          decoration: InputDecoration(
-            counterText: "",
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller,
+            maxLength: limit,
+            keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+            inputFormatters: isPhone ? [FilteringTextInputFormatter.digitsOnly] : null,
+            decoration: InputDecoration(
+              counterText: "", // Hides the character counter below input
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
@@ -436,16 +461,12 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   }
 
   Widget _profilePicture() {
-    ImageProvider imageProvider;
+    ImageProvider? imageProvider;
     if (_photoBase64 != null && _photoBase64!.trim().isNotEmpty) {
       try {
         final raw = _photoBase64!.contains(',') ? _photoBase64!.split(',').last : _photoBase64!;
         imageProvider = MemoryImage(base64Decode(raw));
-      } catch (_) {
-        imageProvider = const AssetImage('assets/images/person.jpeg');
-      }
-    } else {
-      imageProvider = const AssetImage('assets/images/person.jpeg');
+      } catch (_) {}
     }
 
     return Center(
@@ -455,8 +476,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
           children: [
             CircleAvatar(
               radius: 56,
-              backgroundColor: Colors.grey.shade200,
+              backgroundColor: Colors.grey.shade300,
               backgroundImage: imageProvider,
+              child: imageProvider == null
+                  ? Icon(Icons.person, size: 60, color: Colors.white)
+                  : null,
             ),
             Positioned(
               bottom: 0,
