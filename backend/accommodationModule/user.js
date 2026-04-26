@@ -6,6 +6,7 @@ const Accommodation = require("./accomodation");
 router.get("/", async (req, res) => {
   try {
     const data = await Accommodation.find({
+      status: 'Active',
       title: { $exists: true, $nin: [null, ""] },
       city: { $exists: true, $nin: [null, ""] }
     }).sort({ createdAt: -1 });

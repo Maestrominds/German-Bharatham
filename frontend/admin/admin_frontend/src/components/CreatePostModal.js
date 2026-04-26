@@ -4,96 +4,74 @@ import API_URL from '../config';
 
 const CreatePostModal = ({ onClose, onPostCreated }) => {
   const [postData, setPostData] = useState({
-  title: "",
-  category: "",
-  readTime: "",
-  content: ""   // 🔥 ADD THIS
-});
+    title: "",
+    category: "Guide",
+    readTime: "5",
+    description: "",
+    keyPoints: "",
+    officialWebsites: "",
+    communityDiscussions: "",
+    author: "German Bharatham Team"
+  });
 
-const parseContent = (content) => {
-  const description = content.split("KEYPOINTS:")[0].trim();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const keyPointsSection = content.split("KEYPOINTS:")[1]?.split("OFFICIAL:")[0] || "";
-  const keyPoints = keyPointsSection
-    .split("\n")
-    .map(k => k.trim())
-    .filter(k => k.length > 0);
+    const token = localStorage.getItem("adminToken");
+    
+    // Convert keyPoints back to array
+    const keyPointsArray = postData.keyPoints
+      .split("\n")
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
 
-  const officialWebsites = content.split("OFFICIAL:")[1]?.split("COMMUNITY:")[0]?.trim() || "";
+    try {
+      const response = await fetch(`${API_URL}/api/admin/community`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: postData.title,
+          category: postData.category,
+          readTime: Number(postData.readTime),
+          description: postData.description,
+          keyPoints: keyPointsArray,
+          officialWebsites: postData.officialWebsites,
+          communityDiscussions: postData.communityDiscussions,
+          author: postData.author,
+          date: new Date().toDateString(),
+        }),
+      });
 
-  const communityDiscussions = content.split("COMMUNITY:")[1]?.split("AUTHOR:")[0]?.trim() || "";
+      const data = await response.json();
 
-  const author = content.split("AUTHOR:")[1]?.trim() || "German Bharatham Team";
+      if (!response.ok) {
+        alert(data.message);
+        return;
+      }
 
-  return {
-    description,
-    keyPoints,
-    officialWebsites,
-    communityDiscussions,
-    author
+      alert("Post Created Successfully ✅");
+      if (onPostCreated) await onPostCreated();
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert("Error creating post ❌");
+    }
   };
-};
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  const token = localStorage.getItem("adminToken");
-  console.log("TOKEN:", token);
-
-  const parsed = parseContent(postData.content);
-
-  try {
-    const response = await fetch(`${API_URL}/api/admin/community`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        title: postData.title,
-        category: postData.category,
-        readTime: Number(postData.readTime),
-        ...parsed,
-        date: new Date().toDateString(),
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-  alert(data.message);
-  return;
-}
-
-alert("Post Created Successfully ✅");
-
-// Refresh posts in parent page
-if (onPostCreated) {
-  await onPostCreated();
-}
-
-// Close modal
-onClose();
-
-  } catch (error) {
-    console.error(error);
-    alert("Error creating post ❌");
-  }
-};
   return (
     <div className="modal-overlay">
-      <div className="modal-content create-post-modal">
+      <div className="modal-content create-post-modal" style={{ maxWidth: '700px', width: '90%' }}>
         <div className="modal-header">
           <div>
             <h2>Create New Post</h2>
             <p>Create a new post for the community</p>
           </div>
-          <div className="header-actions">
-            <button className="show-all-btn">Show All Posts</button>
-            <button className="close-btn" onClick={onClose}>
-              <X size={24} />
-            </button>
-          </div>
+          <button className="close-btn" onClick={onClose}>
+            <X size={24} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="create-post-form">
@@ -103,7 +81,7 @@ onClose();
               type="text"
               placeholder="e.g., Complete Guide to Germany - Anmeldung"
               value={postData.title}
-              onChange={(e) => setPostData(prev => ({...prev, title: e.target.value}))}
+              onChange={(e) => setPostData({ ...postData, title: e.target.value })}
               required
             />
           </div>
@@ -112,37 +90,77 @@ onClose();
             <div className="form-group">
               <label>Category</label>
               <select
-  value={postData.category}
-  onChange={(e) =>
-    setPostData(prev => ({ ...prev, category: e.target.value }))
-  }
-  required
->
-  <option value="">Select Category</option>
-  <option value="Guide">Guide</option>
-  <option value="Announcement">Announcement</option>
-  <option value="News">News</option>
-  <option value="Tips">Tips</option>
-</select>
+                value={postData.category}
+                onChange={(e) => setPostData({ ...postData, category: e.target.value })}
+                required
+              >
+                <option value="Guide">Guide</option>
+                <option value="Announcement">Announcement</option>
+                <option value="News">News</option>
+                <option value="Tips">Tips</option>
+              </select>
             </div>
+
             <div className="form-group">
-              <label>Estimated Read Time (minutes)</label>
+              <label>Estimated Read Time (min)</label>
               <input
-  type="number"
-  placeholder="Enter read time in minutes"
-  value={postData.readTime}
-  onChange={(e) =>
-    setPostData(prev => ({ ...prev, readTime: e.target.value }))
-  }
-  min="1"
-  required
-/>
+                type="number"
+                value={postData.readTime}
+                onChange={(e) => setPostData({ ...postData, readTime: e.target.value })}
+                min="1"
+                required
+              />
             </div>
           </div>
 
           <div className="form-group">
-            <label>Content</label>
-            <textarea rows={10} value={postData.content} onChange={(e) =>setPostData({ ...postData, content: e.target.value })}/>
+            <label>Description (Short Intro)</label>
+            <textarea
+              rows={3}
+              value={postData.description}
+              onChange={(e) => setPostData({ ...postData, description: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Key Points (One per line)</label>
+            <textarea
+              rows={5}
+              value={postData.keyPoints}
+              onChange={(e) => setPostData({ ...postData, keyPoints: e.target.value })}
+              placeholder="Point 1&#10;Point 2&#10;Point 3"
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Official Resource Link</label>
+              <input
+                type="url"
+                value={postData.officialWebsites}
+                onChange={(e) => setPostData({ ...postData, officialWebsites: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="form-group">
+              <label>Community Link / Discussion</label>
+              <input
+                type="url"
+                value={postData.communityDiscussions}
+                onChange={(e) => setPostData({ ...postData, communityDiscussions: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Author Name</label>
+            <input
+              type="text"
+              value={postData.author}
+              onChange={(e) => setPostData({ ...postData, author: e.target.value })}
+            />
           </div>
 
           <div className="form-actions">

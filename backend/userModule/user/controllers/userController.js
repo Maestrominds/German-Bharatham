@@ -27,9 +27,20 @@ exports.getAllUsers = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const filter = { role: "user" };
+    
+    // Sort logic
+    let sort = { createdAt: -1 }; // Default: newest
+    const sortBy = req.query.sortBy;
+    if (sortBy === 'oldest') sort = { createdAt: 1 };
+    else if (sortBy === 'alphabetical') sort = { name: 1 };
+
     const [total, users] = await Promise.all([
       User.countDocuments(filter),
-      User.find(filter).select("-password").skip(skip).limit(limit)
+      User.find(filter)
+        .select("-password")
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
     ]);
     const totalPages = Math.ceil(total / limit);
     res.json({ data: users, count: total, page, limit, totalPages });

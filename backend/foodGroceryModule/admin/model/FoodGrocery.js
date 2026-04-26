@@ -47,6 +47,15 @@ const foodGrocerySchema = new mongoose.Schema(
   }
 );
 
+foodGrocerySchema.pre('validate', function() {
+  if (this.status != null) {
+    const raw = String(this.status).trim().toLowerCase();
+    if (raw === 'active') this.status = 'Active';
+    else if (raw === 'pending') this.status = 'Pending';
+    else if (raw === 'inactive' || raw === 'disabled') this.status = 'Inactive';
+  }
+});
+
 // Indexes for faster admin queries
 foodGrocerySchema.index({ status: 1, createdAt: -1 });
 foodGrocerySchema.index({ city: 1 });

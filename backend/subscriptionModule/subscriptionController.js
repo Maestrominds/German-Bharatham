@@ -189,6 +189,7 @@ exports.getMySubscription = async (req, res) => {
   return res.status(200).json({
     user: user ? { ...user, freeTrialCompleted } : null,
     subscription: sub || null,
+    serverTime: new Date().toISOString(),
   });
 };
 

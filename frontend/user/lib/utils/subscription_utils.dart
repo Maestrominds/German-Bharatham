@@ -32,7 +32,14 @@ Future<bool?> isSubscriptionExpired() async {
     if (user is Map && user['subscriptionExpiresAt'] != null) {
       final expiresAt = DateTime.tryParse(user['subscriptionExpiresAt'].toString());
       if (expiresAt == null) return null;
-      return DateTime.now().isAfter(expiresAt);
+      
+      // Use serverTime if provided by backend, else fallback to local
+      final serverTimeRaw = statusJson['serverTime'];
+      final now = (serverTimeRaw != null) 
+          ? (DateTime.tryParse(serverTimeRaw.toString()) ?? DateTime.now())
+          : DateTime.now();
+          
+      return now.isAfter(expiresAt);
     }
     return null;
   } catch (_) {
@@ -80,7 +87,11 @@ Future<void> checkSubscriptionAndNotify(BuildContext context, {int forceRedirect
       expiresAt = DateTime.tryParse(expiresRaw.toString());
     }
 
-    final now = DateTime.now();
+    // 🔥 Use server-provided time to prevent local clock tampering
+    final serverTimeRaw = statusJson['serverTime'];
+    final now = (serverTimeRaw != null)
+        ? (DateTime.tryParse(serverTimeRaw.toString()) ?? DateTime.now())
+        : DateTime.now();
 
     // If trial ending soon (within _kTrialWarningDays and still in future)
     if ((status == 'trial' || status == 'none') && expiresAt != null && expiresAt.isAfter(now)) {

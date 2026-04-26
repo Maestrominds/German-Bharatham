@@ -455,7 +455,7 @@ class _SearchPageState extends State<SearchPage> {
     return TextField(
       onChanged: (value) {
         _searchDebounce?.cancel();
-        _searchDebounce = Timer(const Duration(milliseconds: 200), () {
+        _searchDebounce = Timer(const Duration(milliseconds: 500), () {
           if (!mounted) return;
           setState(() {
             searchQuery = value;

@@ -13,9 +13,9 @@ const serviceSchema = new mongoose.Schema(
     longitude: { type: Number },
     address: { type: String, trim: true },
 
-    phone: { type: String, trim: true },
+    phone: { type: String, trim: true, required: true },
     whatsapp: { type: String, trim: true },
-    email: { type: String, trim: true, lowercase: true },
+    email: { type: String, trim: true, lowercase: true, required: true },
     website: { type: String, trim: true },
 
     images: { type: [String], default: [] },

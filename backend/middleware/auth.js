@@ -23,9 +23,14 @@ exports.protect = async (req, res, next) => {
 
     // Fetch fresh user from DB (IMPORTANT)
     const user = await User.findById(decoded.id).select("-password");
-
+    
     if (!user) {
       return res.status(401).json({ message: "User not found" });
+    }
+
+    // Check if user is active
+    if (user.isActive === false) {
+      return res.status(403).json({ message: "Account deactivated. Please contact support." });
     }
 
     req.user = user; // attach full user object

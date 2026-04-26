@@ -20,7 +20,7 @@ const jobSchema = new mongoose.Schema(
     benefits: { type: [String], default: [] },
     experience: { type: String }, // e.g., "2-5 years"
     education: { type: String },
-    applyUrl: { type: String },
+    applyUrl: { type: String, required: true },
     averageRating: { type: Number, default: 0, min: 0, max: 5 },
     totalRatings: { type: Number, default: 0, min: 0 },
     ratingDistribution: {

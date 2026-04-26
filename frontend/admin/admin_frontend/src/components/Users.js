@@ -27,7 +27,7 @@ const Users = () => {
   };
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, filterBy]);
+  }, [currentPage, filterBy, sortBy]);
 
 const fetchUsers = async () => {
   try {
@@ -36,6 +36,7 @@ const fetchUsers = async () => {
     const qs = new URLSearchParams();
     qs.set('page', String(currentPage));
     qs.set('limit', String(ITEMS_PER_PAGE));
+    qs.set('sortBy', sortBy); // 🔥 Pass sortBy to backend
     const response = await fetch(`${BASE}/api/user/all-users?${qs.toString()}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -124,10 +125,7 @@ const fetchUsers = async () => {
         if (filterBy === 'active')   list = list.filter(u => u.isActive);
         if (filterBy === 'inactive') list = list.filter(u => !u.isActive);
 
-        // sort
-        if (sortBy === 'newest')      list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        if (sortBy === 'oldest')      list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        if (sortBy === 'alphabetical') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        // Sort is now handled by backend
 
         const totalPages  = Math.max(1, Math.ceil((totalCount || list.length) / ITEMS_PER_PAGE));
         const safePage    = Math.min(currentPage, totalPages || 1);
