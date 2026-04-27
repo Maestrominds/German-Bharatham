@@ -50,7 +50,10 @@ class WelcomeScreen extends StatelessWidget {
             child: Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 36),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 36,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -66,7 +69,11 @@ class WelcomeScreen extends StatelessWidget {
                     const Text(
                       'Helping Indians settle in Germany',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.black87),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black87,
+                      ),
                     ),
 
                     const SizedBox(height: 8),
@@ -74,7 +81,10 @@ class WelcomeScreen extends StatelessWidget {
                     Text(
                       'Accommodation • Food • Jobs • Services',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 19, color: Colors.grey.shade700),
+                      style: TextStyle(
+                        fontSize: 19,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
 
                     const SizedBox(height: 28),
@@ -93,11 +103,17 @@ class WelcomeScreen extends StatelessWidget {
                           backgroundColor: primaryGreen,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         child: const Text(
                           'Get Started',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Colors.white),
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -133,9 +149,19 @@ class InfoPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black87)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
                 const SizedBox(height: 6),
-                Text(subtitle, style: const TextStyle(fontSize: 15, color: Colors.black54)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 15, color: Colors.black54),
+                ),
               ],
             ),
           ),
@@ -154,12 +180,7 @@ class InfoPage extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.asset(
-          assetPath,
-          width: 48,
-          height: 48,
-          fit: BoxFit.cover,
-        ),
+        child: Image.asset(assetPath, width: 48, height: 48, fit: BoxFit.cover),
       ),
     );
   }
@@ -176,15 +197,30 @@ class InfoPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: primaryGreen),
         ),
         centerTitle: true,
-        title: const Text('Everything you need', style: TextStyle(color: primaryGreen, fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Everything you need',
+          style: TextStyle(color: primaryGreen, fontWeight: FontWeight.w700),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildCard(_leadingImage('assets/images/rent.jpg'), 'Find accommodation', 'Verified shared rooms & apartments'),
-            _buildCard(_leadingImage('assets/images/service.jpg'), 'Discover food & jobs', 'Groceries, restaurants, and job leads'),
-            _buildCard(_leadingImage('assets/images/trust.jpg'), 'Community support', 'Guides and resources from Indians'),
+            _buildCard(
+              _leadingImage('assets/images/rent.jpg'),
+              'Find accommodation',
+              'Verified shared rooms & apartments',
+            ),
+            _buildCard(
+              _leadingImage('assets/images/service.jpg'),
+              'Discover food & jobs',
+              'Groceries, restaurants, and job leads',
+            ),
+            _buildCard(
+              _leadingImage('assets/images/trust.jpg'),
+              'Community support',
+              'Guides and resources from Indians',
+            ),
             const Spacer(),
             SizedBox(
               width: double.infinity,
@@ -197,9 +233,14 @@ class InfoPage extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                child: const Text('Continue', style: TextStyle(fontSize: 18, color: Colors.white)),
+                child: const Text(
+                  'Continue',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
               ),
             ),
           ],

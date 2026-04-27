@@ -13,6 +13,8 @@ router.post("/login", controller.login);
 router.post("/social-login", controller.socialLogin);
 router.post("/forgot-password", controller.forgotPassword);
 router.post("/reset-password", controller.resetPassword);
+router.post("/forgot-password-otp", controller.forgotPasswordOtp);
+router.post("/reset-password-otp", controller.resetPasswordOtp);
 router.post("/verify-email", controller.verifyEmail);
 router.get("/profile", protect, controller.getProfile);
 router.put("/profile", protect, controller.updateProfile);

@@ -722,7 +722,6 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// RESET PASSWORD (use token + new password)
 exports.resetPassword = async (req, res) => {
   const start = Date.now();
   console.log(`🚀 [START] resetPassword called at ${new Date().toISOString()}`);
@@ -761,6 +760,96 @@ exports.resetPassword = async (req, res) => {
     return res.status(200).json({ message: "Password reset successful" });
   } catch (error) {
     console.error(`❌ [ERROR] resetPassword failed: ${error.message} after ${Date.now() - start}ms`);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// ─── OTP-BASED FORGOT PASSWORD ────────────────────────────────────────────────
+// Step 1: Send a 6-digit OTP to the user's email.
+// Reuses the same EmailVerification model used for signup OTP.
+exports.forgotPasswordOtp = async (req, res) => {
+  const start = Date.now();
+  console.log(`🚀 [START] forgotPasswordOtp called at ${new Date().toISOString()}`);
+  try {
+    const emailRaw = String(req.body.email || '').trim().toLowerCase();
+    if (!emailRaw) return res.status(400).json({ message: 'Email is required.' });
+
+    console.log(`🔍 [DB QUERY] finding user with email: ${emailRaw}`);
+    const user = await User.findOne({ email: emailRaw });
+
+    // Always respond 200 to avoid leaking which emails exist
+    if (!user || user.isActive === false) {
+      console.log(`[forgotPasswordOtp] user not found or inactive for: ${emailRaw}`);
+      return res.status(200).json({ message: 'If the email exists, an OTP was sent.' });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    console.log(`🔍 [DB QUERY] upserting OTP for forgot-password: ${emailRaw}`);
+    await EmailVerification.findOneAndUpdate(
+      { email: emailRaw },
+      { code, expiresAt },
+      { upsert: true, new: true }
+    );
+
+    await sendEmail({
+      to: emailRaw,
+      subject: 'Your Password Reset OTP',
+      text: `Your OTP to reset your password is: ${code}. It expires in 10 minutes.`,
+    });
+
+    console.log(`📤 [RESPONSE] OTP sent for forgot-password after ${Date.now() - start}ms`);
+    return res.status(200).json({ message: 'OTP sent to your email.' });
+  } catch (error) {
+    console.error(`❌ [ERROR] forgotPasswordOtp failed: ${error.message} after ${Date.now() - start}ms`);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// Step 2: Verify OTP + set new password in one call.
+exports.resetPasswordOtp = async (req, res) => {
+  const start = Date.now();
+  console.log(`🚀 [START] resetPasswordOtp called at ${new Date().toISOString()}`);
+  try {
+    const emailRaw = String(req.body.email || '').trim().toLowerCase();
+    const code = String(req.body.code || '').trim();
+    const newPassword = String(req.body.newPassword || '').trim();
+
+    if (!emailRaw || !code || !newPassword) {
+      return res.status(400).json({ message: 'email, code and newPassword are required.' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters.' });
+    }
+
+    console.log(`🔍 [DB QUERY] finding OTP record for: ${emailRaw}`);
+    const record = await EmailVerification.findOne({ email: emailRaw });
+
+    if (!record || record.code !== code) {
+      return res.status(400).json({ message: 'Invalid or expired OTP.' });
+    }
+    if (record.expiresAt < new Date()) {
+      return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
+    }
+
+    console.log(`🔍 [DB QUERY] finding user with email: ${emailRaw}`);
+    const user = await User.findOne({ email: emailRaw });
+    if (!user) return res.status(400).json({ message: 'User not found.' });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    // Clear any old link-based reset tokens too
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    // Delete the used OTP record
+    await EmailVerification.deleteOne({ email: emailRaw });
+
+    console.log(`📤 [RESPONSE] password reset via OTP successful after ${Date.now() - start}ms`);
+    return res.status(200).json({ message: 'Password reset successfully.' });
+  } catch (error) {
+    console.error(`❌ [ERROR] resetPasswordOtp failed: ${error.message} after ${Date.now() - start}ms`);
     return res.status(500).json({ message: error.message });
   }
 };

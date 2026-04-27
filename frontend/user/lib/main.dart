@@ -56,9 +56,7 @@ class MyApp extends StatelessWidget {
       navigatorKey: rootNavigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'German Bharatham',
-      theme: ThemeData(
-        textTheme: GoogleFonts.notoSansTextTheme(),
-      ),
+      theme: ThemeData(textTheme: GoogleFonts.notoSansTextTheme()),
       home: const SplashScreen(),
     );
   }
@@ -133,11 +131,15 @@ class _AuthPageState extends State<AuthPage> {
         if (decoded is List) {
           creds = decoded
               .whereType<Map>()
-              .map((m) => {
-                    'identifier': (m['identifier'] ?? '').toString(),
-                    'password': (m['password'] ?? '').toString(),
-                  })
-              .where((m) => (m['identifier'] ?? '').toString().trim().isNotEmpty)
+              .map(
+                (m) => {
+                  'identifier': (m['identifier'] ?? '').toString(),
+                  'password': (m['password'] ?? '').toString(),
+                },
+              )
+              .where(
+                (m) => (m['identifier'] ?? '').toString().trim().isNotEmpty,
+              )
               .toList();
         }
       } catch (_) {
@@ -146,11 +148,14 @@ class _AuthPageState extends State<AuthPage> {
     }
 
     // Migration from previous single-value storage.
-    final oldIdentifier = (prefs.getString(_rememberedIdentifierKey) ?? '').trim();
+    final oldIdentifier = (prefs.getString(_rememberedIdentifierKey) ?? '')
+        .trim();
     final oldPassword = prefs.getString(_rememberedPasswordKey) ?? '';
     if (remember && oldIdentifier.isNotEmpty) {
       final exists = creds.any(
-        (c) => (c['identifier'] ?? '').toString().trim().toLowerCase() == oldIdentifier.toLowerCase(),
+        (c) =>
+            (c['identifier'] ?? '').toString().trim().toLowerCase() ==
+            oldIdentifier.toLowerCase(),
       );
       if (!exists) {
         creds.insert(0, {'identifier': oldIdentifier, 'password': oldPassword});
@@ -196,7 +201,9 @@ class _AuthPageState extends State<AuthPage> {
       if (identifier.isNotEmpty) {
         var current = List<Map<String, String>>.from(_savedCredentials);
         current.removeWhere(
-          (c) => (c['identifier'] ?? '').toString().trim().toLowerCase() == identifier.toLowerCase(),
+          (c) =>
+              (c['identifier'] ?? '').toString().trim().toLowerCase() ==
+              identifier.toLowerCase(),
         );
         current.insert(0, {'identifier': identifier, 'password': password});
         if (current.length > 5) {
@@ -264,7 +271,10 @@ class _AuthPageState extends State<AuthPage> {
                     child: SizedBox(
                       width: fieldWidth,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 220, maxWidth: 600),
+                        constraints: const BoxConstraints(
+                          maxHeight: 220,
+                          maxWidth: 600,
+                        ),
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -275,19 +285,27 @@ class _AuthPageState extends State<AuthPage> {
                             padding: EdgeInsets.zero,
                             shrinkWrap: true,
                             itemCount: options.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
                             itemBuilder: (context, index) {
                               final item = options[index];
-                              final identifier = (item['identifier'] ?? '').toString();
+                              final identifier = (item['identifier'] ?? '')
+                                  .toString();
                               return InkWell(
                                 onTap: () {
                                   _emailController.text = identifier;
-                                  _passwordController.text = (item['password'] ?? '').toString();
+                                  _passwordController.text =
+                                      (item['password'] ?? '').toString();
                                   _hideIdentifierSuggestions();
-                                  FocusScope.of(context).requestFocus(_passwordFocusNode);
+                                  FocusScope.of(
+                                    context,
+                                  ).requestFocus(_passwordFocusNode);
                                 },
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
                                   child: Text(
                                     identifier,
                                     style: const TextStyle(fontSize: 14),
@@ -320,119 +338,129 @@ class _AuthPageState extends State<AuthPage> {
     _passwordController.dispose();
     super.dispose();
   }
+
   Future<void> loginUser() async {
-  if (_isBusy) return;
-  setState(() {
-    _loginError = null; // clear old error
-    _isBusy = true;
-  });
+    if (_isBusy) return;
+    setState(() {
+      _loginError = null; // clear old error
+      _isBusy = true;
+    });
 
-  try {
-    final identifier = _emailController.text.trim();
-    final isEmail = identifier.contains('@');
+    try {
+      final identifier = _emailController.text.trim();
+      final isEmail = identifier.contains('@');
 
-    final response = await http.post(
-      Uri.parse(ApiConfig.loginEndpoint),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        // Backward compatible:
-        // - Old backend expects `email`
-        // - Updated backend accepts `identifier` (email OR phone)
-        "identifier": identifier,
-        "email": identifier,
-        if (!isEmail) "phone": identifier,
-        "password": _passwordController.text.trim(),
-      }),
-    ).timeout(const Duration(seconds: 8));
+      final response = await http
+          .post(
+            Uri.parse(ApiConfig.loginEndpoint),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              // Backward compatible:
+              // - Old backend expects `email`
+              // - Updated backend accepts `identifier` (email OR phone)
+              "identifier": identifier,
+              "email": identifier,
+              if (!isEmail) "phone": identifier,
+              "password": _passwordController.text.trim(),
+            }),
+          )
+          .timeout(const Duration(seconds: 8));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final user = data['user'];
-      final token = data['token'].toString();
-      unawaited(UserSession.instance.save(
-        userId: user['_id'].toString(),
-        token: token,
-        name: user['name'].toString(),
-        email: user['email'].toString(),
-        phone: user['phone']?.toString(),
-        photoBase64: user['photo']?.toString(),
-      ));
-      unawaited(_persistCredentialsAfterLoginSuccess());
-      TextInput.finishAutofillContext(shouldSave: true);
-      final uid = user['_id'].toString();
-      SavedManager.instance.switchUser(uid);
-      unawaited(Future.wait([
-        SavedFoodManager.instance.switchUser(uid),
-        SavedJobManager.instance.switchUser(uid),
-        SavedServiceManager.instance.switchUser(uid),
-        SavedGuidesManager.instance.switchUser(uid),
-      ]));
-
-      // Fire-and-forget to warm backend and seed caches before home usage.
-      PrefetchService.warmUpAndPrefetch(token: token);
-
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const LocationPermissionPage(),
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final user = data['user'];
+        final token = data['token'].toString();
+        unawaited(
+          UserSession.instance.save(
+            userId: user['_id'].toString(),
+            token: token,
+            name: user['name'].toString(),
+            email: user['email'].toString(),
+            phone: user['phone']?.toString(),
+            photoBase64: user['photo']?.toString(),
           ),
         );
-      }
-    } else {
-      String message;
-      try {
-        final decoded = jsonDecode(response.body);
-        if (decoded is Map<String, dynamic> && decoded['message'] != null) {
-          message = decoded['message'].toString();
-        } else {
+        unawaited(_persistCredentialsAfterLoginSuccess());
+        TextInput.finishAutofillContext(shouldSave: true);
+        final uid = user['_id'].toString();
+        SavedManager.instance.switchUser(uid);
+        unawaited(
+          Future.wait([
+            SavedFoodManager.instance.switchUser(uid),
+            SavedJobManager.instance.switchUser(uid),
+            SavedServiceManager.instance.switchUser(uid),
+            SavedGuidesManager.instance.switchUser(uid),
+          ]),
+        );
+
+        // Fire-and-forget to warm backend and seed caches before home usage.
+        PrefetchService.warmUpAndPrefetch(token: token);
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
+          );
+        }
+      } else {
+        String message;
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic> && decoded['message'] != null) {
+            message = decoded['message'].toString();
+          } else {
+            message = 'Login failed (HTTP ${response.statusCode})';
+          }
+        } catch (_) {
           message = 'Login failed (HTTP ${response.statusCode})';
         }
-      } catch (_) {
-        message = 'Login failed (HTTP ${response.statusCode})';
+        setState(() {
+          _loginError = message;
+        });
       }
+    } on TimeoutException {
       setState(() {
-        _loginError = message;
+        _loginError = 'waking_up';
       });
-    }
-  } on TimeoutException {
-    setState(() {
-      _loginError = 'Server is waking up. Please try again in a few seconds.';
-    });
-  } catch (e) {
-    debugPrint('Login error: $e');
-    setState(() {
-      _loginError = "Network error. Please check your connection and try again.";
-    });
-  } finally {
-    if (mounted) {
+    } catch (e) {
+      debugPrint('Login error: $e');
       setState(() {
-        _isBusy = false;
+        _loginError =
+            "Network error. Please check your connection and try again.";
       });
+    } finally {
+      if (mounted && _loginError != 'waking_up') {
+        setState(() {
+          _isBusy = false;
+        });
+      }
     }
   }
-}
 
   Future<void> _handleSocialResponse(http.Response response) async {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final user = data['user'];
-      unawaited(UserSession.instance.save(
-        userId: user['_id'].toString(),
-        token: data['token'].toString(),
-        name: user['name'].toString(),
-        email: user['email'].toString(),
-        phone: user['phone']?.toString(),
-        photoBase64: user['photo']?.toString(),
-      ));
+      unawaited(
+        UserSession.instance.save(
+          userId: user['_id'].toString(),
+          token: data['token'].toString(),
+          name: user['name'].toString(),
+          email: user['email'].toString(),
+          phone: user['phone']?.toString(),
+          photoBase64: user['photo']?.toString(),
+        ),
+      );
       final uid = user['_id'].toString();
       SavedManager.instance.switchUser(uid);
-      unawaited(Future.wait([
-        SavedFoodManager.instance.switchUser(uid),
-        SavedJobManager.instance.switchUser(uid),
-        SavedServiceManager.instance.switchUser(uid),
-        SavedGuidesManager.instance.switchUser(uid),
-      ]));
+      unawaited(
+        Future.wait([
+          SavedFoodManager.instance.switchUser(uid),
+          SavedJobManager.instance.switchUser(uid),
+          SavedServiceManager.instance.switchUser(uid),
+          SavedGuidesManager.instance.switchUser(uid),
+        ]),
+      );
       PrefetchService.warmUpAndPrefetch(token: data['token']?.toString());
       if (mounted) {
         Navigator.pushReplacement(
@@ -476,12 +504,14 @@ class _AuthPageState extends State<AuthPage> {
           clientId: kIsWeb && webClientId.isNotEmpty ? webClientId : null,
           serverClientId:
               !kIsWeb && includeServerClientId && serverClientId.isNotEmpty
-                  ? serverClientId
-                  : null,
+              ? serverClientId
+              : null,
         );
       }
 
-      GoogleSignIn googleSignIn = buildGoogleSignIn(includeServerClientId: true);
+      GoogleSignIn googleSignIn = buildGoogleSignIn(
+        includeServerClientId: true,
+      );
 
       // Avoid stale sessions causing odd failures.
       try {
@@ -493,7 +523,8 @@ class _AuthPageState extends State<AuthPage> {
         account = await googleSignIn.signIn();
       } on PlatformException catch (e) {
         final raw = '${e.code}: ${e.message ?? ''} ${e.details ?? ''}'.trim();
-        final isDeveloperError = raw.contains('ApiException: 10') ||
+        final isDeveloperError =
+            raw.contains('ApiException: 10') ||
             raw.toLowerCase().contains('developer_error') ||
             e.code.toLowerCase().contains('sign_in_failed');
         if (isDeveloperError) {
@@ -514,19 +545,23 @@ class _AuthPageState extends State<AuthPage> {
       final accessToken = auth.accessToken;
       if ((idToken == null || idToken.isEmpty) &&
           (accessToken == null || accessToken.isEmpty)) {
-        throw Exception('Google token not available. Check Google OAuth setup.');
+        throw Exception(
+          'Google token not available. Check Google OAuth setup.',
+        );
       }
 
-      final response = await http.post(
-        Uri.parse(ApiConfig.socialLoginEndpoint),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "provider": "google",
-          if (idToken != null && idToken.isNotEmpty) "idToken": idToken,
-          if (accessToken != null && accessToken.isNotEmpty)
-            "accessToken": accessToken,
-        }),
-      ).timeout(const Duration(seconds: 20));
+      final response = await http
+          .post(
+            Uri.parse(ApiConfig.socialLoginEndpoint),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "provider": "google",
+              if (idToken != null && idToken.isNotEmpty) "idToken": idToken,
+              if (accessToken != null && accessToken.isNotEmpty)
+                "accessToken": accessToken,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
 
       await _handleSocialResponse(response);
     } on TimeoutException {
@@ -534,11 +569,15 @@ class _AuthPageState extends State<AuthPage> {
         _loginError = 'Google login timed out. Please try again.';
       });
     } on PlatformException catch (e) {
-      debugPrint('Google login PlatformException: code=${e.code} message=${e.message} details=${e.details}');
+      debugPrint(
+        'Google login PlatformException: code=${e.code} message=${e.message} details=${e.details}',
+      );
 
       // Common Android misconfig shows up as DEVELOPER_ERROR / ApiException: 10.
       final raw = '${e.code}: ${e.message ?? ''} ${e.details ?? ''}'.trim();
-      final isDeveloperError = raw.contains('ApiException: 10') || raw.toLowerCase().contains('developer_error');
+      final isDeveloperError =
+          raw.contains('ApiException: 10') ||
+          raw.toLowerCase().contains('developer_error');
 
       setState(() {
         if (isDeveloperError) {
@@ -591,13 +630,20 @@ class _AuthPageState extends State<AuthPage> {
                 child: Image.asset(
                   'assets/images/german_map.png',
                   fit: BoxFit.contain,
-                  errorBuilder: (c, e, s) => const Icon(Icons.location_on, color: Color(0xFF2E7D32)),
+                  errorBuilder: (c, e, s) =>
+                      const Icon(Icons.location_on, color: Color(0xFF2E7D32)),
                 ),
               ),
               const SizedBox(height: 18),
-              const Text('Get Started now',style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),),
+              const Text(
+                'Get Started now',
+                style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 8),
-              Text('Create an account or log in to explore the app',style: TextStyle(fontSize: 22,color: Colors.grey,),),
+              Text(
+                'Create an account or log in to explore the app',
+                style: TextStyle(fontSize: 22, color: Colors.grey),
+              ),
               const SizedBox(height: 18),
 
               // segmented control (Login / Sign up)
@@ -617,21 +663,33 @@ class _AuthPageState extends State<AuthPage> {
                             color: _isLogin ? Colors.white : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text('Login', textAlign: TextAlign.center),
+                          child: const Text(
+                            'Login',
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ),
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
-                                    Navigator.push(context,MaterialPageRoute(builder: (_) => SignupPage()),);},
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => SignupPage()),
+                          );
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: !_isLogin ? Colors.white : Colors.transparent,
+                            color: !_isLogin
+                                ? Colors.white
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text('Sign up', textAlign: TextAlign.center),
+                          child: const Text(
+                            'Sign up',
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ),
@@ -640,7 +698,10 @@ class _AuthPageState extends State<AuthPage> {
               ),
 
               const SizedBox(height: 18),
-              const Text('Email or Phone number',style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),),
+              const Text(
+                'Email or Phone number',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
               const SizedBox(height: 6),
               AutofillGroup(
                 child: Column(
@@ -658,7 +719,9 @@ class _AuthPageState extends State<AuthPage> {
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(5)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
                         ),
                       ),
                     ),
@@ -675,7 +738,9 @@ class _AuthPageState extends State<AuthPage> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(5)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscure ? Icons.visibility_off : Icons.visibility,
@@ -698,48 +763,64 @@ class _AuthPageState extends State<AuthPage> {
                         value: _remember,
                         onChanged: (v) => _setRememberMe(v ?? false),
                       ),
-                      const Text('Remember me',style: TextStyle(fontSize: 14),),
+                      const Text('Remember me', style: TextStyle(fontSize: 14)),
                     ],
                   ),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+                        MaterialPageRoute(
+                          builder: (_) => const ForgotPasswordPage(),
+                        ),
                       );
                     },
-                    child: const Text('Forgot Password?', style: TextStyle(color: Color(0xFF4E7F6D))),
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(color: Color(0xFF4E7F6D)),
+                    ),
                   ),
                 ],
               ),
 
               const SizedBox(height: 12),
               if (_loginError != null)
-  Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Text(
-      _loginError!,
-      style: const TextStyle(
-        color: Colors.red,
-        fontSize: 14,
-      ),
-    ),
-  ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _loginError == 'waking_up'
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFF4E7F6D),
+                            ),
+                          ),
+                        )
+                      : Text(
+                          _loginError!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
+                        ),
+                ),
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
                   onPressed: _isBusy
-                    ? null
-                    : _isLogin
-                    ? loginUser
+                      ? null
+                      : _isLogin
+                      ? loginUser
                       : () {
                           final email = _emailController.text.trim();
                           sendVerificationCodeAndNavigate(context, email);
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: _isBusy && _isLogin
                       ? const SizedBox(
@@ -747,7 +828,9 @@ class _AuthPageState extends State<AuthPage> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Text(
@@ -763,28 +846,29 @@ class _AuthPageState extends State<AuthPage> {
 
               const SizedBox(height: 18),
               Row(
-  children: [
-    const Expanded(child: Divider()),
-    Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Text(
-        'Or',
-        style: TextStyle(
-          color: Colors.white.withOpacity(0.6),
-        ),
-      ),
-    ),
-    const Expanded(child: Divider()),
-  ],
-),
+                children: [
+                  const Expanded(child: Divider()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      'Or',
+                      style: TextStyle(color: Colors.white.withOpacity(0.6)),
+                    ),
+                  ),
+                  const Expanded(child: Divider()),
+                ],
+              ),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _socialCircle('assets/images/google.png', onTap: _loginWithGoogle),
+                  _socialCircle(
+                    'assets/images/google.png',
+                    onTap: _loginWithGoogle,
+                  ),
                 ],
               ),
-            const SizedBox(height: 30),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -798,19 +882,13 @@ class _AuthPageState extends State<AuthPage> {
       backgroundColor: Colors.grey.shade200,
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: Image.asset(
-          imagePath,
-          fit: BoxFit.contain,
-        ),
+        child: Image.asset(imagePath, fit: BoxFit.contain),
       ),
     );
 
     return GestureDetector(
       onTap: _socialBusy ? null : onTap,
-      child: Opacity(
-        opacity: _socialBusy ? 0.6 : 1.0,
-        child: child,
-      ),
+      child: Opacity(opacity: _socialBusy ? 0.6 : 1.0, child: child),
     );
   }
 }
@@ -825,7 +903,6 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-
   // 🔹 Toggle (Login / Signup)
   bool _isLogin = false;
 
@@ -853,129 +930,129 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   String? validatePassword(String password) {
-  if (password.length < 6) {
-    return "Password must be at least 6 characters long";
+    if (password.length < 6) {
+      return "Password must be at least 6 characters long";
+    }
+
+    if (!RegExp(r'[A-Za-z]').hasMatch(password)) {
+      return "Password must contain at least one alphabet";
+    }
+
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return "Password must contain at least one number";
+    }
+
+    if (!RegExp(r'[!@#\$&*~%^()_\-+=]').hasMatch(password)) {
+      return "Password must contain at least one special character";
+    }
+
+    return null;
   }
 
-  if (!RegExp(r'[A-Za-z]').hasMatch(password)) {
-    return "Password must contain at least one alphabet";
-  }
-
-  if (!RegExp(r'[0-9]').hasMatch(password)) {
-    return "Password must contain at least one number";
-  }
-
-  if (!RegExp(r'[!@#\$&*~%^()_\-+=]').hasMatch(password)) {
-    return "Password must contain at least one special character";
-  }
-
-  return null;
-}
   Future<void> registerUser() async {
+    final password = _passwordController.text.trim();
+    final error = validatePassword(password);
 
-  final password = _passwordController.text.trim();
-  final error = validatePassword(password);
+    if (error != null) {
+      setState(() {
+        _passwordError = error;
+      });
+      return;
+    }
 
-  if (error != null) {
     setState(() {
-      _passwordError = error;
+      _passwordError = null;
     });
-    return;
-  }
 
-  setState(() {
-    _passwordError = null;
-  });
-
-  try {
-    final response = await http.post(
-      Uri.parse(ApiConfig.registerEndpoint),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "name": _nameController.text.trim(),
-        "email": _emailController.text.trim(),
-        "phone": '$_selectedDialCode${_phoneController.text.trim()}',
-        "password": password,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      final data = jsonDecode(response.body);
-      final user = data['user'];
-      await UserSession.instance.save(
-        userId: user['_id'].toString(),
-        token: data['token'].toString(),
-        name: user['name'].toString(),
-        email: user['email'].toString(),
-        phone: user['phone']?.toString(),
-        photoBase64: user['photo']?.toString(),
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.registerEndpoint),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "name": _nameController.text.trim(),
+          "email": _emailController.text.trim(),
+          "phone": '$_selectedDialCode${_phoneController.text.trim()}',
+          "password": password,
+        }),
       );
-      SavedManager.instance.switchUser(user['_id'].toString());
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const LocationPermissionPage(),
-          ),
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        final user = data['user'];
+        await UserSession.instance.save(
+          userId: user['_id'].toString(),
+          token: data['token'].toString(),
+          name: user['name'].toString(),
+          email: user['email'].toString(),
+          phone: user['phone']?.toString(),
+          photoBase64: user['photo']?.toString(),
         );
-      }
-    } else {
-      String message;
-      try {
-        final decoded = jsonDecode(response.body);
-        if (decoded is Map<String, dynamic> && decoded['message'] != null) {
-          message = decoded['message'].toString();
-        } else {
+        SavedManager.instance.switchUser(user['_id'].toString());
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
+          );
+        }
+      } else {
+        String message;
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic> && decoded['message'] != null) {
+            message = decoded['message'].toString();
+          } else {
+            message = 'Signup failed (HTTP ${response.statusCode})';
+          }
+        } catch (_) {
           message = 'Signup failed (HTTP ${response.statusCode})';
         }
-      } catch (_) {
-        message = 'Signup failed (HTTP ${response.statusCode})';
+        setState(() {
+          _passwordError = message;
+        });
       }
+    } catch (e) {
+      debugPrint('Signup error: $e');
       setState(() {
-        _passwordError = message;
+        _passwordError =
+            "Network error. Please check your connection and try again.";
       });
     }
-  } catch (e) {
-    debugPrint('Signup error: $e');
-    setState(() {
-      _passwordError = "Network error. Please check your connection and try again.";
-    });
-  }
-}
-
-void _startSignupVerification() {
-  final name = _nameController.text.trim();
-  final email = _emailController.text.trim();
-  final phone = _phoneController.text.trim();
-  final password = _passwordController.text.trim();
-
-  if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
-    setState(() {
-      _passwordError = 'Please fill all fields';
-    });
-    return;
   }
 
-  final error = validatePassword(password);
-  if (error != null) {
+  void _startSignupVerification() {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
+      setState(() {
+        _passwordError = 'Please fill all fields';
+      });
+      return;
+    }
+
+    final error = validatePassword(password);
+    if (error != null) {
+      setState(() {
+        _passwordError = error;
+      });
+      return;
+    }
+
     setState(() {
-      _passwordError = error;
+      _passwordError = null;
     });
-    return;
+
+    sendVerificationCodeAndNavigate(
+      context,
+      email,
+      name: name,
+      phone: '$_selectedDialCode$phone',
+      password: password,
+    );
   }
 
-  setState(() {
-    _passwordError = null;
-  });
-
-  sendVerificationCodeAndNavigate(
-    context,
-    email,
-    name: name,
-    phone: '$_selectedDialCode$phone',
-    password: password,
-  );
-}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -994,13 +1071,20 @@ void _startSignupVerification() {
                 child: Image.asset(
                   'assets/images/german_map.png',
                   fit: BoxFit.contain,
-                  errorBuilder: (c, e, s) => const Icon(Icons.location_on, color: Color(0xFF2E7D32)),
+                  errorBuilder: (c, e, s) =>
+                      const Icon(Icons.location_on, color: Color(0xFF2E7D32)),
                 ),
               ),
               const SizedBox(height: 18),
-              const Text('Get Started now',style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),),
+              const Text(
+                'Get Started now',
+                style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 8),
-              Text('Create an account or log in to explore the app',style: TextStyle(fontSize: 22,color: Colors.grey.shade700)),
+              Text(
+                'Create an account or log in to explore the app',
+                style: TextStyle(fontSize: 22, color: Colors.grey.shade700),
+              ),
               const SizedBox(height: 18),
 
               Container(
@@ -1011,36 +1095,46 @@ void _startSignupVerification() {
                 child: Row(
                   children: [
                     Expanded(
-  child: GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => AuthPage(),
-        ),
-      );
-},
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: _isLogin ? Colors.white : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Text('Login', textAlign: TextAlign.center),
-    ),
-  ),
-),
-                    Expanded(
                       child: GestureDetector(
                         onTap: () {
-                                    Navigator.push(context,MaterialPageRoute(builder: (_) => SignupPage()),);},
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => AuthPage()),
+                          );
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: !_isLogin ? Colors.white : Colors.transparent,
+                            color: _isLogin ? Colors.white : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text('Sign up', textAlign: TextAlign.center),
+                          child: const Text(
+                            'Login',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => SignupPage()),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: !_isLogin
+                                ? Colors.white
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Sign up',
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ),
@@ -1051,7 +1145,10 @@ void _startSignupVerification() {
               _inputField(_nameController),
 
               _fieldLabel('Email'),
-              _inputField(_emailController, keyboard: TextInputType.emailAddress),
+              _inputField(
+                _emailController,
+                keyboard: TextInputType.emailAddress,
+              ),
 
               _fieldLabel('Phone Number'),
               Row(
@@ -1072,11 +1169,19 @@ void _startSignupVerification() {
                       showCountryOnly: false,
                       showOnlyCountryWhenClosed: false,
                       alignLeft: false,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(child: _inputField(_phoneController, keyboard: TextInputType.phone)),
+                  Expanded(
+                    child: _inputField(
+                      _phoneController,
+                      keyboard: TextInputType.phone,
+                    ),
+                  ),
                 ],
               ),
 
@@ -1085,7 +1190,9 @@ void _startSignupVerification() {
                 controller: _passwordController,
                 obscureText: _obscure,
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscure ? Icons.visibility_off : Icons.visibility,
@@ -1097,16 +1204,13 @@ void _startSignupVerification() {
 
               const SizedBox(height: 22),
               if (_passwordError != null)
-  Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Text(
-      _passwordError!,
-      style: const TextStyle(
-        color: Colors.red,
-        fontSize: 14,
-      ),
-    ),
-  ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    _passwordError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 14),
+                  ),
+                ),
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -1114,10 +1218,18 @@ void _startSignupVerification() {
                   onPressed: _startSignupVerification,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: const Text('Sign up',
-                      style: TextStyle(fontSize: 16,color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    'Sign up',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1134,8 +1246,10 @@ void _startSignupVerification() {
     );
   }
 
-  Widget _inputField(TextEditingController controller,
-      {TextInputType keyboard = TextInputType.text}) {
+  Widget _inputField(
+    TextEditingController controller, {
+    TextInputType keyboard = TextInputType.text,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboard,
@@ -1162,7 +1276,7 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
 
   Future<void> _goNext() async {
     final token = UserSession.instance.token;
-    
+
     // First check if profile is complete
     if (token != null) {
       try {
@@ -1173,12 +1287,24 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         if (profileRes.statusCode == 200) {
           final data = jsonDecode(profileRes.body) as Map<String, dynamic>;
           bool hasMissingMandatory = false;
-          final req = ['name', 'phone', 'dob', 'gender', 'location', 'preferredCity', 'education', 'profession', 'germanLevel', 'passport', 'photo'];
+          final req = [
+            'name',
+            'phone',
+            'dob',
+            'gender',
+            'location',
+            'preferredCity',
+            'education',
+            'profession',
+            'germanLevel',
+            'passport',
+            'photo',
+          ];
           for (var field in req) {
-             if (data[field] == null || data[field].toString().trim().isEmpty) {
-                 hasMissingMandatory = true;
-                 break;
-             }
+            if (data[field] == null || data[field].toString().trim().isEmpty) {
+              hasMissingMandatory = true;
+              break;
+            }
           }
           if (hasMissingMandatory) {
             if (!mounted) return;
@@ -1200,7 +1326,9 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
     await _checkSubscriptionAndNavigate(context);
   }
 
-  Future<void> _checkSubscriptionAndNavigate(BuildContext currentContext) async {
+  Future<void> _checkSubscriptionAndNavigate(
+    BuildContext currentContext,
+  ) async {
     // Load user subscription status to decide where to go next
     final token = UserSession.instance.token;
     if (token != null) {
@@ -1264,7 +1392,9 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         await Geolocator.openAppSettings();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Enable location permission from Settings')),
+            const SnackBar(
+              content: Text('Enable location permission from Settings'),
+            ),
           );
         }
         return;
@@ -1273,9 +1403,9 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
       _goNext();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Location error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Location error: $e')));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -1284,7 +1414,10 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final imageHeight = (MediaQuery.sizeOf(context).height * 0.32).clamp(160.0, 260.0);
+    final imageHeight = (MediaQuery.sizeOf(context).height * 0.32).clamp(
+      160.0,
+      260.0,
+    );
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -1306,10 +1439,7 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
 
                 const Text(
                   'Location',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -1343,7 +1473,10 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
                 const SizedBox(height: 14),
                 TextButton(
                   onPressed: _busy ? null : _goNext,
-                  child: const Text('Not now', style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    'Not now',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
 
                 const SizedBox(height: 24),
@@ -1391,19 +1524,26 @@ class _SplashScreenState extends State<SplashScreen>
         SavedServiceManager.instance.switchUser(UserSession.instance.userId!),
         SavedGuidesManager.instance.switchUser(UserSession.instance.userId!),
       ]);
-      
+
       // 🛡️ Check if account is deactivated before proceeding
       // We do this in the background while the logo animation plays
       try {
-        final res = await http.get(
-          Uri.parse(ApiConfig.profileEndpoint),
-          headers: {'Authorization': 'Bearer ${UserSession.instance.token}'},
-        ).timeout(const Duration(seconds: 4));
-        
+        final res = await http
+            .get(
+              Uri.parse(ApiConfig.profileEndpoint),
+              headers: {
+                'Authorization': 'Bearer ${UserSession.instance.token}',
+              },
+            )
+            .timeout(const Duration(seconds: 4));
+
         if (res.statusCode == 403) {
           final data = jsonDecode(res.body);
-          if (data['code'] == 'ACCOUNT_DEACTIVATED' || 
-              data['message']?.toString().toLowerCase().contains('deactivated') == true) {
+          if (data['code'] == 'ACCOUNT_DEACTIVATED' ||
+              data['message']?.toString().toLowerCase().contains(
+                    'deactivated',
+                  ) ==
+                  true) {
             if (mounted) {
               Navigator.pushReplacement(
                 context,
@@ -1460,10 +1600,7 @@ class _SplashScreenState extends State<SplashScreen>
               fit: BoxFit.contain,
             ),
             builder: (context, child) {
-              return Transform.scale(
-                scale: _zoom.value,
-                child: child,
-              );
+              return Transform.scale(scale: _zoom.value, child: child);
             },
           ),
         ),
@@ -1563,7 +1700,8 @@ class _EmailCodePageState extends State<EmailCodePage> {
             String message = 'Registration failed after verification.';
             try {
               final decoded = jsonDecode(registerResponse.body);
-              if (decoded is Map<String, dynamic> && decoded['message'] != null) {
+              if (decoded is Map<String, dynamic> &&
+                  decoded['message'] != null) {
                 message = decoded['message'].toString();
               }
             } catch (_) {}
@@ -1624,7 +1762,8 @@ class _EmailCodePageState extends State<EmailCodePage> {
         );
       } catch (e) {
         setState(() {
-          _error = 'Verification succeeded, but login failed. Please login manually.';
+          _error =
+              'Verification succeeded, but login failed. Please login manually.';
         });
       }
     } else {
@@ -1651,9 +1790,9 @@ class _EmailCodePageState extends State<EmailCodePage> {
     });
     if (response.statusCode == 200) {
       _startTimer();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('OTP resent!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('OTP resent!')));
     } else {
       setState(() {
         _error = 'Failed to resend OTP.';
@@ -1672,7 +1811,10 @@ class _EmailCodePageState extends State<EmailCodePage> {
           icon: const Icon(Icons.arrow_back, color: primaryGreen),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Verify Email', style: TextStyle(color: primaryGreen, fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Verify Email',
+          style: TextStyle(color: primaryGreen, fontWeight: FontWeight.w700),
+        ),
         centerTitle: true,
       ),
       backgroundColor: Colors.white,
@@ -1681,11 +1823,24 @@ class _EmailCodePageState extends State<EmailCodePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('A verification code was sent to', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+            Text(
+              'A verification code was sent to',
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+            ),
             const SizedBox(height: 4),
-            Text(widget.email, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              widget.email,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 28),
-            Text('Enter OTP', style: TextStyle(fontSize: 15, color: Colors.grey[800], fontWeight: FontWeight.w600)),
+            Text(
+              'Enter OTP',
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey[800],
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _codeController,
@@ -1693,7 +1848,9 @@ class _EmailCodePageState extends State<EmailCodePage> {
               maxLength: 6,
               decoration: InputDecoration(
                 counterText: '',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 hintText: 'Enter 6-digit code',
                 filled: true,
                 fillColor: Colors.grey[100],
@@ -1703,17 +1860,29 @@ class _EmailCodePageState extends State<EmailCodePage> {
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 14)),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                ),
               ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 if (_secondsLeft > 0)
-                  Text('$_secondsLeft seconds left', style: const TextStyle(color: Colors.grey)),
+                  Text(
+                    '$_secondsLeft seconds left',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                 if (_secondsLeft == 0)
                   TextButton(
                     onPressed: _verifying ? null : _resendCode,
-                    child: const Text('Resend OTP', style: TextStyle(color: primaryGreen, fontWeight: FontWeight.w600)),
+                    child: const Text(
+                      'Resend OTP',
+                      style: TextStyle(
+                        color: primaryGreen,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -1722,14 +1891,32 @@ class _EmailCodePageState extends State<EmailCodePage> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: (_secondsLeft > 0 && !_verifying) ? _verifyCode : null,
+                onPressed: (_secondsLeft > 0 && !_verifying)
+                    ? _verifyCode
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: _verifying
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Verify', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w600)),
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Verify',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
           ],

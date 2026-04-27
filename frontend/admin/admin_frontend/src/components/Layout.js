@@ -1,14 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  FolderOpen, 
-  Users, 
-  Shield, 
-  MessageCircle, 
+import {
+  LayoutDashboard,
+  FileText,
+  FolderOpen,
+  Users,
+  Shield,
+  MessageCircle,
   CreditCard,
-  Settings, 
+  Settings,
   LogOut
 } from 'lucide-react';
 
@@ -35,13 +35,13 @@ const Layout = ({ children, onLogout }) => {
             <h1>German Bharatham</h1>
           </div>
         </div>
-        
+
         <nav className="sidebar-nav">
           {menuItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) => 
+              className={({ isActive }) =>
                 `nav-link ${isActive ? 'active' : ''}`
               }
             >
@@ -50,7 +50,7 @@ const Layout = ({ children, onLogout }) => {
             </NavLink>
           ))}
         </nav>
-        
+
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={onLogout}>
             <LogOut size={20} />
@@ -58,7 +58,7 @@ const Layout = ({ children, onLogout }) => {
           </button>
         </div>
       </div>
-      
+
       <div className="main-content">
         {children}
       </div>

@@ -101,12 +101,21 @@ class _SearchPageState extends State<SearchPage> {
     await _loadFromCache(limitPerModule: 3);
 
     if (!mounted) return;
-    setState(() {
-      isLoading = false;
-    });
 
-    // Fire lazy fetch for full data
-    _ensureFullDataLoaded();
+    final hasData = _allAccommodations.isNotEmpty ||
+        _allJobs.isNotEmpty ||
+        _allFood.isNotEmpty ||
+        _allServices.isNotEmpty;
+
+    if (hasData) {
+      setState(() {
+        isLoading = false;
+      });
+      _ensureFullDataLoaded();
+    } else {
+      // If cache had no data, force a full refresh showing the loader
+      unawaited(_refreshAll(showLoaderIfEmpty: true));
+    }
   }
 
   Future<void> _loadAll() async {

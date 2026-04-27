@@ -132,7 +132,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     ),
   ),
 ),
-      body: Padding(
+      resizeToAvoidBottomInset: true,
+      body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +180,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         color: Colors.white,
                       ),
                     ),
-            )
+            ),
           ],
         ),
       ),

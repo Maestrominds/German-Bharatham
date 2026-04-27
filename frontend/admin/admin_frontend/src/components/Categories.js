@@ -292,7 +292,7 @@ const Categories = () => {
             <option value="active">Active</option>
             <option value="disabled">Disabled</option>
           </select>
-          <button className="add-listing-btn" onClick={() => setShowAdd(true)}>
+          <button className="add-listing-btn" onClick={() => { /* Feature temporarily disabled */ }}>
             <Plus size={18} /> New Category
           </button>
         </div>
@@ -328,13 +328,13 @@ const Categories = () => {
               <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
                 <button
                   title="Edit"
-                  onClick={() => setEditCat(cat)}
+                  onClick={() => { /* Feature temporarily disabled */ }}
                   style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', color: '#374151', display: 'flex', alignItems: 'center' }}
                 >
                   <Edit2 size={14} />
                 </button>
                 <button
-                  onClick={() => handleDelete(cat)}
+                  onClick={() => { /* Feature temporarily disabled */ }}
                   style={{ background: 'none', border: '1px solid #fee2e2', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', color: '#ef4444', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 5 }}
                 >
                   <Trash2 size={14} /> Delete

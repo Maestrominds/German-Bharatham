@@ -55,6 +55,8 @@ class ApiConfig {
   static String get foodEndpoint => '$baseUrl/api/user/foodgrocery';
   static String get settingsPublicEndpoint => '$baseUrl/api/admin/settings/public';
   static String get profileEndpoint => '$baseUrl/api/user/profile';
+  static String get forgotPasswordOtpEndpoint => '$baseUrl/api/user/forgot-password-otp';
+  static String get resetPasswordOtpEndpoint => '$baseUrl/api/user/reset-password-otp';
 
   // Subscriptions
   static String get subscriptionPlansEndpoint => '$baseUrl/api/subscriptions/user/plans';

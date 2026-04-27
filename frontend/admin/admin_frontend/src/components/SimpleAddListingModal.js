@@ -13,7 +13,7 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
     contact: "",
     description: "",
     price: "",
-    status: "Active",
+    status: "Pending",
   });
 
   const handleCategoryChange = (e) => {
@@ -258,11 +258,12 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
             </div>
             <div className="form-group">
               <label>Status</label>
-              <select name="status" value={form.status} onChange={handleChange} required>
-                <option value="Active">Active</option>
+              <select name="status" value="Pending" disabled required>
                 <option value="Pending">Pending</option>
-                <option value="Inactive">Inactive</option>
               </select>
+              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
+                New listings are reviewed in Content Moderation before going live.
+              </div>
             </div>
           </div>
 
