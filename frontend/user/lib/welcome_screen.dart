@@ -202,48 +202,50 @@ class InfoPage extends StatelessWidget {
           style: TextStyle(color: primaryGreen, fontWeight: FontWeight.w700),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildCard(
-              _leadingImage('assets/images/rent.jpg'),
-              'Find accommodation',
-              'Verified shared rooms & apartments',
-            ),
-            _buildCard(
-              _leadingImage('assets/images/service.jpg'),
-              'Discover food & jobs',
-              'Groceries, restaurants, and job leads',
-            ),
-            _buildCard(
-              _leadingImage('assets/images/trust.jpg'),
-              'Community support',
-              'Guides and resources from Indians',
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const AuthPage()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryGreen,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+          child: Column(
+            children: [
+              _buildCard(
+                _leadingImage('assets/images/rent.jpg'),
+                'Find accommodation',
+                'Verified shared rooms & apartments',
+              ),
+              _buildCard(
+                _leadingImage('assets/images/service.jpg'),
+                'Discover food & jobs',
+                'Groceries, restaurants, and job leads',
+              ),
+              _buildCard(
+                _leadingImage('assets/images/trust.jpg'),
+                'Community support',
+                'Guides and resources from Indians',
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const AuthPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryGreen,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 ),
-                child: const Text(
-                  'Continue',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

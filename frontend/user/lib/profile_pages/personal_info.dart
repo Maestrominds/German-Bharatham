@@ -209,70 +209,79 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
           ),
         ),
 ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Container(
+      body: SafeArea(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          decoration: _cardDecoration(),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                _profilePicture(),
-                const SizedBox(height: 24),
-                _input("Full Name", name),
-                _input("Phone Number", phone),
-                _input("Email", email),
-                _dobPicker(),
-                _genderRadio(),
-                _input("Current Location", location),
-                _input("Preferred City in Germany", preferredCity),
-                _input("Education", education),
-                _input("Profession", profession),
-                _input("German Language Level (A1, A2, B1, B2)", germanLevel),
-                _input("Passport Number", passport),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: _cardDecoration(),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _profilePicture(),
+                  const SizedBox(height: 24),
+                  _input("Full Name", name),
+                  _input("Phone Number", phone),
+                  _input("Email", email),
+                  _dobPicker(),
+                  _genderRadio(),
+                  _input("Current Location", location),
+                  _input("Preferred City in Germany", preferredCity),
+                  _input("Education", education),
+                  _input("Profession", profession),
+                  _input("German Language Level (A1, A2, B1, B2)", germanLevel),
+                  _input("Passport Number", passport),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      bool isValid = _formKey.currentState!.validate();
-                      if (_selectedGender == null || _selectedGender!.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please select your gender')),
-                        );
-                        isValid = false;
-                      }
-                      if (dob.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please select your date of birth')),
-                        );
-                        isValid = false;
-                      }
-                      if (_photoBase64 == null || _photoBase64!.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please upload a profile picture')),
-                        );
-                        isValid = false;
-                      }
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        bool isValid = _formKey.currentState!.validate();
+                        if (_selectedGender == null || _selectedGender!.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select your gender')),
+                          );
+                          isValid = false;
+                        }
+                        if (dob.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select your date of birth')),
+                          );
+                          isValid = false;
+                        }
+                        // Photo must be a real user-uploaded base64 image.
+                        // A Google/social profile URL does NOT count.
+                        final photoOk = _photoBase64 != null &&
+                            _photoBase64!.trim().startsWith('data:image');
+                        if (!photoOk) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please add a profile photo to continue'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          isValid = false;
+                        }
 
-                      if (isValid) {
-                        _saveData();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryGreen,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        if (isValid) {
+                          _saveData();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryGreen,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      child: const Text("Save Information",style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w600,),),
                     ),
-                    child: const Text("Save Information",style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w600,),),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

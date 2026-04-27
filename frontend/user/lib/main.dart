@@ -1287,25 +1287,29 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         if (profileRes.statusCode == 200) {
           final data = jsonDecode(profileRes.body) as Map<String, dynamic>;
           bool hasMissingMandatory = false;
-          final req = [
-            'name',
-            'phone',
-            'dob',
-            'gender',
-            'location',
-            'preferredCity',
-            'education',
-            'profession',
-            'germanLevel',
-            'passport',
-            'photo',
+
+          // Check all text fields (excluding photo)
+          final textFields = [
+            'name', 'phone', 'dob', 'gender', 'location',
+            'preferredCity', 'education', 'profession',
+            'germanLevel', 'passport',
           ];
-          for (var field in req) {
+          for (var field in textFields) {
             if (data[field] == null || data[field].toString().trim().isEmpty) {
               hasMissingMandatory = true;
               break;
             }
           }
+
+          // Photo must be a real user-uploaded base64 image (data:image/...)
+          // Google/social login URLs do NOT count as a valid profile photo.
+          if (!hasMissingMandatory) {
+            final photoVal = data['photo']?.toString().trim() ?? '';
+            if (!photoVal.startsWith('data:image')) {
+              hasMissingMandatory = true;
+            }
+          }
+
           if (hasMissingMandatory) {
             if (!mounted) return;
             Navigator.pushReplacement(
@@ -1551,6 +1555,46 @@ class _SplashScreenState extends State<SplashScreen>
               );
               return; // Halt navigation to HomePage
             }
+          }
+        }
+
+        // ✅ Check if profile is complete (including a real uploaded photo) on every app open.
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body) as Map<String, dynamic>;
+
+          // Check all text fields
+          const textFields = [
+            'name', 'phone', 'dob', 'gender', 'location',
+            'preferredCity', 'education', 'profession',
+            'germanLevel', 'passport',
+          ];
+          bool hasMissing = textFields.any(
+            (f) => data[f] == null || data[f].toString().trim().isEmpty,
+          );
+
+          // Photo check: must be a real base64 upload (data:image/...)
+          // A Google/social profile picture URL does NOT count.
+          final photoVal = data['photo']?.toString().trim() ?? '';
+          final hasRealPhoto = photoVal.startsWith('data:image');
+          if (!hasRealPhoto) hasMissing = true;
+          if (hasMissing && mounted) {
+            await _logoController.forward();
+            if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PersonalInformationPage(
+                  isInitialSetup: true,
+                  onSetupComplete: (ctx) {
+                    Navigator.pushReplacement(
+                      ctx,
+                      MaterialPageRoute(builder: (_) => const HomePage()),
+                    );
+                  },
+                ),
+              ),
+            );
+            return;
           }
         }
       } catch (_) {
