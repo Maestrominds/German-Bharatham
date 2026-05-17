@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_map/flutter_map.dart';
@@ -998,7 +998,7 @@ class _ServiceMapWidgetState extends State<_ServiceMapWidget> {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.germanbharatham.app',
+                  userAgentPackageName: 'com.german.german_bharatham_admin',
                 ),
                 MarkerLayer(
                   markers: [

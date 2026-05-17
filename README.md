@@ -60,11 +60,11 @@ node server.js
 ```
 
 Backend URLs:
- - Render backend: `https://german-bharatham-vhjx.onrender.com`
+ - Render backend: `https://germanbharatham-production.up.railway.app`
 
 ### 2. Admin Frontend Setup
 
- - Flutter app default API base URL: `https://german-bharatham-vhjx.onrender.com`
+ - Flutter app default API base URL: `https://germanbharatham-production.up.railway.app`
 
 ```bash
 # Navigate to admin frontend directory
@@ -103,7 +103,7 @@ flutter run
 ```
 
 **Important Configuration:**
-- Update API base URL in Flutter app if needed (currently set to `https://german-bharatham-vhjx.onrender.com`)
+- Update API base URL in Flutter app if needed (currently set to `https://germanbharatham-production.up.railway.app`)
 - The app requires Material Icons - already configured in `pubspec.yaml`
 
 ## Features
@@ -166,7 +166,7 @@ PORT=5000
 
 ### Backend
 - Use `node server.js` to start the server
-- API base URL: `https://german-bharatham-vhjx.onrender.com`
+- API base URL: `https://germanbharatham-production.up.railway.app`
 - All admin routes require Bearer token authentication
 - CORS should include your admin domain (local): `http://localhost:3000`
 

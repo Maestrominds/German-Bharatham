@@ -2,7 +2,7 @@ param(
   [string]$DeviceId = "",
   [int]$Port = 5000,
   # Default to the Render backend. (Override with -ApiBaseUrl=... if needed.)
-  [string]$ApiBaseUrl = "https://german-bharatham-vhjx.onrender.com"
+  [string]$ApiBaseUrl = "https://germanbharatham-production.up.railway.app"
 )
 
 $ErrorActionPreference = "Stop"

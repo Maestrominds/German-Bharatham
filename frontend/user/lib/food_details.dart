@@ -674,7 +674,7 @@ class _FoodMapWidgetState extends State<_FoodMapWidget> {
                 TileLayer(
                   urlTemplate:
                       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.germanbharatham.app',
+                  userAgentPackageName: 'com.german.german_bharatham_admin',
                 ),
                 MarkerLayer(
                   markers: [

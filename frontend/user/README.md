@@ -22,7 +22,7 @@ Or let it auto-pick the first connected device:
 
 This script finds `adb.exe` even if it isn't on PATH, runs `adb reverse tcp:5000 tcp:5000` (only needed if you point the app to a local backend), then runs `flutter run`.
 
-This app's default API base URL is: `https://german-bharatham-vhjx.onrender.com`.
+This app's default API base URL is: `https://germanbharatham-production.up.railway.app`.
 
 A new Flutter project.
 
