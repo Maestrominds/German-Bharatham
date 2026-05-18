@@ -262,19 +262,23 @@ exports.register = async (req, res) => {
   console.log(`🚀 [START] register called at ${new Date().toISOString()}`);
   try {
     const { name, email, phone, password } = req.body;
-    console.log(`🔍 [DB QUERY] checking for existing user with email: ${email}`);
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+    const cleanEmail = email.toLowerCase().trim();
+    console.log(`🔍 [DB QUERY] checking for existing user with email: ${cleanEmail}`);
     const queryStart = Date.now();
     // Only check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: cleanEmail });
     console.log(`✅ [DB RESULT] findOne returned ${existingUser ? 1 : 0} documents in ${Date.now() - queryStart}ms`);
     if (existingUser)
       return res.status(400).json({ message: "User already exists" });
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(`🔍 [DB QUERY] creating new user with email: ${email}`);
+    console.log(`🔍 [DB QUERY] creating new user with email: ${cleanEmail}`);
     const createStart = Date.now();
     const user = await User.create({
       name,
-      email,
+      email: cleanEmail,
       phone,
       password: hashedPassword,
       role: "user",
@@ -303,31 +307,49 @@ exports.sendVerificationCode = async (req, res) => {
       return res.status(400).json({ message: 'Email is required.' });
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check if user already exists
+    console.log(`🔍 [DB QUERY] checking if user already exists with email: ${cleanEmail}`);
+    const existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser) {
+      console.log(`⚠️ [DUPLICATE EMAIL] User already exists with email: ${cleanEmail}`);
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
     // Generate a 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Upsert the verification code
-    console.log(`🔍 [DB QUERY] upserting verification code for email: ${email}`);
+    // Upsert the verification code to DB first (fast)
+    console.log(`🔍 [DB QUERY] upserting verification code for email: ${cleanEmail}`);
     const upsertStart = Date.now();
     await EmailVerification.findOneAndUpdate(
-      { email: email.toLowerCase().trim() },
+      { email: cleanEmail },
       { code, expiresAt },
       { upsert: true, new: true }
     );
     console.log(`✅ [DB RESULT] findOneAndUpdate completed in ${Date.now() - upsertStart}ms`);
 
-    // Send the code via email
-    console.log(`🔍 [DB QUERY] sending verification code email to: ${email}`);
-    const emailStart = Date.now();
-    await sendEmail({
-      to: email,
-      subject: 'Your Verification Code',
-      text: `Your verification code is: ${code}`
+    // ✅ Respond immediately — do NOT wait for SMTP (can hang for 20+ seconds)
+    console.log(`📤 [RESPONSE] sending 200 immediately after ${Date.now() - start}ms`);
+    res.status(200).json({ message: 'Verification code sent.' });
+
+    // 🔁 Send email in background after response is flushed
+    setImmediate(async () => {
+      try {
+        const emailStart = Date.now();
+        await sendEmail({
+          to: email,
+          subject: 'Your Verification Code',
+          text: `Your German Bharatham verification code is: ${code}\n\nThis code expires in 10 minutes.`
+        });
+        console.log(`✅ [BG EMAIL] sendEmail completed in ${Date.now() - emailStart}ms`);
+      } catch (emailErr) {
+        console.error(`❌ [BG EMAIL] sendEmail failed: ${emailErr.message}`);
+      }
     });
-    console.log(`✅ [DB RESULT] sendEmail completed in ${Date.now() - emailStart}ms`);
-    console.log(`📤 [RESPONSE] sending 200 response after ${Date.now() - start}ms`);
-    return res.status(200).json({ message: 'Verification code sent.' });
+
   } catch (error) {
     console.error(`❌ [ERROR] sendVerificationCode failed: ${error.message} after ${Date.now() - start}ms`);
     return res.status(500).json({ message: error.message });
@@ -793,14 +815,23 @@ exports.forgotPasswordOtp = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    await sendEmail({
-      to: emailRaw,
-      subject: 'Your Password Reset OTP',
-      text: `Your OTP to reset your password is: ${code}. It expires in 10 minutes.`,
-    });
+    // ✅ Respond immediately — don't await SMTP
+    console.log(`📤 [RESPONSE] sending 200 immediately after ${Date.now() - start}ms`);
+    res.status(200).json({ message: 'OTP sent to your email.' });
 
-    console.log(`📤 [RESPONSE] OTP sent for forgot-password after ${Date.now() - start}ms`);
-    return res.status(200).json({ message: 'OTP sent to your email.' });
+    // 🔁 Send email in background
+    setImmediate(async () => {
+      try {
+        await sendEmail({
+          to: emailRaw,
+          subject: 'Your Password Reset OTP',
+          text: `Your OTP to reset your password is: ${code}. It expires in 10 minutes.`,
+        });
+        console.log(`✅ [BG EMAIL] forgot-password OTP sent to: ${emailRaw}`);
+      } catch (emailErr) {
+        console.error(`❌ [BG EMAIL] forgot-password sendEmail failed: ${emailErr.message}`);
+      }
+    });
   } catch (error) {
     console.error(`❌ [ERROR] forgotPasswordOtp failed: ${error.message} after ${Date.now() - start}ms`);
     return res.status(500).json({ message: error.message });

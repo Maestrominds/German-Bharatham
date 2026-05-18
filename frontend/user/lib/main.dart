@@ -905,6 +905,7 @@ class SignupPage extends StatefulWidget {
 class _SignupPageState extends State<SignupPage> {
   // 🔹 Toggle (Login / Signup)
   bool _isLogin = false;
+  bool _isBusy = false;
 
   // 🔹 Text Controllers
   final TextEditingController _nameController = TextEditingController();
@@ -1019,7 +1020,7 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  void _startSignupVerification() {
+  Future<void> _startSignupVerification() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
@@ -1042,15 +1043,24 @@ class _SignupPageState extends State<SignupPage> {
 
     setState(() {
       _passwordError = null;
+      _isBusy = true;
     });
 
-    sendVerificationCodeAndNavigate(
-      context,
-      email,
-      name: name,
-      phone: '$_selectedDialCode$phone',
-      password: password,
-    );
+    try {
+      await sendVerificationCodeAndNavigate(
+        context,
+        email,
+        name: name,
+        phone: '$_selectedDialCode$phone',
+        password: password,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBusy = false;
+        });
+      }
+    }
   }
 
   @override
@@ -1215,21 +1225,32 @@ class _SignupPageState extends State<SignupPage> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _startSignupVerification,
+                  onPressed: _isBusy ? null : _startSignupVerification,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    'Sign up',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: _isBusy
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text(
+                          'Sign up',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -1715,73 +1736,55 @@ class _EmailCodePageState extends State<EmailCodePage> {
       _error = null;
     });
     final email = widget.email.trim().toLowerCase();
-    final response = await http.post(
-      Uri.parse(ApiConfig.baseUrl + '/api/user/verify-email'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": email, "code": _codeController.text.trim()}),
-    );
-    setState(() => _verifying = false);
-    if (response.statusCode == 200) {
-      try {
-        final hasSignupPayload =
-            (widget.name ?? '').trim().isNotEmpty &&
-            (widget.phone ?? '').trim().isNotEmpty &&
-            (widget.password ?? '').trim().isNotEmpty;
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.baseUrl + '/api/user/verify-email'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "code": _codeController.text.trim()}),
+      ).timeout(const Duration(seconds: 20));
 
-        if (hasSignupPayload) {
-          final registerResponse = await http.post(
-            Uri.parse(ApiConfig.registerEndpoint),
-            headers: {"Content-Type": "application/json"},
-            body: jsonEncode({
-              "name": widget.name!.trim(),
-              "email": widget.email.trim(),
-              "phone": widget.phone!.trim(),
-              "password": widget.password!.trim(),
-            }),
-          );
+      if (response.statusCode == 200) {
+        try {
+          final hasSignupPayload =
+              (widget.name ?? '').trim().isNotEmpty &&
+              (widget.phone ?? '').trim().isNotEmpty &&
+              (widget.password ?? '').trim().isNotEmpty;
 
-          if (registerResponse.statusCode != 201) {
-            String message = 'Registration failed after verification.';
-            try {
-              final decoded = jsonDecode(registerResponse.body);
-              if (decoded is Map<String, dynamic> &&
-                  decoded['message'] != null) {
-                message = decoded['message'].toString();
+          if (hasSignupPayload) {
+            final registerResponse = await http.post(
+              Uri.parse(ApiConfig.registerEndpoint),
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode({
+                "name": widget.name!.trim(),
+                "email": widget.email.trim(),
+                "phone": widget.phone!.trim(),
+                "password": widget.password!.trim(),
+              }),
+            ).timeout(const Duration(seconds: 10));
+
+            if (registerResponse.statusCode != 201) {
+              String message = 'Registration failed after verification.';
+              try {
+                final decoded = jsonDecode(registerResponse.body);
+                if (decoded is Map<String, dynamic> &&
+                    decoded['message'] != null) {
+                  message = decoded['message'].toString();
+                }
+              } catch (_) {}
+              if (mounted) {
+                setState(() {
+                  _verifying = false;
+                  _error = message;
+                });
               }
-            } catch (_) {}
-            setState(() {
-              _error = message;
-            });
-            return;
-          }
+              return;
+            }
 
-          final data = jsonDecode(registerResponse.body);
-          final user = data['user'];
-          await UserSession.instance.save(
-            userId: user['_id'].toString(),
-            token: data['token'].toString(),
-            name: user['name'].toString(),
-            email: user['email'].toString(),
-            phone: user['phone']?.toString(),
-            photoBase64: user['photo']?.toString(),
-          );
-
-          final uid = user['_id'].toString();
-          SavedManager.instance.switchUser(uid);
-          await Future.wait([
-            SavedFoodManager.instance.switchUser(uid),
-            SavedJobManager.instance.switchUser(uid),
-            SavedServiceManager.instance.switchUser(uid),
-            SavedGuidesManager.instance.switchUser(uid),
-          ]);
-        } else {
-          final data = jsonDecode(response.body);
-          final token = data['token'];
-          final user = data['user'];
-          if (token != null && user != null) {
+            final data = jsonDecode(registerResponse.body);
+            final user = data['user'];
             await UserSession.instance.save(
               userId: user['_id'].toString(),
-              token: token.toString(),
+              token: data['token'].toString(),
               name: user['name'].toString(),
               email: user['email'].toString(),
               phone: user['phone']?.toString(),
@@ -1796,24 +1799,75 @@ class _EmailCodePageState extends State<EmailCodePage> {
               SavedServiceManager.instance.switchUser(uid),
               SavedGuidesManager.instance.switchUser(uid),
             ]);
+          } else {
+            final data = jsonDecode(response.body);
+            final token = data['token'];
+            final user = data['user'];
+            if (token != null && user != null) {
+              await UserSession.instance.save(
+                userId: user['_id'].toString(),
+                token: token.toString(),
+                name: user['name'].toString(),
+                email: user['email'].toString(),
+                phone: user['phone']?.toString(),
+                photoBase64: user['photo']?.toString(),
+              );
+
+              final uid = user['_id'].toString();
+              SavedManager.instance.switchUser(uid);
+              await Future.wait([
+                SavedFoodManager.instance.switchUser(uid),
+                SavedJobManager.instance.switchUser(uid),
+                SavedServiceManager.instance.switchUser(uid),
+                SavedGuidesManager.instance.switchUser(uid),
+              ]);
+            }
+          }
+
+          if (mounted) {
+            setState(() => _verifying = false);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _verifying = false;
+              _error = 'Verification succeeded, but login failed: $e';
+            });
           }
         }
-
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
-        );
-      } catch (e) {
+      } else {
+        String message = 'Invalid code or expired.';
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic> && decoded['message'] != null) {
+            message = decoded['message'].toString();
+          }
+        } catch (_) {}
+        if (mounted) {
+          setState(() {
+            _verifying = false;
+            _error = message;
+          });
+        }
+      }
+    } on TimeoutException {
+      if (mounted) {
         setState(() {
-          _error =
-              'Verification succeeded, but login failed. Please login manually.';
+          _verifying = false;
+          _error = 'Connection timed out. Please check your internet connection and try again.';
         });
       }
-    } else {
-      setState(() {
-        _error = 'Invalid code or expired.';
-      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _verifying = false;
+          _error = 'Network error: $e';
+        });
+      }
     }
   }
 
@@ -1823,24 +1877,54 @@ class _EmailCodePageState extends State<EmailCodePage> {
       _error = null;
     });
     final email = widget.email.trim().toLowerCase();
-    final response = await http.post(
-      Uri.parse(ApiConfig.baseUrl + '/api/user/send-verification-code'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": email}),
-    );
-    setState(() {
-      _verifying = false;
-      _resent = true;
-    });
-    if (response.statusCode == 200) {
-      _startTimer();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('OTP resent!')));
-    } else {
-      setState(() {
-        _error = 'Failed to resend OTP.';
-      });
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.baseUrl + '/api/user/send-verification-code'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email}),
+      ).timeout(const Duration(seconds: 20));
+
+      if (mounted) {
+        setState(() {
+          _verifying = false;
+          _resent = true;
+        });
+      }
+      if (response.statusCode == 200) {
+        _startTimer();
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('OTP resent!')));
+        }
+      } else {
+        String message = 'Failed to resend OTP.';
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic> && decoded['message'] != null) {
+            message = decoded['message'].toString();
+          }
+        } catch (_) {}
+        if (mounted) {
+          setState(() {
+            _error = message;
+          });
+        }
+      }
+    } on TimeoutException {
+      if (mounted) {
+        setState(() {
+          _verifying = false;
+          _error = 'Connection timed out while resending. Please try again.';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _verifying = false;
+          _error = 'Network error while resending: $e';
+        });
+      }
     }
   }
 
@@ -1971,35 +2055,64 @@ class _EmailCodePageState extends State<EmailCodePage> {
 }
 
 // --- Send verification code and navigate ---
-Future<void> sendVerificationCodeAndNavigate(
+Future<bool> sendVerificationCodeAndNavigate(
   BuildContext context,
   String email, {
   String? name,
   String? phone,
   String? password,
 }) async {
-  final response = await http.post(
-    Uri.parse(ApiConfig.baseUrl + '/api/user/send-verification-code'),
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode({"email": email}),
-  );
-  if (response.statusCode == 200) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EmailCodePage(
-          email: email,
-          name: name,
-          phone: phone,
-          password: password,
+  try {
+    final response = await http.post(
+      Uri.parse(ApiConfig.baseUrl + '/api/user/send-verification-code'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"email": email}),
+    ).timeout(const Duration(seconds: 30)); // 30s: Railway cold start + SMTP sending can be slow
+
+    if (response.statusCode == 200) {
+      if (!context.mounted) return true;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EmailCodePage(
+            email: email,
+            name: name,
+            phone: phone,
+            password: password,
+          ),
         ),
+      );
+      return true;
+    } else {
+      String message = 'Failed to send code.';
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic> && decoded['message'] != null) {
+          message = decoded['message'].toString();
+        }
+      } catch (_) {}
+      if (!context.mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+      return false;
+    }
+  } on TimeoutException {
+    if (!context.mounted) return false;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Connection timed out. Please check your internet connection and try again.'),
       ),
     );
-  } else {
-    // Show error (e.g., email already exists)
+    return false;
+  } catch (e) {
+    if (!context.mounted) return false;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to send code: ${response.body}')),
+      SnackBar(
+        content: Text('Network error: $e'),
+      ),
     );
+    return false;
   }
 }
 
