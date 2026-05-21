@@ -25,6 +25,7 @@ class PersonalInformationPage extends StatefulWidget {
 
 class _PersonalInformationPageState extends State<PersonalInformationPage> {
   final _formKey = GlobalKey<FormState>();
+  bool _saving = false;
 
   final TextEditingController name = TextEditingController();
   final TextEditingController phone = TextEditingController();
@@ -111,76 +112,84 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   }
 
   Future<void> _saveData() async {
-    final token = UserSession.instance.token;
-    if (token != null) {
-      try {
-        final res = await http.put(
-          Uri.parse(ApiConfig.profileEndpoint),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'name': name.text,
-            'phone': phone.text,
-            'dob': dob.text,
-            'gender': _selectedGender ?? '',
-            'location': location.text,
-            'preferredCity': preferredCity.text,
-            'education': education.text,
-            'profession': profession.text,
-            'germanLevel': germanLevel.text,
-            'passport': passport.text,
-            'photo': _photoBase64 ?? '',
-          }),
-        );
-        if (res.statusCode != 200 && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Save failed: ${jsonDecode(res.body)['message'] ?? res.statusCode}')),
-          );
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final token = UserSession.instance.token;
+      if (token != null) {
+        try {
+          final res = await http.put(
+            Uri.parse(ApiConfig.profileEndpoint),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'name': name.text,
+              'phone': phone.text,
+              'dob': dob.text,
+              'gender': _selectedGender ?? '',
+              'location': location.text,
+              'preferredCity': preferredCity.text,
+              'education': education.text,
+              'profession': profession.text,
+              'germanLevel': germanLevel.text,
+              'passport': passport.text,
+              'photo': _photoBase64 ?? '',
+            }),
+          ).timeout(const Duration(seconds: 15));
+          if (res.statusCode != 200 && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Save failed: ${jsonDecode(res.body)['message'] ?? res.statusCode}')),
+            );
+            return;
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Network error: $e')),
+            );
+          }
           return;
         }
-      } catch (e) {
-        if (mounted) {
+      }
+
+      // Also save to SharedPreferences as local cache
+      final prefs = await SharedPreferences.getInstance();
+      final uid = UserSession.instance.userId ?? 'guest';
+      String key(String field) => 'pi_${uid}_$field';
+      await prefs.setString(key('name'), name.text);
+      await prefs.setString(key('phone'), phone.text);
+      await prefs.setString(key('email'), email.text);
+      await prefs.setString(key('dob'), dob.text);
+      await prefs.setString(key('gender'), _selectedGender ?? '');
+      await prefs.setString(key('location'), location.text);
+      await prefs.setString(key('preferredCity'), preferredCity.text);
+      await prefs.setString(key('education'), education.text);
+      await prefs.setString(key('profession'), profession.text);
+      await prefs.setString(key('germanLevel'), germanLevel.text);
+      await prefs.setString(key('passport'), passport.text);
+      await prefs.setString(key('photo'), _photoBase64 ?? '');
+
+      // Update global session cache so the UI updates immediately
+      await UserSession.instance.updateProfile(
+        name: name.text,
+        phone: phone.text,
+        photoBase64: _photoBase64,
+      );
+
+      if (mounted) {
+        if (widget.isInitialSetup && widget.onSetupComplete != null) {
+          widget.onSetupComplete!(context);
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Network error: $e')),
+            const SnackBar(content: Text("Profile Updated Successfully")),
           );
         }
-        return;
       }
-    }
-
-    // Also save to SharedPreferences as local cache
-    final prefs = await SharedPreferences.getInstance();
-    final uid = UserSession.instance.userId ?? 'guest';
-    String key(String field) => 'pi_${uid}_$field';
-    await prefs.setString(key('name'), name.text);
-    await prefs.setString(key('phone'), phone.text);
-    await prefs.setString(key('email'), email.text);
-    await prefs.setString(key('dob'), dob.text);
-    await prefs.setString(key('gender'), _selectedGender ?? '');
-    await prefs.setString(key('location'), location.text);
-    await prefs.setString(key('preferredCity'), preferredCity.text);
-    await prefs.setString(key('education'), education.text);
-    await prefs.setString(key('profession'), profession.text);
-    await prefs.setString(key('germanLevel'), germanLevel.text);
-    await prefs.setString(key('passport'), passport.text);
-    await prefs.setString(key('photo'), _photoBase64 ?? '');
-
-    // Update global session cache so the UI updates immediately
-    await UserSession.instance.updateProfile(
-      name: name.text,
-      phone: phone.text,
-      photoBase64: _photoBase64,
-    );
-
-    if (mounted) {
-      if (widget.isInitialSetup && widget.onSetupComplete != null) {
-        widget.onSetupComplete!(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profile Updated Successfully")),
-        );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
       }
     }
   }
@@ -190,100 +199,121 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
-  title: const Text("Personal Information"),
-  centerTitle: true,
-  backgroundColor: Colors.white,
-  foregroundColor: Colors.black,
-  elevation: 0,
-
-  leading: widget.isInitialSetup
-      ? const SizedBox.shrink()
-      : IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Image.asset(
-            'assets/images/left-arrow.png',
-            width: 22,
-            height: 22,
-          ),
-        ),
-),
+        title: const Text("Personal Information"),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        leading: widget.isInitialSetup
+            ? const SizedBox.shrink()
+            : IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: Image.asset(
+                  'assets/images/left-arrow.png',
+                  width: 22,
+                  height: 22,
+                ),
+              ),
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: _cardDecoration(),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  _profilePicture(),
-                  const SizedBox(height: 24),
-                  _input("Full Name", name),
-                  _input("Phone Number", phone),
-                  _input("Email", email),
-                  _dobPicker(),
-                  _genderRadio(),
-                  _input("Current Location", location),
-                  _input("Preferred City in Germany", preferredCity),
-                  _input("Education", education),
-                  _input("Profession", profession),
-                  _input("German Language Level (A1, A2, B1, B2)", germanLevel),
-                  _input("Passport Number", passport),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: _cardDecoration(),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _profilePicture(),
+                      const SizedBox(height: 24),
+                      _input("Full Name", name),
+                      _input("Phone Number", phone),
+                      _input("Email", email),
+                      _dobPicker(),
+                      _genderRadio(),
+                      _input("Current Location", location),
+                      _input("Preferred City in Germany", preferredCity),
+                      _input("Education", education),
+                      _input("Profession", profession),
+                      _input("German Language Level (A1, A2, B1, B2)", germanLevel),
+                      _input("Passport Number", passport),
 
-                  const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        bool isValid = _formKey.currentState!.validate();
-                        if (_selectedGender == null || _selectedGender!.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please select your gender')),
-                          );
-                          isValid = false;
-                        }
-                        if (dob.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please select your date of birth')),
-                          );
-                          isValid = false;
-                        }
-                        // Photo must be a real user-uploaded base64 image.
-                        // A Google/social profile URL does NOT count.
-                        final photoOk = _photoBase64 != null &&
-                            _photoBase64!.trim().startsWith('data:image');
-                        if (!photoOk) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please add a profile photo to continue'),
-                              backgroundColor: Colors.redAccent,
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _saving
+                              ? null
+                              : () {
+                                  bool isValid = _formKey.currentState!.validate();
+                                  if (_selectedGender == null || _selectedGender!.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Please select your gender')),
+                                    );
+                                    isValid = false;
+                                  }
+                                  if (dob.text.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Please select your date of birth')),
+                                    );
+                                    isValid = false;
+                                  }
+                                  // Photo must be a real user-uploaded base64 image.
+                                  // A Google/social profile URL does NOT count.
+                                  final photoOk = _photoBase64 != null &&
+                                      _photoBase64!.trim().startsWith('data:image');
+                                  if (!photoOk) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Please add a profile photo to continue'),
+                                        backgroundColor: Colors.redAccent,
+                                      ),
+                                    );
+                                    isValid = false;
+                                  }
+
+                                  if (isValid) {
+                                    _saveData();
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryGreen,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          );
-                          isValid = false;
-                        }
-
-                        if (isValid) {
-                          _saveData();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryGreen,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            "Save Information",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                      child: const Text("Save Information",style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w600,),),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+            if (_saving)
+              Container(
+                color: Colors.black.withOpacity(0.15),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

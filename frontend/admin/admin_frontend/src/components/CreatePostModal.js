@@ -132,31 +132,28 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
               value={postData.keyPoints}
               onChange={(e) => setPostData({ ...postData, keyPoints: e.target.value })}
               placeholder="Point 1&#10;Point 2&#10;Point 3"
-              required
               maxLength={2000}
             />
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label>Official Resource Link</label>
+              <label>Official Resource Link <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span></label>
               <input
                 type="url"
                 value={postData.officialWebsites}
                 onChange={(e) => setPostData({ ...postData, officialWebsites: e.target.value })}
                 placeholder="https://..."
-                required
                 maxLength={500}
               />
             </div>
             <div className="form-group">
-              <label>Community Link / Discussion</label>
+              <label>Community Link / Discussion <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span></label>
               <input
                 type="url"
                 value={postData.communityDiscussions}
                 onChange={(e) => setPostData({ ...postData, communityDiscussions: e.target.value })}
                 placeholder="https://..."
-                required
                 maxLength={500}
               />
             </div>

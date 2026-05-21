@@ -364,7 +364,7 @@ class _AuthPageState extends State<AuthPage> {
               "password": _passwordController.text.trim(),
             }),
           )
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -1293,9 +1293,20 @@ class LocationPermissionPage extends StatefulWidget {
 }
 
 class _LocationPermissionPageState extends State<LocationPermissionPage> {
-  bool _busy = false;
+  bool _enabling = false;
+  bool _skipping = false;
 
   Future<void> _goNext() async {
+    if (_enabling || _skipping) return;
+    setState(() => _skipping = true);
+    try {
+      await _processNavigation();
+    } finally {
+      if (mounted) setState(() => _skipping = false);
+    }
+  }
+
+  Future<void> _processNavigation() async {
     final token = UserSession.instance.token;
 
     // First check if profile is complete
@@ -1304,7 +1315,7 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         final profileRes = await http.get(
           Uri.parse(ApiConfig.profileEndpoint),
           headers: {'Authorization': 'Bearer $token'},
-        );
+        ).timeout(const Duration(seconds: 10));
         if (profileRes.statusCode == 200) {
           final data = jsonDecode(profileRes.body) as Map<String, dynamic>;
           bool hasMissingMandatory = false;
@@ -1364,7 +1375,7 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
-        );
+        ).timeout(const Duration(seconds: 15));
         if (res.statusCode == 200) {
           final statusJson = jsonDecode(res.body);
           final user = statusJson['user'] as Map?;
@@ -1391,8 +1402,8 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
   }
 
   Future<void> _enableLocation() async {
-    if (_busy) return;
-    setState(() => _busy = true);
+    if (_enabling || _skipping) return;
+    setState(() => _enabling = true);
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -1425,7 +1436,7 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         return;
       }
 
-      _goNext();
+      await _processNavigation();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -1433,7 +1444,7 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
         ).showSnackBar(SnackBar(content: Text('Location error: $e')));
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _enabling = false);
     }
   }
 
@@ -1443,71 +1454,87 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
       160.0,
       260.0,
     );
+    final isLocked = _enabling || _skipping;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 24),
+        child: Stack(
+          children: [
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 24),
 
-                Image.asset(
-                  'assets/images/loc.jpeg',
-                  height: imageHeight,
-                  fit: BoxFit.contain,
-                ),
+                    Image.asset(
+                      'assets/images/loc.jpeg',
+                      height: imageHeight,
+                      fit: BoxFit.contain,
+                    ),
 
-                const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                const Text(
-                  'Location',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Allow location access to discover nearby accommodation, services, jobs, and community resources around you.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.black54,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _busy ? null : _enableLocation,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: LocationPermissionPage.primaryGreen,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                    const Text(
+                      'Location',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Allow location access to discover nearby accommodation, services, jobs, and community resources around you.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.black54,
+                        height: 1.5,
                       ),
                     ),
-                    child: Text(
-                      _busy ? 'Enabling…' : 'Enable Location',
-                      style: const TextStyle(color: Colors.white),
+                    const SizedBox(height: 32),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: isLocked ? null : _enableLocation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: LocationPermissionPage.primaryGreen,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        child: Text(
+                          _enabling ? 'Enabling…' : 'Enable Location',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextButton(
+                      onPressed: isLocked ? null : _goNext,
+                      child: Text(
+                        _skipping ? 'Skipping…' : 'Not now',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+            if (isLocked)
+              Container(
+                color: Colors.black.withOpacity(0.15),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      LocationPermissionPage.primaryGreen,
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
-                TextButton(
-                  onPressed: _busy ? null : _goNext,
-                  child: const Text(
-                    'Not now',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
+              ),
+          ],
         ),
       ),
     );
@@ -1560,7 +1587,7 @@ class _SplashScreenState extends State<SplashScreen>
                 'Authorization': 'Bearer ${UserSession.instance.token}',
               },
             )
-            .timeout(const Duration(seconds: 4));
+            .timeout(const Duration(seconds: 10));
 
         if (res.statusCode == 403) {
           final data = jsonDecode(res.body);

@@ -18,7 +18,7 @@ const Community = () => {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch(`${BASE}/api/community?limit=100&page=1`);
+      const response = await fetch(`${BASE}/api/admin/community`);
       const payload = await response.json();
       const list = Array.isArray(payload)
         ? payload
@@ -47,10 +47,8 @@ const Community = () => {
   if (view === "create") {
     return (
       <CreatePostModal
-        onClose={() => {
-          setView("list");
-          fetchPosts();
-        }}
+        onClose={() => setView("list")}
+        onPostCreated={fetchPosts}
       />
     );
   }

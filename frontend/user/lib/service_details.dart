@@ -232,12 +232,12 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
     );
   }
 
-  Widget _infoIcon(String iconAsset, {required bool isLocationIcon}) {
+  Widget _infoIcon(String iconAsset) {
     if (iconAsset.contains('whatsapp')) {
-      return FaIcon(
+      return const FaIcon(
         FontAwesomeIcons.whatsapp,
         size: 18,
-        color: isLocationIcon ? Colors.black87 : const Color(0xFF4E7F6D),
+        color: Color(0xFF4E7F6D),
       );
     }
 
@@ -249,7 +249,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
     if (iconAsset.contains('profile')) fallbackIcon = Icons.person_outline;
     if (iconAsset.contains('handshake')) fallbackIcon = Icons.handshake_outlined;
 
-    final iconColor = isLocationIcon ? Colors.black87 : const Color(0xFF4E7F6D);
+    const iconColor = Color(0xFF4E7F6D);
 
     return Image.asset(
       iconAsset,
@@ -856,25 +856,22 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
     required String value,
     Color? valueColor,
   }) {
-    final bool isLocationIcon = iconAsset.contains('location.png');
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          isLocationIcon
-              ? _infoIcon(iconAsset, isLocationIcon: true)
-              : Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4E7F6D).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Center(
-                    child: _infoIcon(iconAsset, isLocationIcon: false),
-                  ),
-                ),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF4E7F6D).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Center(
+              child: _infoIcon(iconAsset),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
