@@ -144,8 +144,17 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       _controllers['description'] = TextEditingController(text: data?['description'] ?? '');
       _controllers['salary'] = TextEditingController(text: data?['salary'] ?? '');
       _controllers['companyName'] = TextEditingController(text: data?['company'] ?? data?['companyName'] ?? '');
-      _controllers['requirements'] = TextEditingController(text: data?['requirements'] ?? '');
-      _controllers['benefits'] = TextEditingController(text: data?['benefits'] ?? '');
+      
+      final reqs = data?['requirements'];
+      _controllers['requirements'] = TextEditingController(
+        text: (reqs is List) ? reqs.join(', ') : (reqs?.toString() ?? ''),
+      );
+      
+      final bens = data?['benefits'];
+      _controllers['benefits'] = TextEditingController(
+        text: (bens is List) ? bens.join(', ') : (bens?.toString() ?? ''),
+      );
+      
       _controllers['applyUrl'] = TextEditingController(text: data?['applyUrl'] ?? '');
 
       _jobType = data?['jobType'] ?? data?['type'] ?? 'Full Time';
@@ -169,8 +178,11 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       _controllers['longitude'] = TextEditingController(text: data?['longitude']?.toString() ?? '');
       _controllers['description'] = TextEditingController(text: data?['description'] ?? '');
       
-      final List<dynamic> initAmenities = data?['amenities'] ?? [];
-      _controllers['amenitiesText'] = TextEditingController(text: initAmenities.join(', '));
+      final amenitiesRaw = data?['amenities'];
+      final amenitiesStr = (amenitiesRaw is List) 
+          ? amenitiesRaw.join(', ') 
+          : (amenitiesRaw?.toString() ?? '');
+      _controllers['amenitiesText'] = TextEditingController(text: amenitiesStr);
 
       _serviceType = data?['serviceType'] ?? 'Immigration';
 
@@ -399,6 +411,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
             inputFormatters: inputFormatters,
             decoration: InputDecoration(
               hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
               filled: true,
               fillColor: Colors.white,
               counterText: '',
