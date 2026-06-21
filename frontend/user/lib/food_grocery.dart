@@ -388,25 +388,6 @@ class _FoodCardState extends State<FoodCard> {
                           maxLines: 1,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Image.asset(
-                        'assets/images/location.png',
-                        width: 12,
-                        height: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          '1.2km',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
                     ],
                   ),
                 ],

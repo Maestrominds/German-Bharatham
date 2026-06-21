@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Eye, Check, X } from 'lucide-react';
+import { Edit, Check, X } from 'lucide-react';
 import ReviewListingModal from './ReviewListingModal';
 import SkeletonLoader from './SkeletonLoader';
 import API_URL from '../config';
@@ -90,7 +90,29 @@ const ContentModeration = () => {
     } catch (e) { alert(e.message); }
   };
 
-  const handleApprove = (listing) => updateStatus(listing, 'active');
+  const handleSaveListing = async (listing, editedPayload, finalStatus) => {
+    try {
+      const res = await fetch(DELETE_URLS[listing.category](listing.id), {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(editedPayload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to save listing changes');
+      }
+
+      if (finalStatus.toLowerCase() === 'active') {
+        await updateStatus(listing, finalStatus);
+      } else {
+        await fetchPending();
+      }
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const handleApprove = (listing) => updateStatus(listing, listing.category === 'Jobs' ? 'Active' : 'active');
 
   const handleReject = async (listing) => {
     try {
@@ -156,7 +178,7 @@ const ContentModeration = () => {
             </div>
             <div className="listing-actions-vertical">
               <button className="action-btn view-btn" onClick={() => { setSelectedListing(listing); setShowReviewModal(true); }}>
-                <Eye size={16} /> View
+                <Edit size={16} /> Edit
               </button>
               <button className="action-btn approve-btn" onClick={() => handleApprove(listing)}>
                 <Check size={16} /> Approve
@@ -173,7 +195,8 @@ const ContentModeration = () => {
         <ReviewListingModal
           listing={selectedListing}
           onClose={() => setShowReviewModal(false)}
-          onApprove={() => { handleApprove(selectedListing); setShowReviewModal(false); }}
+          onApprove={(editedPayload) => { handleSaveListing(selectedListing, editedPayload, selectedListing.category === 'Jobs' ? 'Active' : 'active'); setShowReviewModal(false); }}
+          onSavePending={(editedPayload) => { handleSaveListing(selectedListing, editedPayload, selectedListing.category === 'Jobs' ? 'Pending' : 'pending'); setShowReviewModal(false); }}
           onReject={() => { handleReject(selectedListing); setShowReviewModal(false); }}
         />
       )}

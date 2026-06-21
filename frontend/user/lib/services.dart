@@ -103,7 +103,7 @@ class _ServicesPageState extends State<ServicesPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        errorMessage = 'Unable to load services. Please check your internet or try again.';
+        errorMessage = 'Unable to load services: $e';
         isLoading = false;
       });
     }
