@@ -160,7 +160,7 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
         ? DateTime.parse(item['createdAt']).toLocal().toString().split(' ')[0]
         : '';
 
-    final statusUpper = String(status).toUpperCase();
+    final statusUpper = status.toString().toUpperCase();
     final bool isPending = statusUpper == 'PENDING';
     final bool isRejected = statusUpper == 'REJECTED';
 
