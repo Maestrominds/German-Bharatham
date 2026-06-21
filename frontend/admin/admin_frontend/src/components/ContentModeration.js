@@ -137,7 +137,7 @@ const ContentModeration = () => {
               <div className="listing-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <h3 style={{ margin: 0 }}>{listing.title}</h3>
                 <span className="listing-category">{listing.category}</span>
-                {listing.creatorType === 'user' && (
+                {(listing.creatorType === 'user' || listing.createdBy) && (
                   <span style={{ fontSize: 11, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: 12, fontWeight: 'bold' }}>
                     👤 User: {listing.createdBy?.name || 'User'}
                   </span>
