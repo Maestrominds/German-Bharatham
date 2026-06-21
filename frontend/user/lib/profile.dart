@@ -27,6 +27,8 @@ import 'main.dart';
 import 'welcome_screen.dart';
 import 'user_profiles_page.dart';
 import 'utils/open_subscriptions_page.dart';
+import 'profile_pages/create_listing_category.dart';
+import 'profile_pages/submitted_listings_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -220,6 +222,16 @@ class _ProfilePageState extends State<ProfilePage>
                 'assets/images/lock.png',
                 "Change Password",
                 const ChangePasswordPage(),
+              ),
+              _menuItem(
+                'assets/images/edit.png',
+                "Create Listing",
+                const CreateListingCategoryPage(),
+              ),
+              _menuItem(
+                'assets/images/info.png',
+                "Submitted Listings",
+                const SubmittedListingsPage(),
               ),
             ]),
 

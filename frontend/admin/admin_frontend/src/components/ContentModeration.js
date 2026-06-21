@@ -39,6 +39,8 @@ const ContentModeration = () => {
     images: raw.media?.images || raw.images || (raw.image ? [raw.image] : []),
     description: raw.description || '',
     amenities: Array.isArray(raw.amenities) ? raw.amenities : [],
+    creatorType: raw.creatorType || 'admin',
+    createdBy: raw.createdBy || null,
     raw,
   });
 
@@ -92,15 +94,19 @@ const ContentModeration = () => {
 
   const handleReject = async (listing) => {
     try {
-      const res = await fetch(DELETE_URLS[listing.category](listing.id), {
-        method: 'DELETE',
-        headers: authHeaders(),
-      });
-      if (!res.ok) {
-        const e2 = await res.json().catch(() => ({}));
-        throw new Error(e2.message || 'Failed to delete');
+      if (listing.creatorType === 'user') {
+        await updateStatus(listing, 'Rejected');
+      } else {
+        const res = await fetch(DELETE_URLS[listing.category](listing.id), {
+          method: 'DELETE',
+          headers: authHeaders(),
+        });
+        if (!res.ok) {
+          const e2 = await res.json().catch(() => ({}));
+          throw new Error(e2.message || 'Failed to delete');
+        }
+        await fetchPending();
       }
-      await fetchPending();
     } catch (e) { alert(e.message); }
   };
 
@@ -128,9 +134,14 @@ const ContentModeration = () => {
               )}
             </div>
             <div className="listing-details">
-              <div className="listing-header">
-                <h3>{listing.title}</h3>
+              <div className="listing-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0 }}>{listing.title}</h3>
                 <span className="listing-category">{listing.category}</span>
+                {listing.creatorType === 'user' && (
+                  <span style={{ fontSize: 11, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: 12, fontWeight: 'bold' }}>
+                    👤 User: {listing.createdBy?.name || 'User'}
+                  </span>
+                )}
               </div>
               <div className="listing-info">
                 <div className="info-row">
