@@ -1,6 +1,6 @@
 // API Configuration
-const PROD_API_URL = 'https://germanbharatham-production.up.railway.app';
-const DEV_API_URL = 'https://germanbharatham-production.up.railway.app';
+const PROD_API_URL = 'https://german-bharatham-4umj.onrender.com';
+const DEV_API_URL = 'https://german-bharatham-4umj.onrender.com';
 
 const API_URL =
 	process.env.REACT_APP_API_URL ||
