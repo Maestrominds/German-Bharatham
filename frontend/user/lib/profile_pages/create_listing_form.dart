@@ -564,7 +564,14 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         onChanged: (val) => setState(() => _propertyType = val ?? 'apartment'),
       ),
       _buildField(key: 'city', label: 'City', hint: 'Munich', maxLength: 50),
-      _buildField(key: 'postalCode', label: 'Postal Code', hint: '80331', maxLength: 20),
+      _buildField(
+        key: 'postalCode',
+        label: 'Postal Code',
+        hint: '80331',
+        maxLength: 20,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      ),
       _buildField(key: 'area', label: 'Area', hint: 'Schwabing', maxLength: 100),
       _buildField(key: 'address', label: 'Address', hint: 'Leopoldstraße 1', maxLength: 200),
       _buildField(
