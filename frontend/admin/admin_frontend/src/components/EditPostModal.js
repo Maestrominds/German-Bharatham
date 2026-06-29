@@ -3,6 +3,8 @@ import { X, Upload } from "lucide-react";
 import API_URL from '../config';
 
 const EditPostModal = ({ post, onClose, onPostUpdated }) => {
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
   const [postData, setPostData] = useState({
     title: "",
     category: "Guide",
@@ -34,6 +36,8 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setStatus(null);
 
     const token = localStorage.getItem("adminToken");
     
@@ -68,16 +72,21 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message);
+        setStatus({ type: 'error', message: data.message || "Failed to update." });
+        setLoading(false);
         return;
       }
 
-      alert("Post Updated Successfully ✅");
+      setStatus({ type: 'success', message: "Post Updated Successfully ✅" });
       if (onPostUpdated) await onPostUpdated();
-      onClose();
+      
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert("Error updating post ❌");
+      setStatus({ type: 'error', message: "Error updating post ❌" });
+      setLoading(false);
     }
   };
 
@@ -93,6 +102,17 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
             <X size={24} />
           </button>
         </div>
+
+        {status && (
+          <div style={{
+            margin: '0 24px', padding: '12px', borderRadius: '6px', fontSize: '14px',
+            backgroundColor: status.type === 'error' ? '#fef2f2' : '#f0fdf4',
+            color: status.type === 'error' ? '#991b1b' : '#166534',
+            border: `1px solid ${status.type === 'error' ? '#fecaca' : '#bbf7d0'}`
+          }}>
+            {status.message}
+          </div>
+        )}
 
         <form onSubmit={handleUpdate} className="create-post-form">
           <div className="form-group">
@@ -190,9 +210,9 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="publish-btn">
+            <button type="submit" className="publish-btn" disabled={loading} style={{ opacity: loading ? 0.7 : 1 }}>
               <Upload size={20} />
-              Update Post
+              {loading ? "Updating..." : "Update Post"}
             </button>
           </div>
         </form>

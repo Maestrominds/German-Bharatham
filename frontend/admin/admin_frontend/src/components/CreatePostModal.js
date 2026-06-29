@@ -3,6 +3,8 @@ import { X, Upload } from 'lucide-react';
 import API_URL from '../config';
 
 const CreatePostModal = ({ onClose, onPostCreated }) => {
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
   const [postData, setPostData] = useState({
     title: "",
     category: "Guide",
@@ -16,6 +18,8 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setStatus(null);
 
     const token = localStorage.getItem("adminToken");
     
@@ -48,16 +52,21 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message);
+        setStatus({ type: 'error', message: data.message || "Failed to create post." });
+        setLoading(false);
         return;
       }
 
-      alert("Post Created Successfully ✅");
+      setStatus({ type: 'success', message: "Post Created Successfully ✅" });
       if (onPostCreated) await onPostCreated();
-      onClose();
+      
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert("Error creating post ❌");
+      setStatus({ type: 'error', message: "Error creating post ❌" });
+      setLoading(false);
     }
   };
 
@@ -73,6 +82,17 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
             <X size={24} />
           </button>
         </div>
+
+        {status && (
+          <div style={{
+            margin: '0 24px', padding: '12px', borderRadius: '6px', fontSize: '14px',
+            backgroundColor: status.type === 'error' ? '#fef2f2' : '#f0fdf4',
+            color: status.type === 'error' ? '#991b1b' : '#166534',
+            border: `1px solid ${status.type === 'error' ? '#fecaca' : '#bbf7d0'}`
+          }}>
+            {status.message}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="create-post-form">
           <div className="form-group">
@@ -171,9 +191,9 @@ const CreatePostModal = ({ onClose, onPostCreated }) => {
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="publish-btn">
+            <button type="submit" className="publish-btn" disabled={loading} style={{ opacity: loading ? 0.7 : 1 }}>
               <Upload size={20} />
-              Publish Post
+              {loading ? "Publishing..." : "Publish Post"}
             </button>
           </div>
         </form>
