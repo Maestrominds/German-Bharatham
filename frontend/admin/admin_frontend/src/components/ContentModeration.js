@@ -23,7 +23,7 @@ const ContentModeration = () => {
   const [selectedListing, setSelectedListing] = useState(null);
   const [pendingListings, setPendingListings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(null);
 
   const authHeaders = () => ({
     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
@@ -92,7 +92,8 @@ const ContentModeration = () => {
   };
 
   const handleSaveListing = async (listing, editedPayload, finalStatus) => {
-    setSaving(true);
+    const statusLower = String(finalStatus).toLowerCase();
+    setSaving(statusLower);
     try {
       const res = await fetch(DELETE_URLS[listing.category](listing.id), {
         method: 'PUT',
@@ -105,7 +106,6 @@ const ContentModeration = () => {
       }
 
       // After saving data, update the status if needed
-      const statusLower = String(finalStatus).toLowerCase();
       if (statusLower === 'active') {
         await updateStatus(listing, finalStatus);
       } else {
@@ -114,7 +114,7 @@ const ContentModeration = () => {
     } catch (e) {
       alert('Save error: ' + e.message);
     } finally {
-      setSaving(false);
+      setSaving(null);
     }
   };
 

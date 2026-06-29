@@ -35,6 +35,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       description: raw.description || '',
       contactPhone: raw.contactPhone || raw.phone || raw.email || '',
       city: raw.city || raw.location || raw.address || '',
+      state: raw.state || '',
       
       // Accommodation details
       propertyType: raw.propertyType || 'Apartment',
@@ -60,7 +61,6 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       priceRange: raw.priceRange || '€€',
       type: raw.type || '',
       zipCode: raw.zipCode || '',
-      state: raw.state || '',
       website: raw.website || '',
       openingHours: raw.openingHours || '',
       cuisine: Array.isArray(raw.cuisine) ? raw.cuisine.join(', ') : (raw.cuisine || ''),
@@ -84,6 +84,9 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       providerName: raw.providerName || '',
       whatsapp: raw.whatsapp || '',
       area: raw.area || '',
+      email: raw.email || '',
+      latitude: raw.latitude || '',
+      longitude: raw.longitude || '',
       servicesOfferedText: Array.isArray(raw.amenities) ? raw.amenities.join(', ') : (raw.servicesOffered || '')
     };
   });
@@ -115,7 +118,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         contactPhone: formData.contactPhone?.trim() || '',
         phone: formData.contactPhone?.trim() || '',
         address: formData.address?.trim() || null,
-        area: formData.area?.trim() || null,
+        state: formData.state?.trim() || null,
         zipCode: formData.postalCode?.trim() || null,
         postalCode: formData.postalCode?.trim() || null,
         type: formData.propertyType || null,
@@ -171,7 +174,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         title: formData.title?.trim() || '',
         location: formData.city?.trim() || '',
         city: formData.city?.trim() || '',
-        contact: formData.contact?.trim() || null,
+        contact: formData.contactPhone?.trim() || null,
         description: formData.description?.trim() || null,
         companyName: formData.companyName?.trim() || null,
         jobType: formData.jobType || 'Full Time',
@@ -198,6 +201,10 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         contactPhone: formData.contactPhone?.trim() || null,
         phone: formData.contactPhone?.trim() || null,
         whatsapp: formData.whatsapp?.trim() || null,
+        email: formData.email?.trim() || null,
+        website: formData.website?.trim() || null,
+        latitude: formData.latitude !== '' ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude !== '' ? parseFloat(formData.longitude) : null,
         description: formData.description?.trim() || null,
         priceRange: formData.priceRange || null,
         amenities,
@@ -263,8 +270,8 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Area</label>
-              <input type="text" name="area" value={formData.area || ''} onChange={handleFieldChange} style={inputStyle} placeholder="e.g. Schwabing" />
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>State</label>
+              <input type="text" name="state" value={formData.state || ''} onChange={handleFieldChange} style={inputStyle} placeholder="e.g. Bayern" />
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Address</label>
@@ -356,6 +363,17 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Type (e.g. Veg/Non-Veg)</label>
+              <input type="text" name="type" value={formData.type || ''} onChange={handleFieldChange} style={inputStyle} placeholder="Vegetarian" />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>State</label>
+              <input type="text" name="state" value={formData.state || ''} onChange={handleFieldChange} style={inputStyle} placeholder="e.g. Berlin" />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Opening Hours</label>
               <input type="text" name="openingHours" value={formData.openingHours || ''} onChange={handleFieldChange} placeholder="e.g. 10:00 AM - 10:00 PM" style={inputStyle} />
             </div>
@@ -422,16 +440,9 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Contact Number</label>
-              <input type="text" name="contact" value={formData.contact} onChange={handleFieldChange} style={inputStyle} placeholder="49123456789" />
-            </div>
-            <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Salary Info</label>
               <input type="text" name="salary" value={formData.salary} onChange={handleFieldChange} placeholder="e.g. €45,000 - €55,000 / year" style={inputStyle} />
             </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Apply URL</label>
               <input type="text" name="applyUrl" value={formData.applyUrl} onChange={handleFieldChange} placeholder="https://..." style={inputStyle} />
@@ -514,6 +525,28 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             <input type="text" name="address" value={formData.address || ''} onChange={handleFieldChange} style={inputStyle} />
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Email</label>
+              <input type="email" name="email" value={formData.email || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Website</label>
+              <input type="text" name="website" value={formData.website || ''} onChange={handleFieldChange} placeholder="https://..." style={inputStyle} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Latitude</label>
+              <input type="number" name="latitude" value={formData.latitude} onChange={handleFieldChange} step="any" style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Longitude</label>
+              <input type="number" name="longitude" value={formData.longitude} onChange={handleFieldChange} step="any" style={inputStyle} />
+            </div>
+          </div>
+
           <div style={{ marginBottom: '12px' }}>
             <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Services Offered (comma separated)</label>
             <input type="text" name="servicesOfferedText" value={formData.servicesOfferedText} onChange={handleFieldChange} placeholder="e.g. Tax filing, Double tax consultation" style={inputStyle} />
@@ -593,18 +626,18 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         )}
 
         <div className="review-actions" style={{ padding: '15px 24px', display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #e5e7eb' }}>
-          <button className="close-action-btn" onClick={onClose} disabled={saving} style={{ padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500' }}>
+          <button className="close-action-btn" onClick={onClose} disabled={!!saving} style={{ padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500' }}>
             Cancel
           </button>
-          <button className="approve-action-btn" onClick={handleSaveClick} disabled={saving} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', opacity: saving ? 0.7 : 1 }}>
+          <button className="approve-action-btn" onClick={handleSaveClick} disabled={!!saving} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', opacity: saving ? 0.7 : 1 }}>
             <Save size={16} />
-            {saving ? 'Saving...' : 'Save as Pending'}
+            {saving === 'pending' ? 'Saving...' : 'Save as Pending'}
           </button>
-          <button className="approve-action-btn" onClick={handleApproveClick} disabled={saving} style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', opacity: saving ? 0.7 : 1 }}>
+          <button className="approve-action-btn" onClick={handleApproveClick} disabled={!!saving} style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', opacity: saving ? 0.7 : 1 }}>
             <Check size={16} />
-            {saving ? 'Approving...' : 'Save & Approve'}
+            {saving === 'active' ? 'Approving...' : 'Save & Approve'}
           </button>
-          <button className="reject-action-btn" onClick={onReject} disabled={saving} style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', opacity: saving ? 0.7 : 1 }}>
+          <button className="reject-action-btn" onClick={onReject} disabled={!!saving} style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', opacity: saving ? 0.7 : 1 }}>
             <X size={16} />
             Reject
           </button>
