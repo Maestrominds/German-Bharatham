@@ -35,7 +35,7 @@ const ContentModeration = () => {
     title: raw.title || raw.serviceName || raw.name || 'Untitled',
     category,
     location: raw.location || raw.city || raw.address || '',
-    contact: raw.contactPhone || raw.phone || raw.email || '—',
+    contact: raw.contactPhone || raw.contact || raw.phone || raw.email || '—',
     image: raw.companyLogo || raw.media?.images?.[0] || raw.images?.[0] || raw.image || null,
     images: raw.media?.images || raw.images || (raw.image ? [raw.image] : []),
     description: raw.description || '',

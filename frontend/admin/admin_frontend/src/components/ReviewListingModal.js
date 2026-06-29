@@ -33,7 +33,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       ...raw,
       title: raw.title || raw.serviceName || raw.name || '',
       description: raw.description || '',
-      contactPhone: raw.contactPhone || raw.phone || raw.email || '',
+      contactPhone: raw.contactPhone || raw.contact || raw.phone || raw.email || '',
       city: raw.city || raw.location || raw.address || '',
       state: raw.state || '',
       
