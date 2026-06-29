@@ -107,60 +107,106 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
     }));
   };
 
-  // Prepares structural payload to match backend models on submission
+  // Prepares structural payload to match backend Prisma models on submission
   const prepareSubmitPayload = (status) => {
-    const cleanPayload = {
-      ...formData,
-      status: status
-    };
-
-    // Category conversions
     if (listing.category === 'Accommodation') {
-      cleanPayload.title = formData.title;
-      cleanPayload.city = formData.city;
-      cleanPayload.contactPhone = formData.contactPhone;
-      cleanPayload.zipCode = formData.postalCode;
-      
-      // Ensure numeric types
-      cleanPayload.rentDetails = {
-        coldRent: formData.rentDetails.coldRent !== '' ? parseFloat(formData.rentDetails.coldRent) : null,
-        warmRent: formData.rentDetails.warmRent !== '' ? parseFloat(formData.rentDetails.warmRent) : null,
-        deposit: formData.rentDetails.deposit !== '' ? parseFloat(formData.rentDetails.deposit) : null,
-        electricityIncluded: formData.rentDetails.electricityIncluded,
-        heatingIncluded: formData.rentDetails.heatingIncluded,
-        internetIncluded: formData.rentDetails.internetIncluded
+      return {
+        title: formData.title?.trim() || '',
+        city: formData.city?.trim() || '',
+        contactPhone: formData.contactPhone?.trim() || '',
+        phone: formData.contactPhone?.trim() || '',
+        address: formData.address?.trim() || null,
+        area: formData.area?.trim() || null,
+        zipCode: formData.postalCode?.trim() || null,
+        postalCode: formData.postalCode?.trim() || null,
+        type: formData.propertyType || null,
+        description: formData.description?.trim() || null,
+        status,
+        rentDetails: {
+          coldRent: formData.rentDetails.coldRent !== '' ? parseFloat(formData.rentDetails.coldRent) : null,
+          warmRent: formData.rentDetails.warmRent !== '' ? parseFloat(formData.rentDetails.warmRent) : null,
+          deposit: formData.rentDetails.deposit !== '' ? parseFloat(formData.rentDetails.deposit) : null,
+        },
+        propertyDetails: {
+          sizeSqm: formData.propertyDetails.sizeSqm !== '' ? parseFloat(formData.propertyDetails.sizeSqm) : null,
+          bedrooms: formData.propertyDetails.bedrooms !== '' ? parseInt(formData.propertyDetails.bedrooms, 10) : null,
+          bathrooms: formData.propertyDetails.bathrooms !== '' ? parseInt(formData.propertyDetails.bathrooms, 10) : null,
+        },
+        amenities: formData.amenities && typeof formData.amenities === 'object' ? formData.amenities : {},
       };
-      cleanPayload.propertyDetails = {
-        sizeSqm: formData.propertyDetails.sizeSqm !== '' ? parseFloat(formData.propertyDetails.sizeSqm) : null,
-        bedrooms: formData.propertyDetails.bedrooms !== '' ? parseInt(formData.propertyDetails.bedrooms, 10) : null,
-        bathrooms: formData.propertyDetails.bathrooms !== '' ? parseInt(formData.propertyDetails.bathrooms, 10) : null
-      };
-    } else if (listing.category === 'Food') {
-      cleanPayload.name = formData.title;
-      cleanPayload.city = formData.city;
-      cleanPayload.contactPhone = formData.contactPhone;
-      
-      // Convert cuisines/specialties strings to arrays
-      cleanPayload.cuisine = formData.cuisine.split(',').map(s => s.trim()).filter(Boolean);
-      cleanPayload.specialties = formData.specialties.split(',').map(s => s.trim()).filter(Boolean);
-    } else if (listing.category === 'Jobs') {
-      cleanPayload.title = formData.title;
-      cleanPayload.location = formData.city; // Jobs schema uses location
-      cleanPayload.city = formData.city;
-      cleanPayload.contactPhone = formData.contactPhone;
-    } else if (listing.category === 'Services') {
-      cleanPayload.serviceName = formData.title;
-      cleanPayload.city = formData.city;
-      cleanPayload.contactPhone = formData.contactPhone;
-      
-      // Convert servicesOfferedText string to array for amenities field
-      cleanPayload.amenities = formData.servicesOfferedText.split(',').map(s => s.trim()).filter(Boolean);
-      
-      cleanPayload.latitude = formData.latitude !== '' ? parseFloat(formData.latitude) : null;
-      cleanPayload.longitude = formData.longitude !== '' ? parseFloat(formData.longitude) : null;
     }
 
-    return cleanPayload;
+    if (listing.category === 'Food') {
+      const cuisineArr = typeof formData.cuisine === 'string'
+        ? formData.cuisine.split(',').map(s => s.trim()).filter(Boolean)
+        : (Array.isArray(formData.cuisine) ? formData.cuisine : []);
+      const specialtiesArr = typeof formData.specialties === 'string'
+        ? formData.specialties.split(',').map(s => s.trim()).filter(Boolean)
+        : (Array.isArray(formData.specialties) ? formData.specialties : []);
+      return {
+        name: formData.title?.trim() || '',
+        title: formData.title?.trim() || '',
+        city: formData.city?.trim() || '',
+        address: formData.address?.trim() || null,
+        state: formData.state?.trim() || null,
+        zipCode: formData.zipCode?.trim() || null,
+        phone: formData.contactPhone?.trim() || null,
+        subCategory: formData.subCategory || null,
+        type: formData.type?.trim() || null,
+        description: formData.description?.trim() || null,
+        priceRange: formData.priceRange || null,
+        openingHours: formData.openingHours?.trim() || null,
+        website: formData.website?.trim() || null,
+        cuisine: cuisineArr,
+        specialties: specialtiesArr,
+        dineInAvailable: !!formData.dineInAvailable,
+        deliveryAvailable: !!formData.deliveryAvailable,
+        takeoutAvailable: !!formData.takeoutAvailable,
+        cateringAvailable: !!formData.cateringAvailable,
+        status,
+      };
+    }
+
+    if (listing.category === 'Jobs') {
+      return {
+        title: formData.title?.trim() || '',
+        location: formData.city?.trim() || '',
+        city: formData.city?.trim() || '',
+        contact: formData.contact?.trim() || null,
+        description: formData.description?.trim() || null,
+        companyName: formData.companyName?.trim() || null,
+        jobType: formData.jobType || 'Full Time',
+        salary: formData.salary?.trim() || null,
+        applyUrl: formData.applyUrl?.trim() || null,
+        requirements: formData.requirements?.trim() || null,
+        benefits: formData.benefits?.trim() || null,
+        status,
+      };
+    }
+
+    if (listing.category === 'Services') {
+      const amenities = (formData.servicesOfferedText || '')
+        .split(',').map(s => s.trim()).filter(Boolean);
+      return {
+        title: formData.title?.trim() || '',
+        serviceName: formData.title?.trim() || '',
+        providerName: formData.providerName?.trim() || null,
+        serviceType: formData.serviceType || null,
+        city: formData.city?.trim() || '',
+        area: formData.area?.trim() || null,
+        address: formData.address?.trim() || null,
+        postalCode: formData.postalCode?.trim() || null,
+        contactPhone: formData.contactPhone?.trim() || null,
+        phone: formData.contactPhone?.trim() || null,
+        whatsapp: formData.whatsapp?.trim() || null,
+        description: formData.description?.trim() || null,
+        priceRange: formData.priceRange || null,
+        amenities,
+        status,
+      };
+    }
+
+    return { status };
   };
 
   const handleSaveClick = () => {
