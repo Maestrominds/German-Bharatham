@@ -160,10 +160,9 @@ const AccommodationForm = ({ data, set }) => {
       {/* Amenities */}
       <div style={{ marginBottom: 20 }}>
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Amenities</h4>
-        <ChipsInput label="Amenities (select or type)" options={amenityOpts}
+        <ChipsInput label="Amenities (select or toggle)" options={amenityOpts}
           selected={data.amenities}
           onToggle={a => set(p => ({ ...p, amenities: p.amenities.includes(a) ? p.amenities.filter(x => x !== a) : [...p.amenities, a] }))}
-          onTypeAdd={a => set(p => ({ ...p, amenities: p.amenities.includes(a) ? p.amenities : [...p.amenities, a] }))}
         />
       </div>
 
@@ -221,9 +220,8 @@ const FoodForm = ({ data, set }) => {
               <option value="Grocery Store">Grocery Store</option>
               <option value="Bakery">Bakery</option>
               <option value="Cafe">Cafe</option>
-              <option value="Supermarket">Supermarket</option>
               <option value="Food Truck">Food Truck</option>
-              <option value="Deli">Deli</option>
+              <option value="Other">Other</option>
             </select>
           </div>
         </div>
@@ -235,10 +233,10 @@ const FoodForm = ({ data, set }) => {
           <div className="form-group">
             <label>Price Range</label>
             <select value={data.priceRange} onChange={e => set(p => ({...p, priceRange: e.target.value}))} required>
-              <option value="$">$ - Budget Friendly</option>
-              <option value="$$">$$ - Moderate</option>
-              <option value="$$$">$$$ - Expensive</option>
-              <option value="$$$$">$$$$ - Very Expensive</option>
+              <option value="€">€ - Budget Friendly</option>
+              <option value="€€">€€ - Moderate</option>
+              <option value="€€€">€€€ - Expensive</option>
+              <option value="€€€€">€€€€ - Very Expensive</option>
             </select>
           </div>
         </div>
@@ -274,10 +272,6 @@ const FoodForm = ({ data, set }) => {
           <div className="form-group">
             <label>Phone {REQ}</label>
             <input value={data.phone} onChange={e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); set(p => ({...p, phone: e.target.value}))}} placeholder="491234567890" required maxLength={20} />
-          </div>
-          <div className="form-group">
-            <label>Email {REQ}</label>
-            <input type="email" value={data.email} onChange={e => set(p => ({...p, email: e.target.value}))} placeholder="contact@restaurant.com" required maxLength={100} />
           </div>
         </div>
         <div className="form-group">
@@ -535,7 +529,12 @@ const ServicesForm = ({ data, set }) => {
         </div>
         <div className="form-group">
           <label>Price Range {REQ}</label>
-          <input value={data.priceRange} onChange={e => set(p => ({...p, priceRange: e.target.value}))} placeholder="€50/hour" required maxLength={100} />
+          <select value={data.priceRange} onChange={e => set(p => ({...p, priceRange: e.target.value}))} required>
+            <option value="€">€ (Low)</option>
+            <option value="€€">€€ (Medium)</option>
+            <option value="€€€">€€€ (Premium)</option>
+            <option value="€€€€">€€€€ (Luxury)</option>
+          </select>
         </div>
       </div>
 
@@ -689,6 +688,7 @@ const buildPayload = (category, data) => {
   }
   if (category === 'Food') {
     return {
+      name: data.title?.trim(),
       title: data.title?.trim(),
       subCategory: data.subCategory?.trim(),
       type: data.type?.trim() || null,
@@ -698,8 +698,6 @@ const buildPayload = (category, data) => {
       state: data.state?.trim() || null,
       zipCode: data.zipCode?.trim(),
       phone: data.phone?.trim(),
-      email: data.email?.trim() || null,
-      website: data.website?.trim() || null,
       description: data.description?.trim() || null,
       priceRange: data.priceRange,
       openingHours: data.openingHours?.trim() || null,
