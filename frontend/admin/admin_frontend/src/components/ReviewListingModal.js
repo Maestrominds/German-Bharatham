@@ -38,7 +38,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       
       // Accommodation details
       propertyType: raw.propertyType || 'Apartment',
-      postalCode: raw.postalCode || '',
+      postalCode: raw.zipCode || raw.postalCode || '',
       address: raw.address || '',
       rentDetails: {
         coldRent: raw.rentDetails?.coldRent ?? '',
@@ -119,6 +119,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       cleanPayload.title = formData.title;
       cleanPayload.city = formData.city;
       cleanPayload.contactPhone = formData.contactPhone;
+      cleanPayload.zipCode = formData.postalCode;
       
       // Ensure numeric types
       cleanPayload.rentDetails = {
@@ -228,17 +229,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '15px', background: '#f9fafb', padding: '10px', borderRadius: '6px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-              <input type="checkbox" checked={formData.rentDetails.electricityIncluded} onChange={(e) => handleNestedFieldChange('rentDetails', 'electricityIncluded', 'checkbox', e.target.checked)} style={{ marginRight: '6px' }} /> Electricity Included
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-              <input type="checkbox" checked={formData.rentDetails.heatingIncluded} onChange={(e) => handleNestedFieldChange('rentDetails', 'heatingIncluded', 'checkbox', e.target.checked)} style={{ marginRight: '6px' }} /> Heating Included
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-              <input type="checkbox" checked={formData.rentDetails.internetIncluded} onChange={(e) => handleNestedFieldChange('rentDetails', 'internetIncluded', 'checkbox', e.target.checked)} style={{ marginRight: '6px' }} /> Internet Included
-            </label>
-          </div>
+
 
           <h4 style={{ margin: '15px 0 10px 0', color: '#111827', fontSize: '14px', fontWeight: '600' }}>Amenities</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px', background: '#f9fafb', padding: '12px', borderRadius: '6px' }}>
@@ -491,7 +482,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content review-modal" style={{ maxWidth: '700px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div className="modal-content review-modal" style={{ maxWidth: '900px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <h2>Edit & Moderate Listing</h2>
           <button className="close-btn" onClick={onClose}>
