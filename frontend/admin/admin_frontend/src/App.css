@@ -1403,7 +1403,8 @@ tr:last-child td {
 
 .review-content {
   display: flex;
-  gap: 2rem;
+  flex-direction: column;
+  gap: 1.25rem;
   margin-bottom: 2rem;
 }
 
@@ -1414,8 +1415,8 @@ tr:last-child td {
 }
 
 .main-image {
-  width: 200px;
-  height: 150px;
+  width: 100%;
+  max-height: 220px;
   object-fit: cover;
   border-radius: 8px;
 }
