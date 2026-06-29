@@ -43,7 +43,7 @@ class JobService {
       }
     } catch (e) {
       print('❌ Error fetching jobs: $e');
-      print('Make sure backend is reachable at https://german-bharatham-4umj.onrender.com');
+      print('Make sure backend is reachable at https://german-bharatham-five.vercel.app');
       print('Check that /api/jobs/user endpoint is accessible from device');
       throw Exception('Failed to load jobs: $e');
     }

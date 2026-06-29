@@ -241,31 +241,46 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
 
   Widget _listingsList(String category, List<dynamic> items) {
     if (items.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.list_alt, size: 64, color: Colors.grey),
-              const SizedBox(height: 12),
-              Text(
-                "No $category listings yet",
-                style: const TextStyle(color: Colors.grey, fontSize: 16),
+      return RefreshIndicator(
+        onRefresh: _fetchListings,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.list_alt, size: 64, color: Colors.grey),
+                      const SizedBox(height: 12),
+                      Text(
+                        "No $category listings yet",
+                        style: const TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = Map<String, dynamic>.from(items[index]);
-        return _listingItem(category, item);
-      },
+    return RefreshIndicator(
+      onRefresh: _fetchListings,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = Map<String, dynamic>.from(items[index]);
+          return _listingItem(category, item);
+        },
+      ),
     );
   }
 

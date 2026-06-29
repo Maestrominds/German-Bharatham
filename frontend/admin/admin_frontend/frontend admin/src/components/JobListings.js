@@ -11,7 +11,7 @@ const JobListings = () => {
   const fetchJobs = async () => {
     try {
       const res = await axios.get(
-        "https://german-bharatham-4umj.onrender.com/api/admin/jobs"
+        "https://german-bharatham-five.vercel.app/api/admin/jobs"
       );
       setJobs(res.data);
     } catch (error) {
@@ -31,7 +31,7 @@ const JobListings = () => {
   const handleDelete = async (id) => {
     try {
       await axios.delete(
-        `https://german-bharatham-4umj.onrender.com/api/admin/jobs/${id}`
+        `https://german-bharatham-five.vercel.app/api/admin/jobs/${id}`
       );
       fetchJobs();
     } catch (error) {

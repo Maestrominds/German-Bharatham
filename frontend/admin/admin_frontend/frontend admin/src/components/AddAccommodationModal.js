@@ -236,7 +236,7 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
         }
       };
 
-      const response = await fetch('https://german-bharatham-4umj.onrender.com/api/accommodation/admin', {
+      const response = await fetch('https://german-bharatham-five.vercel.app/api/accommodation/admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
