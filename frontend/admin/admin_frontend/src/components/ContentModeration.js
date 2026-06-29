@@ -23,6 +23,7 @@ const ContentModeration = () => {
   const [selectedListing, setSelectedListing] = useState(null);
   const [pendingListings, setPendingListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const authHeaders = () => ({
     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
@@ -91,6 +92,7 @@ const ContentModeration = () => {
   };
 
   const handleSaveListing = async (listing, editedPayload, finalStatus) => {
+    setSaving(true);
     try {
       const res = await fetch(DELETE_URLS[listing.category](listing.id), {
         method: 'PUT',
@@ -102,13 +104,17 @@ const ContentModeration = () => {
         throw new Error(err.message || 'Failed to save listing changes');
       }
 
-      if (finalStatus.toLowerCase() === 'active') {
+      // After saving data, update the status if needed
+      const statusLower = String(finalStatus).toLowerCase();
+      if (statusLower === 'active') {
         await updateStatus(listing, finalStatus);
       } else {
         await fetchPending();
       }
     } catch (e) {
-      alert(e.message);
+      alert('Save error: ' + e.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -195,8 +201,17 @@ const ContentModeration = () => {
         <ReviewListingModal
           listing={selectedListing}
           onClose={() => setShowReviewModal(false)}
-          onApprove={(editedPayload) => { handleSaveListing(selectedListing, editedPayload, selectedListing.category === 'Jobs' ? 'Active' : 'active'); setShowReviewModal(false); }}
-          onSavePending={(editedPayload) => { handleSaveListing(selectedListing, editedPayload, selectedListing.category === 'Jobs' ? 'Pending' : 'pending'); setShowReviewModal(false); }}
+          saving={saving}
+          onApprove={async (editedPayload) => {
+            const status = selectedListing.category === 'Jobs' ? 'Active' : 'active';
+            await handleSaveListing(selectedListing, editedPayload, status);
+            setShowReviewModal(false);
+          }}
+          onSavePending={async (editedPayload) => {
+            const status = selectedListing.category === 'Jobs' ? 'Pending' : 'pending';
+            await handleSaveListing(selectedListing, editedPayload, status);
+            setShowReviewModal(false);
+          }}
           onReject={() => { handleReject(selectedListing); setShowReviewModal(false); }}
         />
       )}

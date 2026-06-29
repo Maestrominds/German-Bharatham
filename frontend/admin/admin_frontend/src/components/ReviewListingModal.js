@@ -19,7 +19,7 @@ const ACCOMMODATION_AMENITIES = [
   { key: 'wheelchairAccessible', label: 'Wheelchair Accessible' }
 ];
 
-const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePending }) => {
+const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePending, saving }) => {
   const images = Array.isArray(listing.images) && listing.images.length > 0
     ? listing.images
     : (listing.image ? [listing.image] : []);
@@ -82,7 +82,6 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       // Services
       serviceType: raw.serviceType || 'Immigration',
       providerName: raw.providerName || '',
-      address: raw.address || '',
       whatsapp: raw.whatsapp || '',
       area: raw.area || '',
       servicesOfferedText: Array.isArray(raw.amenities) ? raw.amenities.join(', ') : (raw.servicesOffered || '')
@@ -219,6 +218,27 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
     onApprove(payload);
   };
 
+  const inputStyle = {
+    width: '100%',
+    padding: '8px 12px',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    fontSize: '14px',
+    marginTop: '4px',
+    boxSizing: 'border-box'
+  };
+
+  const textareaStyle = {
+    width: '100%',
+    padding: '8px 12px',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    fontSize: '14px',
+    marginTop: '4px',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box'
+  };
+
   const renderCategoryFields = () => {
     if (listing.category === 'Accommodation') {
       return (
@@ -229,8 +249,10 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Property Type</label>
               <select name="propertyType" value={formData.propertyType} onChange={handleFieldChange} style={inputStyle}>
                 <option value="Apartment">Apartment</option>
-                <option value="Shared Room">Shared Room</option>
-                <option value="Temporary Stays">Temporary Stays</option>
+                <option value="House">House</option>
+                <option value="Room">Room</option>
+                <option value="Studio">Studio</option>
+                <option value="Other">Other</option>
               </select>
             </div>
             <div>
@@ -265,7 +287,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             </div>
           </div>
 
-          <h4 style={{ margin: '15px 0 10px 0', color: '#111827', fontSize: '14px', fontWeight: '600' }}>Pricing & Rent (€)</h4>
+          <h5 style={{ margin: '15px 0 8px 0', color: '#374151', fontSize: '13px', fontWeight: '600' }}>Pricing & Rent (€)</h5>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '15px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Cold Rent</label>
@@ -281,13 +303,12 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             </div>
           </div>
 
-
-
-          <h4 style={{ margin: '15px 0 10px 0', color: '#111827', fontSize: '14px', fontWeight: '600' }}>Amenities</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px', background: '#f9fafb', padding: '12px', borderRadius: '6px' }}>
-            {ACCOMMODATION_AMENITIES.map((a) => (
-              <label key={a.key} style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-                <input type="checkbox" checked={!!formData.amenities[a.key]} onChange={(e) => handleNestedFieldChange('amenities', a.key, 'checkbox', e.target.checked)} style={{ marginRight: '6px' }} /> {a.label}
+          <h5 style={{ margin: '15px 0 8px 0', color: '#374151', fontSize: '13px', fontWeight: '600' }}>Amenities</h5>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            {ACCOMMODATION_AMENITIES.map((amenity) => (
+              <label key={amenity.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+                <input type="checkbox" checked={!!formData.amenities[amenity.key]} onChange={(e) => handleNestedFieldChange('amenities', amenity.key, 'checkbox', e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                {amenity.label}
               </label>
             ))}
           </div>
@@ -298,13 +319,13 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
     if (listing.category === 'Food') {
       return (
         <div style={{ marginTop: '20px', borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>
-          <h4 style={{ margin: '0 0 12px 0', color: '#111827', fontSize: '15px', fontWeight: '600' }}>Food & Grocery Details</h4>
+          <h4 style={{ margin: '0 0 12px 0', color: '#111827', fontSize: '15px', fontWeight: '600' }}>Food Listing Details</h4>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Sub-Category</label>
               <select name="subCategory" value={formData.subCategory} onChange={handleFieldChange} style={inputStyle}>
                 <option value="Restaurant">Restaurant</option>
-                <option value="Indian Grocery">Indian Grocery</option>
+                <option value="Grocery Store">Grocery Store</option>
                 <option value="Bakery">Bakery</option>
                 <option value="Cafe">Cafe</option>
                 <option value="Food Truck">Food Truck</option>
@@ -314,69 +335,64 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Price Range</label>
               <select name="priceRange" value={formData.priceRange} onChange={handleFieldChange} style={inputStyle}>
-                <option value="€">€ (Budget)</option>
-                <option value="€€">€€ (Moderate)</option>
-                <option value="€€€">€€€ (Premium)</option>
-                <option value="€€€€">€€€€ (Luxury)</option>
+                <option value="€">€ - Budget Friendly</option>
+                <option value="€€">€€ - Moderate</option>
+                <option value="€€€">€€€ - Expensive</option>
+                <option value="€€€€">€€€€ - Very Expensive</option>
               </select>
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Cuisine / Type Label</label>
-              <input type="text" name="type" value={formData.type} onChange={handleFieldChange} placeholder="e.g. South Indian / Vegetarian" style={inputStyle} />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Zip Code</label>
-              <input type="text" name="zipCode" value={formData.zipCode} onChange={handleFieldChange} style={inputStyle} />
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', marginBottom: '12px' }}>
-            <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Address</label>
               <input type="text" name="address" value={formData.address || ''} onChange={handleFieldChange} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>State</label>
-              <input type="text" name="state" value={formData.state} onChange={handleFieldChange} style={inputStyle} />
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Postal Code</label>
+              <input type="text" name="zipCode" value={formData.zipCode || ''} onChange={handleFieldChange} style={inputStyle} />
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Website</label>
-              <input type="text" name="website" value={formData.website} onChange={handleFieldChange} style={inputStyle} />
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Opening Hours</label>
+              <input type="text" name="openingHours" value={formData.openingHours || ''} onChange={handleFieldChange} placeholder="e.g. 10:00 AM - 10:00 PM" style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Opening Hours</label>
-              <input type="text" name="openingHours" value={formData.openingHours} onChange={handleFieldChange} placeholder="e.g. Mon-Sat: 11:00 AM - 10:00 PM" style={inputStyle} />
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Website</label>
+              <input type="text" name="website" value={formData.website || ''} onChange={handleFieldChange} placeholder="https://..." style={inputStyle} />
             </div>
           </div>
 
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Cuisines (comma separated)</label>
-            <input type="text" name="cuisine" value={formData.cuisine} onChange={handleFieldChange} placeholder="Indian, Tamil, German" style={inputStyle} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Cuisines (comma separated)</label>
+              <input type="text" name="cuisine" value={formData.cuisine} onChange={handleFieldChange} placeholder="South Indian, Punjabi, etc." style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Specialties (comma separated)</label>
+              <input type="text" name="specialties" value={formData.specialties} onChange={handleFieldChange} placeholder="Biryani, Masala Dosa, etc." style={inputStyle} />
+            </div>
           </div>
 
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Specialties (comma separated)</label>
-            <input type="text" name="specialties" value={formData.specialties} onChange={handleFieldChange} placeholder="Biryani, Dosa, Masala Tea" style={inputStyle} />
-          </div>
-
-          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginTop: '12px', background: '#f9fafb', padding: '10px', borderRadius: '6px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-              <input type="checkbox" name="dineInAvailable" checked={formData.dineInAvailable} onChange={handleFieldChange} style={{ marginRight: '6px' }} /> Dine-in
+          <h5 style={{ margin: '15px 0 8px 0', color: '#374151', fontSize: '13px', fontWeight: '600' }}>Options</h5>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+              <input type="checkbox" name="dineInAvailable" checked={formData.dineInAvailable} onChange={handleFieldChange} style={{ width: '16px', height: '16px' }} />
+              Dine In
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-              <input type="checkbox" name="deliveryAvailable" checked={formData.deliveryAvailable} onChange={handleFieldChange} style={{ marginRight: '6px' }} /> Delivery
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+              <input type="checkbox" name="deliveryAvailable" checked={formData.deliveryAvailable} onChange={handleFieldChange} style={{ width: '16px', height: '16px' }} />
+              Delivery
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-              <input type="checkbox" name="takeoutAvailable" checked={formData.takeoutAvailable} onChange={handleFieldChange} style={{ marginRight: '6px' }} /> Takeout
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+              <input type="checkbox" name="takeoutAvailable" checked={formData.takeoutAvailable} onChange={handleFieldChange} style={{ width: '16px', height: '16px' }} />
+              Takeout
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-              <input type="checkbox" name="cateringAvailable" checked={formData.cateringAvailable} onChange={handleFieldChange} style={{ marginRight: '6px' }} /> Catering
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+              <input type="checkbox" name="cateringAvailable" checked={formData.cateringAvailable} onChange={handleFieldChange} style={{ width: '16px', height: '16px' }} />
+              Catering
             </label>
           </div>
         </div>
@@ -509,34 +525,12 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
     return null;
   };
 
-  const inputStyle = {
-    width: '100%',
-    padding: '8px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    fontSize: '14px',
-    marginTop: '4px',
-    boxSizing: 'border-box'
-  };
-
-  const textareaStyle = {
-    width: '100%',
-    padding: '8px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    fontSize: '14px',
-    marginTop: '4px',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit',
-    resize: 'vertical'
-  };
-
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1000 }}>
       <div className="modal-content review-modal" style={{ maxWidth: '900px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <h2>Edit & Moderate Listing</h2>
-          <button className="close-btn" onClick={onClose}>
+          <button className="close-btn" onClick={onClose} disabled={saving}>
             <X size={24} />
           </button>
         </div>
@@ -599,18 +593,18 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         )}
 
         <div className="review-actions" style={{ padding: '15px 24px', display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #e5e7eb' }}>
-          <button className="close-action-btn" onClick={onClose} style={{ padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500' }}>
+          <button className="close-action-btn" onClick={onClose} disabled={saving} style={{ padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500' }}>
             Cancel
           </button>
-          <button className="approve-action-btn" onClick={handleSaveClick} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
+          <button className="approve-action-btn" onClick={handleSaveClick} disabled={saving} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', opacity: saving ? 0.7 : 1 }}>
             <Save size={16} />
-            Save as Pending
+            {saving ? 'Saving...' : 'Save as Pending'}
           </button>
-          <button className="approve-action-btn" onClick={handleApproveClick} style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
+          <button className="approve-action-btn" onClick={handleApproveClick} disabled={saving} style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', opacity: saving ? 0.7 : 1 }}>
             <Check size={16} />
-            Save & Approve
+            {saving ? 'Approving...' : 'Save & Approve'}
           </button>
-          <button className="reject-action-btn" onClick={onReject} style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
+          <button className="reject-action-btn" onClick={onReject} disabled={saving} style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', opacity: saving ? 0.7 : 1 }}>
             <X size={16} />
             Reject
           </button>
