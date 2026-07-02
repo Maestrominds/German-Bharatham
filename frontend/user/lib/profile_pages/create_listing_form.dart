@@ -196,6 +196,12 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
   }
 
   Future<void> _pickImage() async {
+    if (widget.category != 'Jobs' && _imagesBase64.length >= 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You can upload a maximum of 3 images.')),
+      );
+      return;
+    }
     try {
       final XFile? file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
       if (file == null) return;
@@ -541,7 +547,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
                   ],
                 );
               }),
-              if (widget.category != 'Jobs' || _imagesBase64.isEmpty)
+              if ((widget.category != 'Jobs' && _imagesBase64.length < 3) || (widget.category == 'Jobs' && _imagesBase64.isEmpty))
                 GestureDetector(
                   onTap: _pickImage,
                   child: Container(

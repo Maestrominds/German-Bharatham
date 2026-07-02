@@ -105,9 +105,28 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
     }));
   };
 
-  const addImage = () => {
-    const url = prompt('Enter image URL:');
-    if (url) setImages([...images, url]);
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (images.length + files.length > 3) {
+      alert("You can upload a maximum of 3 images.");
+      return;
+    }
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const base64 = uploadEvent.target.result;
+        if (base64) {
+          setImages(prev => {
+            if (prev.length >= 3) return prev;
+            return [...prev, base64];
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const removeImage = (index) => {
@@ -477,7 +496,24 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
                   <button onClick={() => removeImage(idx)} style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', padding: 2, cursor: 'pointer' }}><Trash2 size={12} /></button>
                 </div>
               ))}
-              <button onClick={addImage} style={{ width: 80, height: 80, border: '2px dashed #d1d5db', background: 'none', borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Upload size={20} /></button>
+              {images.length < 3 && (
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    id="review-image-upload-input"
+                    style={{ display: 'none' }}
+                    onChange={handleImageUpload}
+                  />
+                  <label
+                    htmlFor="review-image-upload-input"
+                    style={{ width: 80, height: 80, border: '2px dashed #d1d5db', borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
+                  >
+                    <Upload size={20} />
+                  </label>
+                </>
+              )}
             </div>
           </div>
           <div className="review-details" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
