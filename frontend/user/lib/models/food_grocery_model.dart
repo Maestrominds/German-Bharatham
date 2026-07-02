@@ -122,6 +122,7 @@ class FoodGrocery {
   final bool dineInAvailable;
   final bool cateringAvailable;
   final String? image;
+  final List<String> images;
   final double? latitude;
   final double? longitude;
   final String status;
@@ -155,6 +156,7 @@ class FoodGrocery {
     this.dineInAvailable = false,
     this.cateringAvailable = false,
     this.image,
+    this.images = const [],
     this.latitude,
     this.longitude,
     this.status = 'Active',
@@ -176,6 +178,17 @@ class FoodGrocery {
     final mediaImage = _firstImageFromMedia(json['media']);
     final explicitImage = json['image']?.toString();
     final chosenImage = (explicitImage != null && explicitImage.trim().isNotEmpty) ? explicitImage : mediaImage;
+
+    final List<String> rawImages = [];
+    if (json['images'] is List) {
+      rawImages.addAll(_toStringList(json['images']));
+    } else if (json['media'] is Map && json['media']['images'] is List) {
+      rawImages.addAll(_toStringList(json['media']['images']));
+    }
+    if (rawImages.isEmpty && chosenImage.trim().isNotEmpty) {
+      rawImages.add(chosenImage);
+    }
+    final absoluteImages = rawImages.map((img) => _toAbsoluteImageUrl(img)).toList();
 
     return FoodGrocery(
       id: (json['_id'] ?? json['id'] ?? '').toString(),
@@ -202,6 +215,7 @@ class FoodGrocery {
       dineInAvailable: _toBool(json['dineInAvailable']),
       cateringAvailable: _toBool(json['cateringAvailable']),
       image: chosenImage.trim().isEmpty ? null : _toAbsoluteImageUrl(chosenImage),
+      images: absoluteImages,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       status: _normalizeStatus(json['status'] ?? 'Active'),
@@ -238,6 +252,7 @@ class FoodGrocery {
       'dineInAvailable': dineInAvailable,
       'cateringAvailable': cateringAvailable,
       'image': image,
+      'images': images,
       'latitude': latitude,
       'longitude': longitude,
       'status': status,

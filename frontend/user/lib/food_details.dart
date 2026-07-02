@@ -31,12 +31,21 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
   late bool isSaved;
   RatingStats? _ratingStats;
   Rating? _userRating;
+  int _currentImageIndex = 0;
+  late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
     isSaved = SavedFoodManager.instance.isSaved(widget.item.id);
+    _pageController = PageController();
     _loadRatingData();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadRatingData() async {
@@ -134,7 +143,44 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
             /// IMAGE HEADER
             Stack(
               children: [
-                _buildImage(widget.item.image, 300),
+                SizedBox(
+                  height: 300,
+                  child: widget.item.images.isNotEmpty
+                      ? Stack(
+                          children: [
+                            PageView.builder(
+                              controller: _pageController,
+                              itemCount: widget.item.images.length,
+                              onPageChanged: (i) => setState(() => _currentImageIndex = i),
+                              itemBuilder: (_, i) => _buildImage(widget.item.images[i], 300),
+                            ),
+                            if (widget.item.images.length > 1)
+                              Positioned(
+                                bottom: 12,
+                                left: 0,
+                                right: 0,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    widget.item.images.length,
+                                    (i) => Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                                      width: _currentImageIndex == i ? 12 : 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(4),
+                                        color: _currentImageIndex == i
+                                            ? const Color(0xFF4E7F6D)
+                                            : Colors.white.withOpacity(0.6),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        )
+                      : _buildImage(null, 300),
+                ),
                 Positioned(
                   top: 12,
                   left: 12,

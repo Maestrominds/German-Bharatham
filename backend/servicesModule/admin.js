@@ -203,6 +203,9 @@ router.put('/:id', adminCheck, async (req, res) => {
       updateData.phone        = String(b.contactPhone || b.phone).trim() || null;
     }
     if (amenities !== undefined) updateData.amenities = amenities;
+    if (b.images !== undefined) {
+      updateData.images = Array.isArray(b.images) ? b.images.map(s => String(s)) : [];
+    }
 
     console.log(`🔍 [DB QUERY] Updating Service with ID: ${numericId}`);
     const updateStart = Date.now();

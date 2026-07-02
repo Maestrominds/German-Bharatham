@@ -414,11 +414,20 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: _buildServiceImage(
-                                _displayImage,
-                                width: 80,
-                                height: 80,
-                              ),
+                              child: widget.item.images.isNotEmpty
+                                  ? PageView.builder(
+                                      itemCount: widget.item.images.length,
+                                      itemBuilder: (_, i) => _buildServiceImage(
+                                        widget.item.images[i],
+                                        width: 80,
+                                        height: 80,
+                                      ),
+                                    )
+                                  : _buildServiceImage(
+                                      _displayImage,
+                                      width: 80,
+                                      height: 80,
+                                    ),
                             ),
                           ),
                           const SizedBox(width: 12),

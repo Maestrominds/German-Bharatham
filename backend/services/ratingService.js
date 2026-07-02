@@ -75,20 +75,43 @@ class RatingService {
         throw new Error(`${entityType} not found`);
       }
 
-      // Create new rating
-      const newRating = await prisma.universalRating.create({
-        data: {
+      // Check if user has already rated this entity
+      const existingRating = await prisma.universalRating.findFirst({
+        where: {
           userId: String(userId),
-          userName: userName || "Anonymous User",
-          userType: userType || "guest",
           entityId: numericEntityId,
           entityType: String(entityType).toLowerCase(),
-          rating: parseInt(rating),
-          review: review || "",
-          deviceInfo: deviceInfo || {},
-          status: "active"
         }
       });
+
+      let ratingResult;
+      if (existingRating) {
+        // Update existing rating
+        ratingResult = await prisma.universalRating.update({
+          where: { id: existingRating.id },
+          data: {
+            userName: userName || "Anonymous User",
+            rating: parseInt(rating),
+            review: review || "",
+            deviceInfo: deviceInfo || {},
+          }
+        });
+      } else {
+        // Create new rating
+        ratingResult = await prisma.universalRating.create({
+          data: {
+            userId: String(userId),
+            userName: userName || "Anonymous User",
+            userType: userType || "guest",
+            entityId: numericEntityId,
+            entityType: String(entityType).toLowerCase(),
+            rating: parseInt(rating),
+            review: review || "",
+            deviceInfo: deviceInfo || {},
+            status: "active"
+          }
+        });
+      }
 
       // Recalculate and update entity rating
       await this.updateEntityRating(numericEntityId, entityType);
@@ -96,8 +119,8 @@ class RatingService {
       return {
         success: true,
         rating: {
-          ...newRating,
-          _id: String(newRating.id)
+          ...ratingResult,
+          _id: String(ratingResult.id)
         },
         message: "Rating submitted successfully"
       };

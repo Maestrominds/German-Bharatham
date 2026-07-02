@@ -284,6 +284,13 @@ router.put("/:id", adminCheck, async (req, res) => {
     if (b.media)            updateData.media            = b.media;
     if (b.adminControls)    updateData.adminControls    = b.adminControls;
 
+    // Derived image
+    if (b.media?.images && Array.isArray(b.media.images)) {
+      updateData.image = b.media.images.length > 0 ? b.media.images[0] : null;
+    } else if (b.image !== undefined) {
+      updateData.image = b.image ? String(b.image).trim() : null;
+    }
+
     // Flat derived fields from nested
     if (b.rentDetails?.coldRent != null)      updateData.rent     = parseFloat(b.rentDetails.coldRent) || null;
     if (b.rentDetails?.deposit  != null)      updateData.deposit  = parseFloat(b.rentDetails.deposit)  || null;

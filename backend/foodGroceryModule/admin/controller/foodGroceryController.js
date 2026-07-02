@@ -211,6 +211,12 @@ exports.updateFoodGrocery = async (req, res) => {
     if (Array.isArray(b.cuisine))     updateData.cuisine     = b.cuisine.map(c => String(c));
     if (Array.isArray(b.specialties)) updateData.specialties = b.specialties.map(s => String(s));
 
+    if (b.images !== undefined) {
+      updateData.image = Array.isArray(b.images) ? b.images.join(",") : (b.image ? String(b.image) : null);
+    } else if (b.image !== undefined) {
+      updateData.image = b.image ? String(b.image).trim() : null;
+    }
+
     // Build location string from city/address
     if (b.city || b.address) {
       updateData.location = `${b.city || ''}, ${b.address || ''}`.trim().replace(/^,\s*/, '').replace(/,\s*$/, '');

@@ -164,6 +164,9 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
           bathrooms: formData.propertyDetails.bathrooms !== '' ? parseInt(formData.propertyDetails.bathrooms, 10) : null,
         },
         amenities: formData.amenities && typeof formData.amenities === 'object' ? formData.amenities : {},
+        media: {
+          images: images
+        },
       };
     }
 
