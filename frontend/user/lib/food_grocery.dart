@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'food_details.dart';
 import 'food_filter_page.dart';
@@ -297,21 +299,38 @@ class _FoodCardState extends State<FoodCard> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: widget.item.image != null && widget.item.image!.isNotEmpty
-                  ? (widget.item.image!.startsWith('http')
-                        ? Image.network(
-                            widget.item.image!,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => _placeholderImage(),
-                          )
-                        : Image.asset(
-                            widget.item.image!,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => _placeholderImage(),
-                          ))
+                  ? (widget.item.image!.startsWith('data:image')
+                      ? (() {
+                          try {
+                            final Uint8List bytes = base64Decode(widget.item.image!.split(',').last);
+                            return Image.memory(
+                              bytes,
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              errorBuilder: (_, _, _) => _placeholderImage(),
+                            );
+                          } catch (_) {
+                            return _placeholderImage();
+                          }
+                        })()
+                      : (widget.item.image!.startsWith('http')
+                          ? Image.network(
+                              widget.item.image!,
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              errorBuilder: (_, _, _) => _placeholderImage(),
+                            )
+                          : Image.asset(
+                              widget.item.image!,
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => _placeholderImage(),
+                            )))
                   : _placeholderImage(),
             ),
             const SizedBox(width: 12),

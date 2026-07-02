@@ -211,10 +211,14 @@ exports.updateFoodGrocery = async (req, res) => {
     if (Array.isArray(b.cuisine))     updateData.cuisine     = b.cuisine.map(c => String(c));
     if (Array.isArray(b.specialties)) updateData.specialties = b.specialties.map(s => String(s));
 
+    console.log(`🖼️ [IMAGE UPDATE DEBUG] Received b.images:`, b.images);
+    console.log(`🖼️ [IMAGE UPDATE DEBUG] Received b.image:`, b.image);
     if (b.images !== undefined) {
       updateData.image = Array.isArray(b.images) ? b.images.join(";;;") : (b.image ? String(b.image) : null);
+      console.log(`🖼️ [IMAGE UPDATE DEBUG] Set updateData.image from b.images:`, updateData.image ? (updateData.image.substring(0, 100) + '...') : null);
     } else if (b.image !== undefined) {
       updateData.image = b.image ? String(b.image).trim() : null;
+      console.log(`🖼️ [IMAGE UPDATE DEBUG] Set updateData.image from b.image:`, updateData.image ? (updateData.image.substring(0, 100) + '...') : null);
     }
 
     // Build location string from city/address

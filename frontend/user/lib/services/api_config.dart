@@ -6,7 +6,7 @@ class ApiConfig {
       static String get verifyOtpEndpoint => '$baseUrl/api/user/verify-otp';
     static String get paymentHistoryEndpoint => '$baseUrl/api/subscriptions/user/payment-history';
   // Production backend
-  static const String _prodBaseUrl = 'https://german-bharatham-4umj.onrender.com';
+  static const String _prodBaseUrl = 'https://german-bharatham-five.vercel.app/';
 
   // Google Sign-In
   // Web OAuth client ID (also used as server client ID to obtain ID token on Android
@@ -34,7 +34,7 @@ class ApiConfig {
   // Default backend in debug.
   // You can override at build/run time with:
   //   flutter run --dart-define=API_BASE_URL=<YOUR_BACKEND_BASE_URL>
-  static const String _devDefaultBaseUrl = 'https://german-bharatham-4umj.onrender.com';
+  static const String _devDefaultBaseUrl = 'https://german-bharatham-five.vercel.app';
 
   /// Base URL selection:
   /// - If --dart-define=API_BASE_URL=... is provided, that wins
