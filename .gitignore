@@ -94,4 +94,4 @@ tmp_*.json
 # ── Stash/merge artifacts ─────────────────────────────────────
 .wip_*.patch
 .wip_unmerged_files.txt
-.md
+*.md
