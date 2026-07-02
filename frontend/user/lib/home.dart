@@ -168,10 +168,44 @@ class _HomePageState extends State<HomePage> {
     return null;
   }
 
+  Future<bool?> _showExitConfirmationDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Exit App'),
+        content: const Text('Are you sure you want to exit the app?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HomePage.primaryGreen,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Exit'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FA),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) async {
+        if (didPop) return;
+        final exitConfirmed = await _showExitConfirmationDialog();
+        if (exitConfirmed == true) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF6F8FA),
 
       // 🔹 BODY
       body: SafeArea(
@@ -355,8 +389,9 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   // 🔹 HEADER
   // 🔹 HEADER

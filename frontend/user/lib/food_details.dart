@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -35,6 +36,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
   int _currentImageIndex = 0;
   late PageController _pageController;
   Timer? _slideshowTimer;
+  final Map<String, Uint8List> _base64Cache = {};
 
   @override
   void initState() {
@@ -49,7 +51,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     final imgs = widget.item.images;
     if (imgs.length <= 1) return;
     _slideshowTimer?.cancel();
-    _slideshowTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) {
+    _slideshowTimer = Timer.periodic(const Duration(milliseconds: 4000), (timer) {
       if (_pageController.hasClients) {
         int nextPage = _pageController.page!.toInt() + 1;
         if (nextPage >= imgs.length) {
@@ -589,12 +591,33 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
       return _placeholderImage(height);
     }
 
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        Uint8List? bytes = _base64Cache[imageUrl];
+        if (bytes == null) {
+          bytes = base64Decode(imageUrl.split(',').last);
+          _base64Cache[imageUrl] = bytes;
+        }
+        return Image.memory(
+          bytes,
+          width: double.infinity,
+          height: height,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) => _placeholderImage(height),
+        );
+      } catch (_) {
+        return _placeholderImage(height);
+      }
+    }
+
     if (imageUrl.startsWith('http')) {
       return Image.network(
         imageUrl,
         width: double.infinity,
         height: height,
         fit: BoxFit.cover,
+        gaplessPlayback: true,
         errorBuilder: (context, error, stackTrace) => _placeholderImage(height),
       );
     } else {

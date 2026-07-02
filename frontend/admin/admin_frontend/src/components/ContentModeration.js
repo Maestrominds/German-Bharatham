@@ -77,6 +77,8 @@ const ContentModeration = () => {
   useEffect(() => { fetchPending(); }, []);
 
   const updateStatus = async (listing, status) => {
+    const isApprove = status === 'active' || status === 'Active';
+    setSaving(isApprove ? 'active' : 'rejecting');
     try {
       const res = await fetch(PATCH_URLS[listing.category](listing.id), {
         method: 'PATCH',
@@ -88,7 +90,11 @@ const ContentModeration = () => {
         throw new Error(e2.message || 'Failed to update status');
       }
       await fetchPending();
-    } catch (e) { alert(e.message); }
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setSaving(null);
+    }
   };
 
   const handleSaveListing = async (listing, editedPayload, finalStatus) => {
@@ -121,6 +127,7 @@ const ContentModeration = () => {
   const handleApprove = (listing) => updateStatus(listing, listing.category === 'Jobs' ? 'Active' : 'active');
 
   const handleReject = async (listing) => {
+    setSaving('rejecting');
     try {
       if (listing.creatorType === 'user') {
         await updateStatus(listing, 'Rejected');
@@ -135,7 +142,11 @@ const ContentModeration = () => {
         }
         await fetchPending();
       }
-    } catch (e) { alert(e.message); }
+    } catch (e) { 
+      alert(e.message); 
+    } finally {
+      setSaving(null);
+    }
   };
 
   return (
@@ -183,14 +194,14 @@ const ContentModeration = () => {
               </div>
             </div>
             <div className="listing-actions-vertical">
-              <button className="action-btn view-btn" onClick={() => { setSelectedListing(listing); setShowReviewModal(true); }}>
+              <button className="action-btn view-btn" disabled={saving !== null} onClick={() => { setSelectedListing(listing); setShowReviewModal(true); }}>
                 <Edit size={16} /> Edit
               </button>
-              <button className="action-btn approve-btn" onClick={() => handleApprove(listing)}>
-                <Check size={16} /> Approve
+              <button className="action-btn approve-btn" disabled={saving !== null} onClick={() => handleApprove(listing)}>
+                <Check size={16} /> {saving === 'active' ? 'Approving...' : 'Approve'}
               </button>
-              <button className="action-btn reject-btn" onClick={() => handleReject(listing)}>
-                <X size={16} /> Reject
+              <button className="action-btn reject-btn" disabled={saving !== null} onClick={() => handleReject(listing)}>
+                <X size={16} /> {saving === 'rejecting' ? 'Rejecting...' : 'Reject'}
               </button>
             </div>
           </div>

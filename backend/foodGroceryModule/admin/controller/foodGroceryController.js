@@ -212,7 +212,7 @@ exports.updateFoodGrocery = async (req, res) => {
     if (Array.isArray(b.specialties)) updateData.specialties = b.specialties.map(s => String(s));
 
     if (b.images !== undefined) {
-      updateData.image = Array.isArray(b.images) ? b.images.join(",") : (b.image ? String(b.image) : null);
+      updateData.image = Array.isArray(b.images) ? b.images.join(";;;") : (b.image ? String(b.image) : null);
     } else if (b.image !== undefined) {
       updateData.image = b.image ? String(b.image).trim() : null;
     }

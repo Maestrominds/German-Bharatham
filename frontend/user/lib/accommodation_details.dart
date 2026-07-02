@@ -44,6 +44,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   int _currentImageIndex = 0;
   final PageController _pageController = PageController();
   Timer? _slideshowTimer;
+  final Map<String, Uint8List> _base64Cache = {};
 
   @override
   void initState() {
@@ -62,7 +63,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     final imgs = _allImages;
     if (imgs.length <= 1) return;
     _slideshowTimer?.cancel();
-    _slideshowTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) {
+    _slideshowTimer = Timer.periodic(const Duration(milliseconds: 4000), (timer) {
       if (_pageController.hasClients) {
         int nextPage = _pageController.page!.toInt() + 1;
         if (nextPage >= imgs.length) {
@@ -105,6 +106,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
             'description': item.description,
             'location': item.location,
             'image': item.image,
+            'images': item.images,
             'rating': item.rating,
             'price': item.price,
             'amenities': item.amenities,
@@ -146,11 +148,10 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     // Standardize media
     if (!_data.containsKey('media') || _data['media'] == null) {
       final List<dynamic> imgs = [];
-      if (_data['image'] != null && _data['image'].toString().isNotEmpty) {
-        imgs.add(_data['image']);
-      }
-      if (_data['images'] is List) {
+      if (_data['images'] is List && (_data['images'] as List).isNotEmpty) {
         imgs.addAll(_data['images']);
+      } else if (_data['image'] != null && _data['image'].toString().isNotEmpty) {
+        imgs.add(_data['image']);
       }
       _data['media'] = {'images': imgs};
     }
@@ -321,16 +322,32 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     final absoluteSrc = _toAbsoluteUrl(src);
     if (absoluteSrc.startsWith('data:image')) {
       try {
-        final Uint8List bytes = base64Decode(absoluteSrc.split(',').last);
-        return Image.memory(bytes, width: double.infinity, height: h, fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _placeholder(h));
+        Uint8List? bytes = _base64Cache[absoluteSrc];
+        if (bytes == null) {
+          bytes = base64Decode(absoluteSrc.split(',').last);
+          _base64Cache[absoluteSrc] = bytes;
+        }
+        return Image.memory(
+          bytes,
+          width: double.infinity,
+          height: h,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+          errorBuilder: (_, __, ___) => _placeholder(h),
+        );
       } catch (_) {
         return _placeholder(h);
       }
     }
     if (absoluteSrc.startsWith('http')) {
-      return Image.network(absoluteSrc, width: double.infinity, height: h, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _placeholder(h));
+      return Image.network(
+        absoluteSrc,
+        width: double.infinity,
+        height: h,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) => _placeholder(h),
+      );
     }
     return _placeholder(h);
   }

@@ -18,6 +18,7 @@ class Accommodation {
   final String description;
   final String location;
   final String image;
+  final List<String> images;
   final double rating;
   final int price;
   final List<String> amenities;
@@ -52,6 +53,7 @@ class Accommodation {
     required this.description,
     required this.location,
     required this.image,
+    required this.images,
     required this.rating,
     required this.price,
     required this.amenities,
@@ -145,12 +147,23 @@ class Accommodation {
               ? resolvedImageUrl
               : 'assets/images/room.jpg');
 
+    final List<String> extractedImages = [];
+    if (json['media']?['images'] is List) {
+      extractedImages.addAll((json['media']['images'] as List).map((e) => e.toString()).where((s) => s.isNotEmpty));
+    } else if (json['images'] is List) {
+      extractedImages.addAll((json['images'] as List).map((e) => e.toString()).where((s) => s.isNotEmpty));
+    }
+    if (extractedImages.isEmpty && normalizedImage.isNotEmpty && normalizedImage != 'assets/images/room.jpg') {
+      extractedImages.add(normalizedImage);
+    }
+
     return Accommodation(
       id: (json['_id'] ?? '').toString(),
       title: (json['title'] ?? 'Untitled').toString(),
       description: (json['description'] ?? '').toString(),
       location: location.isNotEmpty ? location : 'Location not specified',
       image: normalizedImage,
+      images: extractedImages,
       rating: 4.5, // Default rating since it's not in schema
       price: displayPrice,
       amenities: extractedAmenities.take(3).toList(),
@@ -187,6 +200,7 @@ class Accommodation {
       'description': description,
       'location': location,
       'image': image,
+      'images': images,
       'rating': rating,
       'price': price,
       'amenities': amenities,
@@ -222,6 +236,9 @@ class Accommodation {
       description: (json['description'] ?? '').toString(),
       location: (json['location'] ?? '').toString(),
       image: (json['image'] ?? 'assets/images/room.jpg').toString(),
+      images: (json['images'] is List)
+          ? (json['images'] as List).map((e) => e.toString()).toList()
+          : <String>[(json['image'] ?? 'assets/images/room.jpg').toString()],
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       price: (json['price'] as num?)?.toInt() ?? 0,
       amenities: (json['amenities'] is List)

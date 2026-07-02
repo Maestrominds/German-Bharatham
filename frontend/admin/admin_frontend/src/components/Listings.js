@@ -24,6 +24,7 @@ const Listings = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
   const handleUnauthorized = () => {
     localStorage.removeItem('adminToken');
@@ -81,6 +82,7 @@ const Listings = () => {
   const handleStatusChange = async (item, newStatus) => {
     const conf = APIS[item.category];
     if (!conf) return;
+    setUpdatingStatusId(item._id);
     try {
       const token = localStorage.getItem('adminToken');
       const res = await fetch(conf.patch(item._id), {
@@ -94,6 +96,9 @@ const Listings = () => {
         ));
       } else { alert('Failed to update status'); }
     } catch (e) { alert('Error: ' + e.message); }
+    finally {
+      setUpdatingStatusId(null);
+    }
   };
 
   const handleDelete = async (item) => {
@@ -184,16 +189,22 @@ const Listings = () => {
                     <td>
                       <select
                         value={listing.status}
+                        disabled={updatingStatusId !== null}
                         onChange={e => handleStatusChange(listing, e.target.value)}
                         style={{
                           background: sc.bg, color: sc.color, border: 'none', borderRadius: 12,
-                          padding: '3px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                          padding: '3px 10px', fontSize: 12, fontWeight: 600, 
+                          cursor: updatingStatusId !== null ? 'not-allowed' : 'pointer',
+                          opacity: updatingStatusId !== null ? 0.6 : 1
                         }}
                       >
                         <option value="active">Active</option>
                         <option value="pending">Pending</option>
                         <option value="inactive">Inactive</option>
                       </select>
+                      {updatingStatusId === listing._id && (
+                        <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '6px' }}>updating...</span>
+                      )}
                     </td>
                     <td>{listing.created}</td>
                     <td>

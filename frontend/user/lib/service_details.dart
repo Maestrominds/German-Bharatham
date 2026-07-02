@@ -19,6 +19,7 @@ Widget _buildServiceImage(
   String src, {
   required double width,
   required double height,
+  Map<String, Uint8List>? cache,
 }) {
   final fallback = Container(
     width: width,
@@ -48,12 +49,19 @@ Widget _buildServiceImage(
 
   if (absoluteSrc.startsWith('data:image')) {
     try {
-      final Uint8List bytes = base64Decode(absoluteSrc.split(',').last);
+      Uint8List? bytes = cache?[absoluteSrc];
+      if (bytes == null) {
+        bytes = base64Decode(absoluteSrc.split(',').last);
+        if (cache != null) {
+          cache[absoluteSrc] = bytes;
+        }
+      }
       return Image.memory(
         bytes,
         width: width,
         height: height,
         fit: BoxFit.cover,
+        gaplessPlayback: true,
         errorBuilder: (_, __, ___) => fallback,
       );
     } catch (_) {
@@ -67,6 +75,7 @@ Widget _buildServiceImage(
       width: width,
       height: height,
       fit: BoxFit.cover,
+      gaplessPlayback: true,
       errorBuilder: (_, __, ___) => fallback,
     );
   }
@@ -98,6 +107,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   int _currentImageIndex = 0;
   late PageController _pageController;
   Timer? _slideshowTimer;
+  final Map<String, Uint8List> _base64Cache = {};
 
   @override
   void initState() {
@@ -115,7 +125,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
     final imgs = widget.item.images;
     if (imgs.length <= 1) return;
     _slideshowTimer?.cancel();
-    _slideshowTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) {
+    _slideshowTimer = Timer.periodic(const Duration(milliseconds: 4000), (timer) {
       if (_pageController.hasClients) {
         int nextPage = _pageController.page!.toInt() + 1;
         if (nextPage >= imgs.length) {
@@ -429,7 +439,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                     controller: _pageController,
                                     itemCount: widget.item.images.length,
                                     onPageChanged: (i) => setState(() => _currentImageIndex = i),
-                                    itemBuilder: (_, i) => _buildServiceImage(widget.item.images[i], width: double.infinity, height: 300),
+                                    itemBuilder: (_, i) => _buildServiceImage(widget.item.images[i], width: double.infinity, height: 300, cache: _base64Cache),
                                   ),
                                   if (widget.item.images.length > 1)
                                     Positioned(
@@ -456,7 +466,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                     ),
                                 ],
                               )
-                            : _buildServiceImage('', width: double.infinity, height: 300),
+                            : _buildServiceImage('', width: double.infinity, height: 300, cache: _base64Cache),
                       ),
                       Positioned(
                         top: 12,
