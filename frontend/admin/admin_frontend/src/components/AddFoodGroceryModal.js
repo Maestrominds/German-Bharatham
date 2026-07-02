@@ -16,7 +16,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
     website: '',
     description: '',
     openingHours: '',
-    priceRange: '$$',
+    priceRange: '€€',
     cuisine: [],
     specialties: [],
     deliveryAvailable: false,
@@ -211,10 +211,10 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
                   onChange={handleChange}
                   required
                 >
-                  <option value="$">$ - Budget Friendly</option>
-                  <option value="$$">$$ - Moderate</option>
-                  <option value="$$$">$$$ - Expensive</option>
-                  <option value="$$$$">$$$$ - Very Expensive</option>
+                  <option value="€">€ - Budget Friendly</option>
+                  <option value="€€">€€ - Moderate</option>
+                  <option value="€€€">€€€ - Expensive</option>
+                  <option value="€€€€">€€€€ - Very Expensive</option>
                 </select>
               </div>
             </div>

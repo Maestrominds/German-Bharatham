@@ -30,9 +30,16 @@ class AccommodationDetailPage extends StatefulWidget {
 }
 
 class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
+  static const Color primaryGreen = Color(0xFF4E7F6D);
+  static const Color lightGreen = Color(0xFFE8F5F0);
+  static const Color textPrimary = Color(0xFF1A1A2E);
+  static const Color textSecondary = Color(0xFF6B7280);
+
   RatingStats? _ratingStats;
   Rating? _userRating;
   bool _isSaved = false;
+  int _currentImageIndex = 0;
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
@@ -45,6 +52,12 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     _loadRatingData();
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadRatingData() async {
     final statsFuture = RatingService.getEntityRatingStats(
       entityId: widget.item.id.toString(),
@@ -54,7 +67,6 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
       entityId: widget.item.id.toString(),
       entityType: 'accommodation',
     );
-
     final stats = await statsFuture;
     final userRating = await userRatingFuture;
     if (mounted) {
@@ -83,309 +95,538 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     );
   }
 
+  // ── Helper to safely extract nested dynamic JSON values ─────────────────────
+  dynamic _safe(Map? m, String key) => m == null ? null : m[key];
+
+  String _str(dynamic v, [String fallback = '']) {
+    if (v == null) return fallback;
+    final s = v.toString().trim();
+    return s.isEmpty ? fallback : s;
+  }
+
+  double _dbl(dynamic v, [double fallback = 0.0]) {
+    if (v == null) return fallback;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    if (v is String) return double.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
+  int _int(dynamic v, [int fallback = 0]) {
+    if (v == null) return fallback;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    if (v is String) return int.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
+  bool _bool(dynamic v) {
+    if (v == null) return false;
+    if (v is bool) return v;
+    if (v is int) return v != 0;
+    if (v is String) return v.toLowerCase() == 'true';
+    return false;
+  }
+
+  // ── Extract all images from media JSON or single image field ─────────────────
+  List<String> get _allImages {
+    final dynamic raw = widget.item;
+    // Try media.images (JSON blob from user-created listings)
+    try {
+      final media = raw.media;
+      if (media is Map && media['images'] is List) {
+        final imgs = (media['images'] as List)
+            .map((e) => e.toString())
+            .where((s) => s.isNotEmpty)
+            .toList();
+        if (imgs.isNotEmpty) return imgs;
+      }
+    } catch (_) {}
+    // Try images array (direct field)
+    try {
+      final imgs = raw.images;
+      if (imgs is List && imgs.isNotEmpty) {
+        return imgs.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+      }
+    } catch (_) {}
+    // Fallback to single image
+    try {
+      final img = raw.image?.toString() ?? '';
+      if (img.isNotEmpty) return [img];
+    } catch (_) {}
+    return [];
+  }
+
+  // ── Extract rent details from JSON blob ──────────────────────────────────────
+  Map? get _rentDetails {
+    try {
+      final rd = widget.item.rentDetails;
+      if (rd is Map) return rd;
+    } catch (_) {}
+    return null;
+  }
+
+  // ── Extract property details from JSON blob ──────────────────────────────────
+  Map? get _propDetails {
+    try {
+      final pd = widget.item.propertyDetails;
+      if (pd is Map) return pd;
+    } catch (_) {}
+    return null;
+  }
+
+  // ── Extract amenities from JSON blob (bool map) ──────────────────────────────
+  List<String> get _amenitiesList {
+    try {
+      final am = widget.item.amenities;
+      if (am is Map) {
+        const labelMap = {
+          'balcony': 'Balcony',
+          'terrace': 'Terrace',
+          'garden': 'Garden',
+          'lift': 'Lift / Elevator',
+          'parking': 'Parking',
+          'garage': 'Garage',
+          'cellar': 'Cellar',
+          'washingMachine': 'Washing Machine',
+          'dishwasher': 'Dishwasher',
+          'kitchen': 'Kitchen',
+          'petsAllowed': 'Pets Allowed',
+          'smokingAllowed': 'Smoking Allowed',
+          'anmeldungPossible': 'Anmeldung Possible',
+          'studentFriendly': 'Student Friendly',
+          'wheelchairAccessible': 'Wheelchair Accessible',
+        };
+        return am.entries
+            .where((e) => _bool(e.value))
+            .map((e) => labelMap[e.key] ?? e.key.toString())
+            .toList();
+      }
+      if (am is List) {
+        return am.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // ── Image display helper ──────────────────────────────────────────────────────
+  Widget _buildImageWidget(String src, {double? height}) {
+    final h = height ?? 280.0;
+    if (src.isEmpty) return _placeholder(h);
+    if (src.startsWith('data:image')) {
+      try {
+        final Uint8List bytes = base64Decode(src.split(',').last);
+        return Image.memory(bytes, width: double.infinity, height: h, fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _placeholder(h));
+      } catch (_) {
+        return _placeholder(h);
+      }
+    }
+    if (src.startsWith('http')) {
+      return Image.network(src, width: double.infinity, height: h, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _placeholder(h));
+    }
+    return _placeholder(h);
+  }
+
+  Widget _placeholder(double h) => Container(
+        width: double.infinity,
+        height: h,
+        color: const Color(0xFFF3F4F6),
+        child: Center(
+          child: Icon(Icons.home_outlined, size: 60, color: Colors.grey.shade300),
+        ),
+      );
+
+  // ── Property type badge ───────────────────────────────────────────────────────
+  String get _propertyTypeBadge {
+    try {
+      final t = (widget.item.type ?? widget.item.propertyType ?? '').toString().toLowerCase();
+      switch (t) {
+        case 'apartment': return 'Apartment';
+        case 'shared_rooms': return 'Shared Room';
+        case 'temporary_stays': return 'Temporary Stay';
+        case 'house': return 'House';
+        case 'studio': return 'Studio';
+        default: return t.isNotEmpty ? t : 'Accommodation';
+      }
+    } catch (_) {
+      return 'Accommodation';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final images = _allImages;
+    final rent = _rentDetails;
+    final prop = _propDetails;
+    final amenities = _amenitiesList;
+
+    final String title = _str(widget.item.title, 'Accommodation');
+    final String city = _str(widget.item.city, '');
+    final String area = _str(widget.item.area, '');
+    final String address = _str(widget.item.address, '');
+    final String zipCode = _str(widget.item.zipCode ?? widget.item.postalCode, '');
+    final String contactPhone = _str(widget.item.contactPhone ?? widget.item.phone, '');
+    final String description = _str(widget.item.description, '');
+    final double? lat = widget.item.latitude is num ? (widget.item.latitude as num).toDouble() : null;
+    final double? lon = widget.item.longitude is num ? (widget.item.longitude as num).toDouble() : null;
+
+    final double coldRent = _dbl(_safe(rent, 'coldRent'));
+    final double warmRent = _dbl(_safe(rent, 'warmRent'));
+    final double deposit = _dbl(_safe(rent, 'deposit'));
+    final double sizeSqm = _dbl(_safe(prop, 'sizeSqm'));
+    final int bedrooms = _int(_safe(prop, 'bedrooms'));
+    final int bathrooms = _int(_safe(prop, 'bathrooms'));
+
+    final double avgRating = _ratingStats?.averageRating ?? _dbl(widget.item.averageRating);
+    final int totalRatings = _ratingStats?.totalRatings ?? _int(widget.item.totalRatings);
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// IMAGE HEADER
-            Stack(
-              children: [
-                _buildImage(widget.item.image, 300),
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: _circleIcon(
-                    icon: 'assets/images/left-arrow.png',
-                    onTap: () => Navigator.pop(context),
+      backgroundColor: const Color(0xFFF7F9FC),
+      body: CustomScrollView(
+        slivers: [
+          // ─── IMAGE GALLERY HEADER ───────────────────────────────────────────
+          SliverAppBar(
+            expandedHeight: 280,
+            pinned: true,
+            backgroundColor: Colors.white,
+            leading: Padding(
+              padding: const EdgeInsets.all(8),
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6)],
                   ),
-                ),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: _circleIcon(
-                    icon: 'assets/images/bookmark.png',
-                    iconColor: _isSaved ? const Color(0xFF4E7F6D) : Colors.black,
-                    onTap: _toggleSave,
-                  ),
-                ),
-              ],
-            ),
-
-            /// CONTENT
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// TITLE
-                    Text(
-                      widget.item.title,
-                      style: GoogleFonts.roboto(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        height: 1.18,
-                        color: Colors.black,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    /// RATING SECTION
-                    Row(
-                      children: [
-                        StarRatingWidget(
-                          rating:
-                              _ratingStats?.averageRating ??
-                              (widget.item.averageRating ?? 0.0),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _ratingStats != null
-                              ? '${_ratingStats!.averageRating.toStringAsFixed(1)} (${_ratingStats!.totalRatings} ratings)'
-                              : '${(widget.item.averageRating ?? 0.0).toStringAsFixed(1)} (${widget.item.totalRatings ?? 0} ratings)',
-                          style: GoogleFonts.roboto(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        if (_userRating != null) ...[
-                          const SizedBox(width: 4),
-                          IconButton(
-                            onPressed: _showRatingDialog,
-                            icon: const Icon(
-                              Icons.edit,
-                              size: 18,
-                              color: Color(0xFF4E7F6D),
-                            ),
-                            tooltip: 'Edit rating',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ],
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    /// LOCATION + PRICE
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Image.asset(
-                                'assets/images/location.png',
-                                width: 14,
-                                height: 14,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  widget.item.location,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.roboto(
-                                    fontSize: 14,
-                                    color: const Color(0xFF7A7A7A),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          "€${widget.item.price} / per month",
-                          style: GoogleFonts.roboto(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF4E7F6D),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    /// DESCRIPTION
-                    const Text(
-                      "Description",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    const Text(
-                      "Modern 2-room apartment in the heart of Munich.\n"
-                      "Close to public transport, shopping centers, and parks.\n"
-                      "Perfect for students and young professionals.",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6E6E6E),
-                        height: 1.5,
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    /// AMENITIES
-                    const Text(
-                      "Amenities",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _AmenityChip(text: "Furnished"),
-                        _AmenityChip(text: "Kitchen"),
-                        _AmenityChip(text: "Wifi"),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    /// LOCATION MAP
-                    const Text(
-                      "Location",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    _buildMapSection(context),
-                  ],
+                  child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black),
                 ),
               ),
             ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: GestureDetector(
+                  onTap: _toggleSave,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6)],
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                      color: _isSaved ? primaryGreen : Colors.black,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: images.isNotEmpty
+                  ? Stack(
+                      children: [
+                        PageView.builder(
+                          controller: _pageController,
+                          itemCount: images.length,
+                          onPageChanged: (i) => setState(() => _currentImageIndex = i),
+                          itemBuilder: (_, i) => _buildImageWidget(images[i]),
+                        ),
+                        if (images.length > 1)
+                          Positioned(
+                            bottom: 12,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(images.length, (i) => Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 3),
+                                width: _currentImageIndex == i ? 18 : 7,
+                                height: 7,
+                                decoration: BoxDecoration(
+                                  color: _currentImageIndex == i ? primaryGreen : Colors.white.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              )),
+                            ),
+                          ),
+                        // Image counter badge
+                        if (images.length > 1)
+                          Positioned(
+                            top: 12,
+                            right: 60,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.55),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${_currentImageIndex + 1}/${images.length}',
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ),
+                      ],
+                    )
+                  : _placeholder(280),
+            ),
+          ),
 
-            /// BOTTOM BUTTONS
-            Padding(
-              padding: const EdgeInsets.all(12),
+          // ─── CONTENT ────────────────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+
+                  // ── TITLE + BADGE ──────────────────────────────────────────
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: _bottomButton(
-                          icon: 'assets/images/call.png',
-                          label: "Call",
-                          color: const Color(0xFF4E7F6D),
-                          onPressed: () =>
-                              _makePhoneCall(context, widget.item.contactPhone),
+                        child: Text(
+                          title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary,
+                            height: 1.2,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Expanded(
-                        child: _bottomButton(
-                          icon: 'assets/images/whatsapp.png',
-                          label: "Whatsapp",
-                          color: const Color(0xFF4E7F6D),
-                          onPressed: () =>
-                              _openWhatsApp(context, widget.item.contactPhone),
-                          iconOverride: const FaIcon(
-                            FontAwesomeIcons.whatsapp,
-                            color: Colors.white,
-                            size: 18,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: primaryGreen.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: primaryGreen.withOpacity(0.4)),
+                        ),
+                        child: Text(
+                          _propertyTypeBadge,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: primaryGreen,
                           ),
                         ),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _showRatingDialog,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4E7F6D),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+
+                  // ── RATING ─────────────────────────────────────────────────
+                  Row(
+                    children: [
+                      StarRatingWidget(rating: avgRating, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${avgRating.toStringAsFixed(1)} ($totalRatings ratings)',
+                        style: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.w600, color: textSecondary),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      if (_userRating != null) ...[
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: _showRatingDialog,
+                          child: const Icon(Icons.edit, size: 16, color: primaryGreen),
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // ── LOCATION ROW ───────────────────────────────────────────
+                  if (city.isNotEmpty || area.isNotEmpty || zipCode.isNotEmpty)
+                    _InfoCard(
+                      child: Column(
                         children: [
-                          Image.asset(
-                            'assets/images/star.png',
-                            width: 18,
-                            height: 18,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Rate This Accommodation',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          _InfoRow(icon: Icons.location_on_outlined, color: primaryGreen, label: 'Location',
+                              value: [area, city, zipCode].where((s) => s.isNotEmpty).join(', ')),
+                          if (address.isNotEmpty) ...[
+                            const Divider(height: 16),
+                            _InfoRow(icon: Icons.map_outlined, color: primaryGreen, label: 'Address', value: address),
+                          ],
                         ],
                       ),
+                    ),
+
+                  const SizedBox(height: 14),
+
+                  // ── RENT DETAILS CARD ──────────────────────────────────────
+                  if (coldRent > 0 || warmRent > 0 || deposit > 0)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SectionTitle(text: '💶 Rent Details'),
+                        const SizedBox(height: 8),
+                        _InfoCard(
+                          child: Row(
+                            children: [
+                              if (coldRent > 0) Expanded(child: _RentCell(label: 'Cold Rent', value: '€${coldRent.toStringAsFixed(0)}')),
+                              if (warmRent > 0) Expanded(child: _RentCell(label: 'Warm Rent', value: '€${warmRent.toStringAsFixed(0)}')),
+                              if (deposit > 0) Expanded(child: _RentCell(label: 'Deposit', value: '€${deposit.toStringAsFixed(0)}')),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                    ),
+
+                  // ── PROPERTY DETAILS CARD ──────────────────────────────────
+                  if (sizeSqm > 0 || bedrooms > 0 || bathrooms > 0)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SectionTitle(text: '🏠 Property Details'),
+                        const SizedBox(height: 8),
+                        _InfoCard(
+                          child: Row(
+                            children: [
+                              if (sizeSqm > 0) Expanded(child: _PropCell(icon: Icons.square_foot, label: 'Size', value: '${sizeSqm.toStringAsFixed(0)} m²')),
+                              if (bedrooms > 0) Expanded(child: _PropCell(icon: Icons.bed_outlined, label: 'Bedrooms', value: bedrooms.toString())),
+                              if (bathrooms > 0) Expanded(child: _PropCell(icon: Icons.bathroom_outlined, label: 'Bathrooms', value: bathrooms.toString())),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                    ),
+
+                  // ── DESCRIPTION ────────────────────────────────────────────
+                  if (description.isNotEmpty) ...[
+                    _SectionTitle(text: 'Description'),
+                    const SizedBox(height: 8),
+                    _InfoCard(
+                      child: Text(
+                        description,
+                        style: GoogleFonts.roboto(fontSize: 14, color: textSecondary, height: 1.6),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // ── AMENITIES ──────────────────────────────────────────────
+                  if (amenities.isNotEmpty) ...[
+                    _SectionTitle(text: '✨ Amenities'),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: amenities.map((a) => _AmenityChip(text: a)).toList(),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // ── CONTACT INFO ───────────────────────────────────────────
+                  if (contactPhone.isNotEmpty) ...[
+                    _SectionTitle(text: 'Contact'),
+                    const SizedBox(height: 8),
+                    _InfoCard(
+                      child: _InfoRow(icon: Icons.phone_outlined, color: primaryGreen, label: 'Phone', value: contactPhone),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // ── MAP ────────────────────────────────────────────────────
+                  _SectionTitle(text: '📍 Location'),
+                  const SizedBox(height: 8),
+                  _buildMapSection(context, lat, lon, [area, city].where((s) => s.isNotEmpty).join(', ')),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+
+      // ─── BOTTOM ACTION BUTTONS ───────────────────────────────────────────────
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      icon: const Icon(Icons.call, color: Colors.white, size: 18),
+                      label: 'Call',
+                      color: primaryGreen,
+                      onPressed: () => _makePhoneCall(context, contactPhone),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ActionButton(
+                      icon: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 18),
+                      label: 'WhatsApp',
+                      color: const Color(0xFF25D366),
+                      onPressed: () => _openWhatsApp(context, contactPhone),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _showRatingDialog,
+                  icon: const Icon(Icons.star_outline, color: Colors.white, size: 18),
+                  label: const Text('Rate This Accommodation',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryGreen,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMapSection(BuildContext context) {
-    final double? lat = widget.item.latitude;
-    final double? lon = widget.item.longitude;
-
+  Widget _buildMapSection(BuildContext context, double? lat, double? lon, String addressText) {
     Future<void> openGoogleMaps(double? latitude, double? longitude) async {
       final Uri url;
       if (latitude != null && longitude != null) {
-        url = Uri.parse(
-          'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude',
-        );
+        url = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude');
       } else {
-        final query = Uri.encodeComponent(widget.item.location ?? '');
-        url = Uri.parse(
-          'https://www.google.com/maps/search/?api=1&query=$query',
-        );
+        final query = Uri.encodeComponent(addressText);
+        url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
       }
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      }
+      if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
     }
 
-    // If lat/lon already stored, show map immediately
     if (lat != null && lon != null) {
-      return _AccommodationMapWidget(
-        lat: lat,
-        lon: lon,
-        address: widget.item.location ?? '',
+      return _AccommodationMapWidget(lat: lat, lon: lon, address: addressText);
+    }
+
+    if (addressText.isEmpty) {
+      return Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: lightGreen,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: primaryGreen.withOpacity(0.3)),
+        ),
+        child: const Center(child: Text('Location not available', style: TextStyle(color: primaryGreen))),
       );
     }
 
-    // Otherwise geocode the address text via Nominatim (free, no API key)
     return FutureBuilder<Map<String, double>?>(
-      future: _geocodeAddress(widget.item.location ?? ''),
+      future: _geocodeAddress(addressText),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return ClipRRect(
@@ -393,7 +634,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
             child: Container(
               height: 180,
               color: Colors.grey[200],
-              child: const Center(child: CircularProgressIndicator()),
+              child: const Center(child: CircularProgressIndicator(color: primaryGreen)),
             ),
           );
         }
@@ -401,37 +642,26 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
           return _AccommodationMapWidget(
             lat: snapshot.data!['lat']!,
             lon: snapshot.data!['lon']!,
-            address: widget.item.location ?? '',
+            address: addressText,
           );
         }
-        // Geocoding failed — fallback tap button
         return GestureDetector(
           onTap: () => openGoogleMaps(null, null),
           child: Container(
             height: 70,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
+              color: lightGreen,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF4E7F6D)),
+              border: Border.all(color: primaryGreen),
             ),
-            child: Center(
+            child: const Center(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset(
-                    'assets/images/google.png',
-                    width: 18,
-                    height: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Open location in Google Maps',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF4E7F6D),
-                    ),
-                  ),
+                  Icon(Icons.map_outlined, color: primaryGreen),
+                  SizedBox(width: 8),
+                  Text('Open location in Google Maps',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primaryGreen)),
                 ],
               ),
             ),
@@ -446,9 +676,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     try {
       final encoded = Uri.encodeComponent(address);
       final response = await http.get(
-        Uri.parse(
-          'https://nominatim.openstreetmap.org/search?q=$encoded&format=json&limit=1',
-        ),
+        Uri.parse('https://nominatim.openstreetmap.org/search?q=$encoded&format=json&limit=1'),
         headers: {'User-Agent': 'GermanBharatham/1.0'},
       );
       if (response.statusCode == 200) {
@@ -464,206 +692,190 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     return null;
   }
 
-  Widget _circleIcon({required String icon, Color? iconColor, VoidCallback? onTap}) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-        child: Image.asset(icon, width: 18, height: 18, color: iconColor),
-      ),
-    );
-  }
-
-  Widget _buildImage(String? imageUrl, double height) {
-    if (imageUrl == null || imageUrl.isEmpty) {
-      return _placeholderImage(height);
-    }
-
-    if (imageUrl.startsWith('data:image')) {
-      try {
-        final Uint8List bytes = base64Decode(imageUrl.split(',').last);
-        return Image.memory(
-          bytes,
-          width: double.infinity,
-          height: height,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _placeholderImage(height),
-        );
-      } catch (_) {
-        return _placeholderImage(height);
-      }
-    }
-
-    if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
-        width: double.infinity,
-        height: height,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _placeholderImage(height),
-      );
-    } else {
-      return Image.asset(
-        imageUrl,
-        width: double.infinity,
-        height: height,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _placeholderImage(height),
-      );
-    }
-  }
-
-  Widget _placeholderImage(double height) {
-    return Container(
-      width: double.infinity,
-      height: height,
-      color: Colors.grey[200],
-      child: Center(
-        child: Image.asset(
-          'assets/images/accommodation.png',
-          width: 110,
-          height: 110,
-          fit: BoxFit.contain,
-        ),
-      ),
-    );
-  }
-
-  Widget _bottomButton({
-    required String icon,
-    required String label,
-    required Color color,
-    VoidCallback? onPressed,
-    Widget? iconOverride,
-  }) {
-    final Widget iconWidget =
-        iconOverride ??
-        Image.asset(icon, width: 18, height: 18, color: Colors.white);
-    return ElevatedButton.icon(
-      onPressed: onPressed ?? () {},
-      icon: iconWidget,
-      label: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-
   void _toggleSave() {
     try {
       final nowSaved = SavedManager.instance.toggle(widget.item);
       if (!mounted) return;
-      setState(() {
-        _isSaved = nowSaved;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(nowSaved ? 'Saved to bookmarks' : 'Removed from bookmarks'),
-          duration: const Duration(seconds: 1),
-          backgroundColor: const Color(0xFF4E7F6D),
-        ),
-      );
-      if (widget.onRefresh != null) {
-        widget.onRefresh!();
-      }
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not update bookmark'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+      setState(() => _isSaved = nowSaved);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(nowSaved ? 'Saved to bookmarks' : 'Removed from bookmarks'),
+        duration: const Duration(seconds: 1),
+        backgroundColor: primaryGreen,
+      ));
+      if (widget.onRefresh != null) widget.onRefresh!();
+    } catch (_) {}
   }
 
   Future<void> _makePhoneCall(BuildContext context, String? phoneNumber) async {
     if (phoneNumber == null || phoneNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Phone number not available'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Phone number not available'), backgroundColor: Colors.red),
       );
       return;
     }
-
     final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(phoneUri)) {
-      await launchUrl(phoneUri);
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not launch phone dialer'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    if (await canLaunchUrl(phoneUri)) await launchUrl(phoneUri);
   }
 
   Future<void> _openWhatsApp(BuildContext context, String? phoneNumber) async {
     if (phoneNumber == null || phoneNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Phone number not available'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Phone number not available'), backgroundColor: Colors.red),
       );
       return;
     }
-
-    // Remove any non-digit characters and ensure it has country code
     String cleanPhone = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
-    if (!cleanPhone.startsWith('+')) {
-      cleanPhone = '+49$cleanPhone'; // Default to Germany
-    }
-
+    if (!cleanPhone.startsWith('+')) cleanPhone = '+49$cleanPhone';
     final Uri whatsappUri = Uri.parse('https://wa.me/$cleanPhone');
     if (await canLaunchUrl(whatsappUri)) {
       await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not launch WhatsApp'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
-
 }
 
-/// MAP WIDGET with user-location support
+// ── Premium helper widgets ───────────────────────────────────────────────────
+
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  const _SectionTitle({required this.text});
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF1A1A2E),
+        ),
+      );
+}
+
+class _InfoCard extends StatelessWidget {
+  final Widget child;
+  const _InfoCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        ),
+        child: child,
+      );
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+  const _InfoRow({required this.icon, required this.color, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFF9CA3AF))),
+                const SizedBox(height: 2),
+                Text(value, style: GoogleFonts.roboto(fontSize: 14, color: const Color(0xFF374151), fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+        ],
+      );
+}
+
+class _RentCell extends StatelessWidget {
+  final String label;
+  final String value;
+  const _RentCell({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          Text(value, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF4E7F6D))),
+          const SizedBox(height: 2),
+          Text(label, style: GoogleFonts.roboto(fontSize: 11, color: const Color(0xFF9CA3AF))),
+        ],
+      );
+}
+
+class _PropCell extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _PropCell({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          Icon(icon, size: 22, color: const Color(0xFF4E7F6D)),
+          const SizedBox(height: 4),
+          Text(value, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A2E))),
+          Text(label, style: GoogleFonts.roboto(fontSize: 11, color: const Color(0xFF9CA3AF))),
+        ],
+      );
+}
+
+class _ActionButton extends StatelessWidget {
+  final Widget icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+  const _ActionButton({required this.icon, required this.label, required this.color, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) => ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: icon,
+        label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+}
+
+class _AmenityChip extends StatelessWidget {
+  final String text;
+  const _AmenityChip({required this.text});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F5F0),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF4E7F6D).withOpacity(0.3)),
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF4E7F6D)),
+        ),
+      );
+}
+
+// ── Map Widget with user-location support ────────────────────────────────────
+
 class _AccommodationMapWidget extends StatefulWidget {
   final double lat;
   final double lon;
   final String address;
 
-  const _AccommodationMapWidget({
-    required this.lat,
-    required this.lon,
-    required this.address,
-  });
+  const _AccommodationMapWidget({required this.lat, required this.lon, required this.address});
 
   @override
-  State<_AccommodationMapWidget> createState() =>
-      _AccommodationMapWidgetState();
+  State<_AccommodationMapWidget> createState() => _AccommodationMapWidgetState();
 }
 
 class _AccommodationMapWidgetState extends State<_AccommodationMapWidget> {
@@ -678,23 +890,15 @@ class _AccommodationMapWidgetState extends State<_AccommodationMapWidget> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Location permission denied'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permission denied'), backgroundColor: Colors.red),
+        );
         setState(() => _locating = false);
         return;
       }
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
       final userLatLng = LatLng(position.latitude, position.longitude);
       if (mounted) {
@@ -708,10 +912,7 @@ class _AccommodationMapWidgetState extends State<_AccommodationMapWidget> {
       if (mounted) {
         setState(() => _locating = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not get location: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Could not get location: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -721,9 +922,7 @@ class _AccommodationMapWidgetState extends State<_AccommodationMapWidget> {
     final url = Uri.parse(
       'https://www.google.com/maps/dir/?api=1&destination=${widget.lat},${widget.lon}',
     );
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
+    if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -739,9 +938,7 @@ class _AccommodationMapWidgetState extends State<_AccommodationMapWidget> {
               options: MapOptions(
                 initialCenter: LatLng(widget.lat, widget.lon),
                 initialZoom: 15,
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.none,
-                ),
+                interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
               ),
               children: [
                 TileLayer(
@@ -750,18 +947,12 @@ class _AccommodationMapWidgetState extends State<_AccommodationMapWidget> {
                 ),
                 MarkerLayer(
                   markers: [
-                    // Accommodation pin — red
                     Marker(
                       point: LatLng(widget.lat, widget.lon),
                       width: 40,
                       height: 40,
-                      child: Image.asset(
-                        'assets/images/location.png',
-                        width: 40,
-                        height: 40,
-                      ),
+                      child: Image.asset('assets/images/location.png', width: 40, height: 40),
                     ),
-                    // User location — blue dot (shown after locating)
                     if (_userLocation != null)
                       Marker(
                         point: _userLocation!,
@@ -772,9 +963,7 @@ class _AccommodationMapWidgetState extends State<_AccommodationMapWidget> {
                             color: const Color(0xFF1A73E8),
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2.5),
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black26, blurRadius: 4),
-                            ],
+                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
                           ),
                         ),
                       ),
@@ -782,49 +971,30 @@ class _AccommodationMapWidgetState extends State<_AccommodationMapWidget> {
                 ),
               ],
             ),
-
-            /// "Open in Google Maps" — bottom right
             Positioned(
               bottom: 8,
               right: 8,
               child: GestureDetector(
                 onTap: _openGoogleMaps,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.92),
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 4),
-                    ],
+                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.asset(
-                        'assets/images/google.png',
-                        width: 14,
-                        height: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Open in Google Maps',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1A56DB),
-                        ),
-                      ),
+                      Icon(Icons.map_outlined, size: 14, color: Color(0xFF1A56DB)),
+                      SizedBox(width: 4),
+                      Text('Open in Google Maps',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1A56DB))),
                     ],
                   ),
                 ),
               ),
             ),
-
-            /// "My Location" button — top right
             Positioned(
               top: 8,
               right: 8,
@@ -836,50 +1006,18 @@ class _AccommodationMapWidgetState extends State<_AccommodationMapWidget> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 4),
-                    ],
+                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
                   ),
                   child: _locating
                       ? const Padding(
                           padding: EdgeInsets.all(8),
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF4E7F6D)),
                         )
-                      : Image.asset(
-                          'assets/images/location.png',
-                          width: 20,
-                          height: 20,
-                        ),
+                      : const Icon(Icons.my_location, size: 20, color: Color(0xFF4E7F6D)),
                 ),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// AMENITY CHIP
-class _AmenityChip extends StatelessWidget {
-  final String text;
-
-  const _AmenityChip({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF2F4F6),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: Colors.black,
         ),
       ),
     );

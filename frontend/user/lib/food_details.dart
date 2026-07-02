@@ -198,7 +198,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                                       ? '${_ratingStats!.averageRating.toStringAsFixed(1)} (${_ratingStats!.totalRatings})'
                                       : widget.item.averageRating > 0
                                           ? widget.item.averageRating.toStringAsFixed(1)
-                                          : '4.5',
+                                          : '0.0',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -228,12 +228,25 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
 
                     const SizedBox(height: 16),
 
-                    /// ADDRESS
-                    _infoRow(
-                      iconAsset: 'assets/images/location.png',
-                      label: 'Address',
-                      value: widget.item.address,
-                    ),
+                    /// FULL LOCATION BLOCK
+                    if ((widget.item.address != null && widget.item.address!.isNotEmpty) ||
+                        (widget.item.city != null && widget.item.city!.isNotEmpty))
+                      _infoRow(
+                        iconAsset: 'assets/images/location.png',
+                        label: 'Location',
+                        value: [
+                          widget.item.address,
+                          widget.item.city,
+                          widget.item.state,
+                          widget.item.zipCode,
+                        ].where((s) => s != null && s.isNotEmpty).join(', '),
+                      )
+                    else
+                      _infoRow(
+                        iconAsset: 'assets/images/location.png',
+                        label: 'Address',
+                        value: widget.item.address ?? 'Not provided',
+                      ),
 
                     if (widget.item.openingHours != null && widget.item.openingHours!.isNotEmpty) ...[
                       const SizedBox(height: 14),
@@ -257,13 +270,58 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
 
                     const SizedBox(height: 20),
 
+                    /// DESCRIPTION
+                    if (widget.item.description != null && widget.item.description!.isNotEmpty) ...[
+                      const Text(
+                        "About",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.item.description!,
+                        style: const TextStyle(fontSize: 14, color: Color(0xFF6E6E6E), height: 1.6),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+
+                    /// CUISINE CHIPS
+                    if (widget.item.cuisine.isNotEmpty) ...[
+                      const Text(
+                        "Cuisines",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: widget.item.cuisine
+                            .map((c) => _FoodChip(text: c, color: const Color(0xFFE8F5E9), textColor: const Color(0xFF2E7D32)))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    /// SPECIALTIES CHIPS
+                    if (widget.item.specialties.isNotEmpty) ...[
+                      const Text(
+                        "Specialties",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: widget.item.specialties
+                            .map((s) => _FoodChip(text: s, color: const Color(0xFFFFF8E1), textColor: const Color(0xFFF57F17)))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
                     /// SERVICES
                     const Text(
                       "Services",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
 
                     const SizedBox(height: 10),
@@ -276,8 +334,40 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                         if (widget.item.deliveryAvailable) const _ServiceChip(text: "Home Delivery"),
                         if (widget.item.takeoutAvailable) const _ServiceChip(text: "Takeout"),
                         if (widget.item.cateringAvailable) const _ServiceChip(text: "Catering"),
+                        if (!widget.item.dineInAvailable && !widget.item.deliveryAvailable &&
+                            !widget.item.takeoutAvailable && !widget.item.cateringAvailable)
+                          const Text('Not specified', style: TextStyle(color: Colors.grey, fontSize: 14)),
                       ],
                     ),
+
+                    const SizedBox(height: 20),
+
+                    /// CONTACT + WEBSITE
+                    if (widget.item.phone != null && widget.item.phone!.isNotEmpty) ...[
+                      _infoRow(
+                        iconAsset: 'assets/images/call.png',
+                        label: 'Phone',
+                        value: widget.item.phone!,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    if (widget.item.website != null && widget.item.website!.isNotEmpty) ...[
+                      GestureDetector(
+                        onTap: () async {
+                          var url = widget.item.website!;
+                          if (!url.startsWith('http')) url = 'https://$url';
+                          final uri = Uri.parse(url);
+                          if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+                        },
+                        child: _infoRow(
+                          iconAsset: 'assets/images/info.png',
+                          label: 'Website',
+                          value: widget.item.website!,
+                          valueColor: const Color(0xFF1A56DB),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
 
                     const SizedBox(height: 20),
 
@@ -435,6 +525,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     required String iconAsset,
     required String label,
     required String value,
+    Color? valueColor,
   }) {
     final bool isLocationIcon = iconAsset.contains('location.png');
     IconData fallbackIcon = Icons.info_outline;
@@ -478,9 +569,9 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF374151),
+                  color: valueColor ?? const Color(0xFF374151),
                 ),
               ),
             ],
@@ -785,6 +876,34 @@ class _FoodMapWidgetState extends State<_FoodMapWidget> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// FOOD CHIP (colored variant)
+class _FoodChip extends StatelessWidget {
+  final String text;
+  final Color color;
+  final Color textColor;
+
+  const _FoodChip({required this.text, required this.color, required this.textColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: textColor,
         ),
       ),
     );

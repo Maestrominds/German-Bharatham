@@ -1633,11 +1633,40 @@ class _SplashScreenState extends State<SplashScreen>
               MaterialPageRoute(
                 builder: (_) => PersonalInformationPage(
                   isInitialSetup: true,
-                  onSetupComplete: (ctx) {
-                    Navigator.pushReplacement(
-                      ctx,
-                      MaterialPageRoute(builder: (_) => const HomePage()),
-                    );
+                  onSetupComplete: (ctx) async {
+                    final token = UserSession.instance.token;
+                    bool hasSubscription = false;
+                    if (token != null) {
+                      try {
+                        final res = await http.get(
+                          Uri.parse(ApiConfig.subscriptionStatusEndpoint),
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer $token',
+                          },
+                        ).timeout(const Duration(seconds: 10));
+                        if (res.statusCode == 200) {
+                          final statusJson = jsonDecode(res.body);
+                          final user = statusJson['user'] as Map?;
+                          final status = user?['subscriptionStatus']?.toString();
+                          hasSubscription = (status == 'active' || status == 'trial');
+                        }
+                      } catch (_) {}
+                    }
+                    if (!ctx.mounted) return;
+                    if (hasSubscription) {
+                      Navigator.pushReplacement(
+                        ctx,
+                        MaterialPageRoute(builder: (_) => UserProfilesPage()),
+                      );
+                    } else {
+                      Navigator.pushReplacement(
+                        ctx,
+                        MaterialPageRoute(
+                          builder: (_) => const SubscriptionsPage(autoNavigateOnActivation: true),
+                        ),
+                      );
+                    }
                   },
                 ),
               ),

@@ -48,41 +48,112 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "Invalid or missing category" });
     }
 
-    const payload = {
-      ...data,
+    // Base meta fields added to all listings
+    const meta = {
       status: "Pending",
       createdById: numericUserId,
       creatorType: "user",
     };
 
-    // Clean ratings fields
-    delete payload.averageRating;
-    delete payload.totalRatings;
-    delete payload.ratingDistribution;
-    delete payload.lastRatedAt;
-    delete payload._id;
-    delete payload.id;
-
     let doc = null;
     if (category === "Accommodation") {
-      doc = await prisma.accommodation.create({ data: payload });
+      // Map propertyType → type (Prisma schema uses 'type', Flutter sends 'propertyType')
+      const accPayload = {
+        title:            data.title || "",
+        type:             data.propertyType || data.type || null,
+        city:             data.city || null,
+        address:          data.address || null,
+        zipCode:          data.postalCode || data.zipCode || null,
+        phone:            data.contactPhone || data.phone || null,
+        contactPhone:     data.contactPhone || null,
+        description:      data.description || null,
+        rentDetails:      data.rentDetails || null,
+        propertyDetails:  data.propertyDetails || null,
+        amenities:        data.amenities || null,
+        media:            data.media || null,
+        area:             data.area && !isNaN(parseFloat(data.area)) ? parseFloat(data.area) : null,
+        ...meta,
+      };
+      doc = await prisma.accommodation.create({ data: accPayload });
+
     } else if (category === "Food") {
-      doc = await prisma.foodGrocery.create({
-        data: {
-          ...payload,
-          category: "Food"
-        }
-      });
+      const foodPayload = {
+        title:             data.title || "",
+        category:          "Food",
+        subCategory:       data.subCategory || null,
+        type:              data.type || null,
+        location:          data.location || null,
+        address:           data.address || null,
+        city:              data.city || null,
+        state:             data.state || null,
+        zipCode:           data.zipCode || null,
+        phone:             data.phone || null,
+        website:           data.website || null,
+        description:       data.description || null,
+        openingHours:      data.openingHours || null,
+        priceRange:        data.priceRange || null,
+        cuisine:           Array.isArray(data.cuisine) ? data.cuisine : [],
+        specialties:       Array.isArray(data.specialties) ? data.specialties : [],
+        deliveryAvailable: !!data.deliveryAvailable,
+        takeoutAvailable:  !!data.takeoutAvailable,
+        dineInAvailable:   !!data.dineInAvailable,
+        cateringAvailable: !!data.cateringAvailable,
+        image:             data.image || null,
+        ...meta,
+      };
+      doc = await prisma.foodGrocery.create({ data: foodPayload });
+
     } else if (category === "Jobs") {
-      doc = await prisma.jobListing.create({ data: payload });
+      const jobPayload = {
+        title:       data.title || "",
+        companyName: data.companyName || data.company || null,
+        companyLogo: data.companyLogo || null,
+        location:    data.location || data.city || null,
+        description: data.description || null,
+        contact:     data.contact || data.phone || null,
+        salary:      data.salary || null,
+        jobType:     data.jobType || data.type || "Full Time",
+        requirements: data.requirements || null,
+        benefits:    data.benefits || null,
+        applyUrl:    data.applyUrl || null,
+        amenities:   Array.isArray(data.amenities) ? data.amenities : [],
+        ...meta,
+      };
+      doc = await prisma.jobListing.create({ data: jobPayload });
+
     } else if (category === "Services") {
-      doc = await prisma.service.create({ data: payload });
+      const svcPayload = {
+        title:        data.serviceName || data.title || null,
+        serviceName:  data.serviceName || data.title || null,
+        providerName: data.providerName || null,
+        serviceType:  data.serviceType || null,
+        city:         data.city || null,
+        area:         data.area || null,
+        postalCode:   data.postalCode || null,
+        address:      data.address || null,
+        phone:        data.contactPhone || data.phone || null,
+        contactPhone: data.contactPhone || null,
+        whatsapp:     data.whatsapp || null,
+        email:        data.email || null,
+        website:      data.website || null,
+        latitude:     data.latitude ? parseFloat(data.latitude) : null,
+        longitude:    data.longitude ? parseFloat(data.longitude) : null,
+        description:  data.description || null,
+        priceRange:   data.priceRange || null,
+        images:       Array.isArray(data.images) ? data.images : [],
+        amenities:    Array.isArray(data.amenities) ? data.amenities : [],
+        ...meta,
+      };
+      doc = await prisma.service.create({ data: svcPayload });
     }
 
     res.status(201).json({ message: "Listing submitted successfully", data: mapItem(doc) });
   } catch (error) {
-    console.error("❌ POST user listing error:", error.message);
-    res.status(400).json({ message: error.message });
+    let msg = error.message || String(error);
+    // Strip long base64 data so the error reason isn't truncated in console logs
+    msg = msg.replace(/data:image\/[^;]+;base64,[^\s"}]+/g, '[BASE64_IMAGE_TRUNCATED]');
+    console.error("❌ POST user listing error:", msg);
+    res.status(400).json({ message: msg });
   }
 });
 
@@ -129,35 +200,107 @@ router.put("/:category/:id", async (req, res) => {
       return res.status(400).json({ message: "Only pending listings can be edited" });
     }
 
-    const payload = {
-      ...data,
+    const meta = {
       status: "Pending",
       createdById: numericUserId,
       creatorType: "user",
     };
 
-    delete payload.averageRating;
-    delete payload.totalRatings;
-    delete payload.ratingDistribution;
-    delete payload.lastRatedAt;
-    delete payload._id;
-    delete payload.id;
-
     let updatedDoc = null;
     if (category === "Accommodation") {
-      updatedDoc = await prisma.accommodation.update({ where: { id: numericId }, data: payload });
+      const accPayload = {
+        title:            data.title || "",
+        type:             data.propertyType || data.type || null,
+        city:             data.city || null,
+        address:          data.address || null,
+        zipCode:          data.postalCode || data.zipCode || null,
+        phone:            data.contactPhone || data.phone || null,
+        contactPhone:     data.contactPhone || null,
+        description:      data.description || null,
+        rentDetails:      data.rentDetails || null,
+        propertyDetails:  data.propertyDetails || null,
+        amenities:        data.amenities || null,
+        media:            data.media || null,
+        area:             data.area && !isNaN(parseFloat(data.area)) ? parseFloat(data.area) : null,
+        ...meta,
+      };
+      updatedDoc = await prisma.accommodation.update({ where: { id: numericId }, data: accPayload });
     } else if (category === "Food") {
-      updatedDoc = await prisma.foodGrocery.update({ where: { id: numericId }, data: payload });
+      const foodPayload = {
+        title:             data.title || "",
+        category:          "Food",
+        subCategory:       data.subCategory || null,
+        type:              data.type || null,
+        location:          data.location || null,
+        address:           data.address || null,
+        city:              data.city || null,
+        state:             data.state || null,
+        zipCode:           data.zipCode || null,
+        phone:             data.phone || null,
+        website:           data.website || null,
+        description:       data.description || null,
+        openingHours:      data.openingHours || null,
+        priceRange:        data.priceRange || null,
+        cuisine:           Array.isArray(data.cuisine) ? data.cuisine : [],
+        specialties:       Array.isArray(data.specialties) ? data.specialties : [],
+        deliveryAvailable: !!data.deliveryAvailable,
+        takeoutAvailable:  !!data.takeoutAvailable,
+        dineInAvailable:   !!data.dineInAvailable,
+        cateringAvailable: !!data.cateringAvailable,
+        image:             data.image || null,
+        ...meta,
+      };
+      updatedDoc = await prisma.foodGrocery.update({ where: { id: numericId }, data: foodPayload });
     } else if (category === "Jobs") {
-      updatedDoc = await prisma.jobListing.update({ where: { id: numericId }, data: payload });
+      const jobPayload = {
+        title:       data.title || "",
+        companyName: data.companyName || data.company || null,
+        companyLogo: data.companyLogo || null,
+        location:    data.location || data.city || null,
+        description: data.description || null,
+        contact:     data.contact || data.phone || null,
+        salary:      data.salary || null,
+        jobType:     data.jobType || data.type || "Full Time",
+        requirements: data.requirements || null,
+        benefits:    data.benefits || null,
+        applyUrl:    data.applyUrl || null,
+        amenities:   Array.isArray(data.amenities) ? data.amenities : [],
+        ...meta,
+      };
+      updatedDoc = await prisma.jobListing.update({ where: { id: numericId }, data: jobPayload });
     } else if (category === "Services") {
-      updatedDoc = await prisma.service.update({ where: { id: numericId }, data: payload });
+      const svcPayload = {
+        title:        data.serviceName || data.title || null,
+        serviceName:  data.serviceName || data.title || null,
+        providerName: data.providerName || null,
+        serviceType:  data.serviceType || null,
+        city:         data.city || null,
+        area:         data.area || null,
+        postalCode:   data.postalCode || null,
+        address:      data.address || null,
+        phone:        data.contactPhone || data.phone || null,
+        contactPhone: data.contactPhone || null,
+        whatsapp:     data.whatsapp || null,
+        email:        data.email || null,
+        website:      data.website || null,
+        latitude:     data.latitude ? parseFloat(data.latitude) : null,
+        longitude:    data.longitude ? parseFloat(data.longitude) : null,
+        description:  data.description || null,
+        priceRange:   data.priceRange || null,
+        images:       Array.isArray(data.images) ? data.images : [],
+        amenities:    Array.isArray(data.amenities) ? data.amenities : [],
+        ...meta,
+      };
+      updatedDoc = await prisma.service.update({ where: { id: numericId }, data: svcPayload });
     }
 
     res.json({ message: "Listing updated successfully", data: mapItem(updatedDoc) });
   } catch (error) {
-    console.error("❌ PUT user listing error:", error.message);
-    res.status(400).json({ message: error.message });
+    let msg = error.message || String(error);
+    // Strip long base64 data so the error reason isn't truncated in console logs
+    msg = msg.replace(/data:image\/[^;]+;base64,[^\s"}]+/g, '[BASE64_IMAGE_TRUNCATED]');
+    console.error("❌ PUT user listing error:", msg);
+    res.status(400).json({ message: msg });
   }
 });
 

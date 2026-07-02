@@ -381,7 +381,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
         : widget.item.averageRating;
     final displayRatingText = (displayRatingValue > 0)
         ? displayRatingValue.toStringAsFixed(1)
-        : '4.5';
+        : '0.0';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFC),

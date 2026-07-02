@@ -16,7 +16,7 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
     website: item.website || '',
     description: item.description || '',
     openingHours: item.openingHours || '',
-    priceRange: item.priceRange || '$$',
+    priceRange: item.priceRange || '€€',
     cuisine: item.cuisine || [],
     specialties: item.specialties || [],
     deliveryAvailable: item.deliveryAvailable || false,
@@ -212,10 +212,10 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   onChange={handleChange}
                   required
                 >
-                  <option value="$">$ - Budget Friendly</option>
-                  <option value="$$">$$ - Moderate</option>
-                  <option value="$$$">$$$ - Expensive</option>
-                  <option value="$$$$">$$$$ - Very Expensive</option>
+                  <option value="€">€ - Budget Friendly</option>
+                  <option value="€€">€€ - Moderate</option>
+                  <option value="€€€">€€€ - Expensive</option>
+                  <option value="€€€€">€€€€ - Very Expensive</option>
                 </select>
               </div>
             </div>

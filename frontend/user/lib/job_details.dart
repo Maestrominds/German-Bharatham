@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'models/job_model.dart';
@@ -153,6 +153,24 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                         Text(
                           widget.item.company,
                           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
+                        ),
+                        const SizedBox(height: 8),
+                        // JobType badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5F0),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFF4E7F6D).withOpacity(0.4)),
+                          ),
+                          child: Text(
+                            widget.item.jobType,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF4E7F6D),
+                            ),
+                          ),
                         ),
                       ],
                     ),
