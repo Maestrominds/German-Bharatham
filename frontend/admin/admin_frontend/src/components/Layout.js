@@ -9,7 +9,8 @@ import {
   MessageCircle,
   CreditCard,
   Settings,
-  LogOut
+  LogOut,
+  AlertCircle
 } from 'lucide-react';
 
 const Layout = ({ children, onLogout }) => {
@@ -21,6 +22,7 @@ const Layout = ({ children, onLogout }) => {
     { path: '/content-moderation', icon: Shield, label: 'Content Moderation' },
     { path: '/community', icon: MessageCircle, label: 'Community' },
     { path: '/subscriptions', icon: CreditCard, label: 'Subscriptions' },
+    { path: '/reported-problems', icon: AlertCircle, label: 'Reported Problems' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 

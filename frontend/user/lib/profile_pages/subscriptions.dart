@@ -403,6 +403,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
       return basePage(
         context: context,
         title: 'Subscription Plans',
+        showLeading: !widget.autoNavigateOnActivation,
         child: Center(child: Text(_error!)),
       );
     }
@@ -419,6 +420,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
     final content = basePage(
       context: context,
       title: 'Subscription Plans',
+      showLeading: !widget.autoNavigateOnActivation,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final gap = 12.0;

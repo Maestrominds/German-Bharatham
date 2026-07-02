@@ -17,16 +17,22 @@ Widget _buildServiceImage(
   String src, {
   required double width,
   required double height,
-  required String placeholderAsset,
 }) {
+  final fallback = Container(
+    width: width,
+    height: height,
+    color: Colors.grey.shade100,
+    child: Center(
+      child: Icon(
+        Icons.business_center_outlined,
+        size: width * 0.4,
+        color: Colors.grey.shade300,
+      ),
+    ),
+  );
+
   if (src.trim().isEmpty) {
-    return Image.asset(
-      placeholderAsset,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-    );
+    return fallback;
   }
 
   if (src.startsWith('data:image')) {
@@ -37,22 +43,10 @@ Widget _buildServiceImage(
         width: width,
         height: height,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Image.asset(
-          placeholderAsset,
-          width: width,
-          height: height,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-        ),
+        errorBuilder: (_, __, ___) => fallback,
       );
     } catch (_) {
-      return Image.asset(
-        placeholderAsset,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-      );
+      return fallback;
     }
   }
 
@@ -62,13 +56,7 @@ Widget _buildServiceImage(
       width: width,
       height: height,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Image.asset(
-        placeholderAsset,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-      ),
+      errorBuilder: (_, __, ___) => fallback,
     );
   }
 
@@ -77,13 +65,7 @@ Widget _buildServiceImage(
     width: width,
     height: height,
     fit: BoxFit.cover,
-    errorBuilder: (_, __, ___) => Image.asset(
-      placeholderAsset,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-    ),
+    errorBuilder: (_, __, ___) => fallback,
   );
 }
 
@@ -430,24 +412,14 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                               borderRadius: BorderRadius.circular(10),
                               color: Colors.grey.shade200,
                             ),
-                            child: _displayImage.isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: _buildServiceImage(
-                                      _displayImage,
-                                      width: 80,
-                                      height: 80,
-                                      placeholderAsset:
-                                          'assets/images/service.jpg',
-                                    ),
-                                  )
-                                : ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.asset(
-                                      'assets/images/service.jpg',
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: _buildServiceImage(
+                                _displayImage,
+                                width: 80,
+                                height: 80,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -613,6 +585,18 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                           iconAsset: 'assets/images/info.png',
                           title: 'Price Range',
                           value: widget.item.priceRange!.trim(),
+                        ),
+                      if ((widget.item.area ?? '').trim().isNotEmpty)
+                        _infoRow(
+                          iconAsset: 'assets/images/location.png',
+                          title: 'Area',
+                          value: widget.item.area!.trim(),
+                        ),
+                      if ((widget.item.zipCode ?? '').trim().isNotEmpty)
+                        _infoRow(
+                          iconAsset: 'assets/images/location.png',
+                          title: 'Postal Code',
+                          value: widget.item.zipCode!.trim(),
                         ),
                       if ((widget.item.address ?? '').trim().isNotEmpty)
                         _infoRow(

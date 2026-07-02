@@ -96,13 +96,27 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   Future<void> _applyNow() async {
-    if (widget.item.applyUrl != null && widget.item.applyUrl!.isNotEmpty) {
-      final Uri applyUri = Uri.parse(widget.item.applyUrl!);
+    String url = (widget.item.applyUrl ?? '').trim();
+    if (url.isNotEmpty) {
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://$url';
+      }
+      final Uri applyUri = Uri.parse(url);
       if (await canLaunchUrl(applyUri)) {
         await launchUrl(applyUri, mode: LaunchMode.externalApplication);
+      } else {
+        try {
+          await launchUrl(applyUri, mode: LaunchMode.externalApplication);
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not open application URL'), backgroundColor: Colors.red),
+            );
+          }
+        }
       }
-    } else if (widget.item.email != null) {
-      final Uri emailUri = Uri(scheme: 'mailto', path: widget.item.email);
+    } else if (widget.item.email != null && widget.item.email!.trim().isNotEmpty) {
+      final Uri emailUri = Uri(scheme: 'mailto', path: widget.item.email!.trim());
       if (await canLaunchUrl(emailUri)) await launchUrl(emailUri);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -252,13 +266,28 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                     ),
                 ],
               ),
-              const SizedBox(height: 16),
+               const SizedBox(height: 16),
               if (widget.item.description != null && widget.item.description!.trim().isNotEmpty) ...[
                 const Text('Description', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
                 Text(
                   widget.item.description!,
                   style: const TextStyle(fontSize: 14, color: Color(0xFF444444), height: 1.5),
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (widget.item.phone != null && widget.item.phone!.trim().isNotEmpty) ...[
+                const Text('Contact Phone', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.phone_outlined, color: Color(0xFF4E7F6D), size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.item.phone!.trim(),
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF444444), fontWeight: FontWeight.w500),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
               ],

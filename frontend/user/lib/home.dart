@@ -108,45 +108,49 @@ class _HomePageState extends State<HomePage> {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 40.0,
-            vertical: 24.0,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text('Trial ended'),
-          content: const Text(
-            'Your trial has ended. Subscribe now to continue using all features.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                // Exit the app when user taps Exit
-                try {
-                  SystemNavigator.pop();
-                } catch (_) {
+        return WillPopScope(
+          onWillPop: () async => false,
+          child: AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 40.0,
+              vertical: 24.0,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text('Trial ended'),
+            content: const Text(
+              'Your trial has ended. Subscribe now to continue using all features.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  // Exit the app when user taps Exit
                   try {
-                    exit(0);
-                  } catch (_) {}
-                }
-              },
-              child: const Text('Exit'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // Replace direct SubscriptionsPage navigation with utility
-                openSubscriptionsPage(context, autoNavigateOnActivation: true);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HomePage.primaryGreen,
-                elevation: 0,
+                    SystemNavigator.pop();
+                  } catch (_) {
+                    try {
+                      exit(0);
+                    } catch (_) {}
+                  }
+                },
+                child: const Text('Exit'),
               ),
-              child: const Text('Subscribe now'),
-            ),
-          ],
+              ElevatedButton(
+                onPressed: () {
+                  // Replace direct SubscriptionsPage navigation with utility
+                  openSubscriptionsPage(context, autoNavigateOnActivation: true);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: HomePage.primaryGreen,
+                  elevation: 0,
+                ),
+                child: const Text('Subscribe now'),
+              ),
+            ],
+          ),
         );
       },
     );

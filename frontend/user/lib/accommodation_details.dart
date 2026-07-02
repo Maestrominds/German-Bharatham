@@ -35,6 +35,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   static const Color textPrimary = Color(0xFF1A1A2E);
   static const Color textSecondary = Color(0xFF6B7280);
 
+  late Map<String, dynamic> _data;
   RatingStats? _ratingStats;
   Rating? _userRating;
   bool _isSaved = false;
@@ -44,12 +45,84 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   @override
   void initState() {
     super.initState();
+    _normalizeData();
     try {
-      _isSaved = SavedManager.instance.isSaved((widget.item.id ?? '').toString());
+      _isSaved = SavedManager.instance.isSaved((_data['id'] ?? '').toString());
     } catch (_) {
       _isSaved = false;
     }
     _loadRatingData();
+  }
+
+  void _normalizeData() {
+    final item = widget.item;
+    if (item == null) {
+      _data = {};
+      return;
+    }
+
+    if (item is Map) {
+      _data = Map<String, dynamic>.from(item);
+    } else {
+      try {
+        _data = Map<String, dynamic>.from(item.toSavedJson());
+      } catch (_) {
+        try {
+          _data = {
+            'id': item.id,
+            'title': item.title,
+            'description': item.description,
+            'location': item.location,
+            'image': item.image,
+            'rating': item.rating,
+            'price': item.price,
+            'amenities': item.amenities,
+            'propertyType': item.propertyType,
+            'latitude': item.latitude,
+            'longitude': item.longitude,
+            'bedrooms': item.bedrooms,
+            'bathrooms': item.bathrooms,
+            'sizeSqm': item.sizeSqm,
+            'coldRent': item.coldRent,
+            'warmRent': item.warmRent,
+            'deposit': item.deposit,
+            'contactPhone': item.contactPhone,
+            'averageRating': item.averageRating,
+            'totalRatings': item.totalRatings,
+          };
+        } catch (_) {
+          _data = {};
+        }
+      }
+    }
+
+    // Standardize rentDetails
+    if (!_data.containsKey('rentDetails') || _data['rentDetails'] == null) {
+      _data['rentDetails'] = {
+        'coldRent': _data['coldRent'] ?? _data['price'] ?? 0,
+        'warmRent': _data['warmRent'] ?? 0,
+        'deposit': _data['deposit'] ?? 0,
+      };
+    }
+    // Standardize propertyDetails
+    if (!_data.containsKey('propertyDetails') || _data['propertyDetails'] == null) {
+      _data['propertyDetails'] = {
+        'sizeSqm': _data['sizeSqm'] ?? 0,
+        'bedrooms': _data['bedrooms'] ?? 0,
+        'bathrooms': _data['bathrooms'] ?? 0,
+      };
+    }
+    // Standardize media
+    if (!_data.containsKey('media') || _data['media'] == null) {
+      final List<dynamic> imgs = [];
+      if (_data['image'] != null && _data['image'].toString().isNotEmpty) {
+        imgs.add(_data['image']);
+      }
+      if (_data['images'] is List) {
+        imgs.addAll(_data['images']);
+      }
+      _data['media'] = {'images': imgs};
+    }
   }
 
   @override
@@ -59,12 +132,15 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   }
 
   Future<void> _loadRatingData() async {
+    final idStr = (_data['id'] ?? '').toString();
+    if (idStr.isEmpty) return;
+
     final statsFuture = RatingService.getEntityRatingStats(
-      entityId: widget.item.id.toString(),
+      entityId: idStr,
       entityType: 'accommodation',
     );
     final userRatingFuture = RatingService.getUserRating(
-      entityId: widget.item.id.toString(),
+      entityId: idStr,
       entityType: 'accommodation',
     );
     final stats = await statsFuture;
@@ -78,12 +154,14 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   }
 
   void _showRatingDialog() {
+    final idStr = (_data['id'] ?? '').toString();
+    final titleStr = (_data['title'] ?? '').toString();
     showDialog(
       context: context,
       builder: (context) => RatingDialog(
-        entityId: widget.item.id.toString(),
+        entityId: idStr,
         entityType: 'accommodation',
-        entityName: widget.item.title,
+        entityName: titleStr,
         initialRating: _userRating?.rating ?? 0,
         onRatingSubmitted: () {
           _loadRatingData();
@@ -130,10 +208,8 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
 
   // ── Extract all images from media JSON or single image field ─────────────────
   List<String> get _allImages {
-    final dynamic raw = widget.item;
-    // Try media.images (JSON blob from user-created listings)
     try {
-      final media = raw.media;
+      final media = _data['media'];
       if (media is Map && media['images'] is List) {
         final imgs = (media['images'] as List)
             .map((e) => e.toString())
@@ -142,16 +218,14 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
         if (imgs.isNotEmpty) return imgs;
       }
     } catch (_) {}
-    // Try images array (direct field)
     try {
-      final imgs = raw.images;
+      final imgs = _data['images'];
       if (imgs is List && imgs.isNotEmpty) {
         return imgs.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
       }
     } catch (_) {}
-    // Fallback to single image
     try {
-      final img = raw.image?.toString() ?? '';
+      final img = _data['image']?.toString() ?? '';
       if (img.isNotEmpty) return [img];
     } catch (_) {}
     return [];
@@ -160,7 +234,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   // ── Extract rent details from JSON blob ──────────────────────────────────────
   Map? get _rentDetails {
     try {
-      final rd = widget.item.rentDetails;
+      final rd = _data['rentDetails'];
       if (rd is Map) return rd;
     } catch (_) {}
     return null;
@@ -169,7 +243,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   // ── Extract property details from JSON blob ──────────────────────────────────
   Map? get _propDetails {
     try {
-      final pd = widget.item.propertyDetails;
+      final pd = _data['propertyDetails'];
       if (pd is Map) return pd;
     } catch (_) {}
     return null;
@@ -178,7 +252,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   // ── Extract amenities from JSON blob (bool map) ──────────────────────────────
   List<String> get _amenitiesList {
     try {
-      final am = widget.item.amenities;
+      final am = _data['amenities'];
       if (am is Map) {
         const labelMap = {
           'balcony': 'Balcony',
@@ -241,7 +315,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   // ── Property type badge ───────────────────────────────────────────────────────
   String get _propertyTypeBadge {
     try {
-      final t = (widget.item.type ?? widget.item.propertyType ?? '').toString().toLowerCase();
+      final t = (_data['type'] ?? _data['propertyType'] ?? '').toString().toLowerCase();
       switch (t) {
         case 'apartment': return 'Apartment';
         case 'shared_rooms': return 'Shared Room';
@@ -262,15 +336,15 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     final prop = _propDetails;
     final amenities = _amenitiesList;
 
-    final String title = _str(widget.item.title, 'Accommodation');
-    final String city = _str(widget.item.city, '');
-    final String area = _str(widget.item.area, '');
-    final String address = _str(widget.item.address, '');
-    final String zipCode = _str(widget.item.zipCode ?? widget.item.postalCode, '');
-    final String contactPhone = _str(widget.item.contactPhone ?? widget.item.phone, '');
-    final String description = _str(widget.item.description, '');
-    final double? lat = widget.item.latitude is num ? (widget.item.latitude as num).toDouble() : null;
-    final double? lon = widget.item.longitude is num ? (widget.item.longitude as num).toDouble() : null;
+    final String title = _str(_data['title'], 'Accommodation');
+    final String city = _str(_data['city'] ?? _data['location'], '');
+    final String area = _str(_data['area'], '');
+    final String address = _str(_data['address'], '');
+    final String zipCode = _str(_data['zipCode'] ?? _data['postalCode'], '');
+    final String contactPhone = _str(_data['contactPhone'] ?? _data['phone'], '');
+    final String description = _str(_data['description'], '');
+    final double? lat = _data['latitude'] is num ? (_data['latitude'] as num).toDouble() : null;
+    final double? lon = _data['longitude'] is num ? (_data['longitude'] as num).toDouble() : null;
 
     final double coldRent = _dbl(_safe(rent, 'coldRent'));
     final double warmRent = _dbl(_safe(rent, 'warmRent'));
@@ -279,8 +353,8 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     final int bedrooms = _int(_safe(prop, 'bedrooms'));
     final int bathrooms = _int(_safe(prop, 'bathrooms'));
 
-    final double avgRating = _ratingStats?.averageRating ?? _dbl(widget.item.averageRating);
-    final int totalRatings = _ratingStats?.totalRatings ?? _int(widget.item.totalRatings);
+    final double avgRating = _ratingStats?.averageRating ?? _dbl(_data['averageRating']);
+    final int totalRatings = _ratingStats?.totalRatings ?? _int(_data['totalRatings']);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),

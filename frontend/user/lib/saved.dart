@@ -606,7 +606,21 @@ class _SavedThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final img = (image ?? '').trim();
-    final fallback = Image.asset(fallbackAsset, width: width, height: height, fit: BoxFit.cover);
+    final fallback = Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: borderRadius,
+      ),
+      child: Center(
+        child: Icon(
+          Icons.image_outlined,
+          size: width * 0.4,
+          color: Colors.grey.shade300,
+        ),
+      ),
+    );
 
     Widget child;
     if (img.isEmpty) {

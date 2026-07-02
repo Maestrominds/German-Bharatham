@@ -119,6 +119,7 @@ class Service {
   final String serviceType; // e.g., "Immigration", "Legal", "Financial", "Plumbing", "Cleaning"
   final String? provider; // Company or individual name
   final String? address;
+  final String? area;
   final String city;
   final String? state;
   final String? zipCode;
@@ -152,6 +153,7 @@ class Service {
     required this.serviceType,
     this.provider,
     this.address,
+    this.area,
     required this.city,
     this.state,
     this.zipCode,
@@ -198,7 +200,8 @@ class Service {
       category: (json['category'] ?? 'Services').toString(),
       serviceType: (json['serviceType'] ?? json['type'] ?? '').toString(),
       provider: provider,
-      address: (json['address'] ?? json['area'])?.toString(),
+      address: json['address']?.toString(),
+      area: json['area']?.toString(),
       city: (json['city'] ?? '').toString(),
       state: json['state']?.toString(),
       zipCode: (json['zipCode'] ?? json['postalCode'])?.toString(),
@@ -235,6 +238,7 @@ class Service {
       'serviceType': serviceType,
       'provider': provider,
       'address': address,
+      'area': area,
       'city': city,
       'state': state,
       'zipCode': zipCode,

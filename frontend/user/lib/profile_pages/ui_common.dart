@@ -2,23 +2,25 @@ import 'package:flutter/material.dart';
 
 const Color primaryGreen = Color(0xFF4E7F6D);
 
-PreferredSizeWidget appBar(BuildContext context, String title) {
+PreferredSizeWidget appBar(BuildContext context, String title, {bool showLeading = true}) {
   return AppBar(
     title: Text(title),
     centerTitle: true,
     backgroundColor: Colors.white,
     foregroundColor: Colors.black,
     elevation: 0,
-    leading: IconButton(
-      onPressed: () {
-        Navigator.pop(context);
-      },
-      icon: Image.asset(
-        'assets/images/left-arrow.png',
-        width: 22,
-        height: 22,
-      ),
-    ),
+    leading: showLeading
+        ? IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Image.asset(
+              'assets/images/left-arrow.png',
+              width: 22,
+              height: 22,
+            ),
+          )
+        : null,
   );
 }
 
@@ -26,10 +28,11 @@ Widget basePage({
   required BuildContext context,
   required String title,
   required Widget child,
+  bool showLeading = true,
 }) {
   return Scaffold(
     backgroundColor: const Color(0xFFF7F8FA),
-    appBar: appBar(context, title),
+    appBar: appBar(context, title, showLeading: showLeading),
     body: SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: child,

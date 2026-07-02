@@ -257,6 +257,24 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                       ),
                     ],
 
+                    if (widget.item.subCategory.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      _infoRow(
+                        iconAsset: 'assets/images/info.png',
+                        label: 'Category',
+                        value: widget.item.subCategory,
+                      ),
+                    ],
+
+                    if (widget.item.type != null && widget.item.type!.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      _infoRow(
+                        iconAsset: 'assets/images/info.png',
+                        label: 'Type (e.g. Veg/Non-Veg)',
+                        value: widget.item.type!,
+                      ),
+                    ],
+
                     if (widget.item.priceRange != null && 
                         widget.item.priceRange!.isNotEmpty && 
                         widget.item.priceRange!.trim().isNotEmpty) ...[
@@ -264,7 +282,16 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                       _infoRow(
                         iconAsset: 'assets/images/info.png',
                         label: 'Price Range',
-                        value: widget.item.priceRange!.replaceAll('\$', '').trim(),
+                        value: (() {
+                          final pr = widget.item.priceRange!.replaceAll('\$', '€').trim();
+                          switch (pr) {
+                            case '€': return '€ - Budget Friendly';
+                            case '€€': return '€€ - Moderate';
+                            case '€€€': return '€€€ - Expensive';
+                            case '€€€€': return '€€€€ - Very Expensive';
+                            default: return pr;
+                          }
+                        })(),
                       ),
                     ],
 
@@ -513,11 +540,17 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
   }
 
   Widget _placeholderImage(double height) {
-    return Image.asset(
-      'assets/images/restaurant.jpg',
+    return Container(
       width: double.infinity,
       height: height,
-      fit: BoxFit.cover,
+      color: Colors.grey.shade100,
+      child: Center(
+        child: Icon(
+          Icons.restaurant_outlined,
+          size: 60,
+          color: Colors.grey.shade300,
+        ),
+      ),
     );
   }
 

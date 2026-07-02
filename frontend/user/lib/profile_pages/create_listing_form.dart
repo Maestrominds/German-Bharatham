@@ -79,13 +79,13 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     final data = widget.initialData;
 
     if (widget.category == 'Accommodation') {
-      _controllers['title'] = TextEditingController(text: data?['title'] ?? '');
-      _controllers['city'] = TextEditingController(text: data?['city'] ?? '');
-      _controllers['postalCode'] = TextEditingController(text: data?['postalCode'] ?? '');
-      _controllers['area'] = TextEditingController(text: data?['area'] ?? '');
-      _controllers['address'] = TextEditingController(text: data?['address'] ?? '');
-      _controllers['contactPhone'] = TextEditingController(text: data?['contactPhone'] ?? '');
-      _controllers['description'] = TextEditingController(text: data?['description'] ?? '');
+      _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
+      _controllers['city'] = TextEditingController(text: data?['city']?.toString() ?? '');
+      _controllers['postalCode'] = TextEditingController(text: (data?['postalCode'] ?? data?['zipCode'])?.toString() ?? '');
+      _controllers['area'] = TextEditingController(text: data?['area']?.toString() ?? '');
+      _controllers['address'] = TextEditingController(text: data?['address']?.toString() ?? '');
+      _controllers['contactPhone'] = TextEditingController(text: (data?['contactPhone'] ?? data?['phone'])?.toString() ?? '');
+      _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
       _controllers['coldRent'] = TextEditingController(text: data?['rentDetails']?['coldRent']?.toString() ?? '');
       _controllers['warmRent'] = TextEditingController(text: data?['rentDetails']?['warmRent']?.toString() ?? '');
       _controllers['deposit'] = TextEditingController(text: data?['rentDetails']?['deposit']?.toString() ?? '');
@@ -111,17 +111,17 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       });
     } 
     else if (widget.category == 'Food') {
-      _controllers['title'] = TextEditingController(text: data?['title'] ?? '');
-      _controllers['type'] = TextEditingController(text: data?['type'] ?? '');
-      _controllers['address'] = TextEditingController(text: data?['address'] ?? '');
-      _controllers['city'] = TextEditingController(text: data?['city'] ?? '');
-      _controllers['state'] = TextEditingController(text: data?['state'] ?? '');
-      _controllers['zipCode'] = TextEditingController(text: data?['zipCode'] ?? '');
-      _controllers['phone'] = TextEditingController(text: data?['phone'] ?? '');
-      _controllers['website'] = TextEditingController(text: data?['website'] ?? '');
-      _controllers['description'] = TextEditingController(text: data?['description'] ?? '');
-      _controllers['openingHours'] = TextEditingController(text: data?['openingHours'] ?? '');
-      _controllers['image'] = TextEditingController(text: data?['image'] ?? '');
+      _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
+      _controllers['type'] = TextEditingController(text: data?['type']?.toString() ?? '');
+      _controllers['address'] = TextEditingController(text: data?['address']?.toString() ?? '');
+      _controllers['city'] = TextEditingController(text: data?['city']?.toString() ?? '');
+      _controllers['state'] = TextEditingController(text: data?['state']?.toString() ?? '');
+      _controllers['zipCode'] = TextEditingController(text: data?['zipCode']?.toString() ?? '');
+      _controllers['phone'] = TextEditingController(text: data?['phone']?.toString() ?? '');
+      _controllers['website'] = TextEditingController(text: data?['website']?.toString() ?? '');
+      _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
+      _controllers['openingHours'] = TextEditingController(text: data?['openingHours']?.toString() ?? '');
+      _controllers['image'] = TextEditingController(text: data?['image']?.toString() ?? '');
 
       _subCategory = data?['subCategory'] ?? 'Restaurant';
       // Normalize legacy $ symbols to € for backward compat
@@ -140,12 +140,12 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       _foodSpecialties.addAll(List<String>.from(initSpecs));
     } 
     else if (widget.category == 'Jobs') {
-      _controllers['title'] = TextEditingController(text: data?['title'] ?? '');
-      _controllers['location'] = TextEditingController(text: data?['location'] ?? '');
-      _controllers['contact'] = TextEditingController(text: data?['contact'] ?? data?['phone'] ?? '');
-      _controllers['description'] = TextEditingController(text: data?['description'] ?? '');
-      _controllers['salary'] = TextEditingController(text: data?['salary'] ?? '');
-      _controllers['companyName'] = TextEditingController(text: data?['company'] ?? data?['companyName'] ?? '');
+      _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
+      _controllers['location'] = TextEditingController(text: data?['location']?.toString() ?? '');
+      _controllers['contact'] = TextEditingController(text: (data?['contact'] ?? data?['phone'])?.toString() ?? '');
+      _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
+      _controllers['salary'] = TextEditingController(text: data?['salary']?.toString() ?? '');
+      _controllers['companyName'] = TextEditingController(text: (data?['company'] ?? data?['companyName'])?.toString() ?? '');
       
       final reqs = data?['requirements'];
       _controllers['requirements'] = TextEditingController(
@@ -165,19 +165,19 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       }
     } 
     else if (widget.category == 'Services') {
-      _controllers['serviceName'] = TextEditingController(text: data?['serviceName'] ?? data?['title'] ?? '');
-      _controllers['providerName'] = TextEditingController(text: data?['providerName'] ?? '');
-      _controllers['city'] = TextEditingController(text: data?['city'] ?? '');
-      _controllers['postalCode'] = TextEditingController(text: data?['postalCode'] ?? '');
-      _controllers['area'] = TextEditingController(text: data?['area'] ?? '');
-      _controllers['address'] = TextEditingController(text: data?['address'] ?? '');
-      _controllers['contactPhone'] = TextEditingController(text: data?['contactPhone'] ?? data?['phone'] ?? '');
-      _controllers['whatsapp'] = TextEditingController(text: data?['whatsapp'] ?? '');
-      _controllers['email'] = TextEditingController(text: data?['email'] ?? '');
-      _controllers['website'] = TextEditingController(text: data?['website'] ?? '');
+      _controllers['serviceName'] = TextEditingController(text: (data?['serviceName'] ?? data?['title'])?.toString() ?? '');
+      _controllers['providerName'] = TextEditingController(text: data?['providerName']?.toString() ?? '');
+      _controllers['city'] = TextEditingController(text: data?['city']?.toString() ?? '');
+      _controllers['postalCode'] = TextEditingController(text: data?['postalCode']?.toString() ?? '');
+      _controllers['area'] = TextEditingController(text: data?['area']?.toString() ?? '');
+      _controllers['address'] = TextEditingController(text: data?['address']?.toString() ?? '');
+      _controllers['contactPhone'] = TextEditingController(text: (data?['contactPhone'] ?? data?['phone'])?.toString() ?? '');
+      _controllers['whatsapp'] = TextEditingController(text: data?['whatsapp']?.toString() ?? '');
+      _controllers['email'] = TextEditingController(text: data?['email']?.toString() ?? '');
+      _controllers['website'] = TextEditingController(text: data?['website']?.toString() ?? '');
       _controllers['latitude'] = TextEditingController(text: data?['latitude']?.toString() ?? '');
       _controllers['longitude'] = TextEditingController(text: data?['longitude']?.toString() ?? '');
-      _controllers['description'] = TextEditingController(text: data?['description'] ?? '');
+      _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
       
       final amenitiesRaw = data?['amenities'];
       final amenitiesStr = (amenitiesRaw is List) 

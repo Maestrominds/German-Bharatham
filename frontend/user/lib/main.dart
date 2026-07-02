@@ -1677,6 +1677,42 @@ class _SplashScreenState extends State<SplashScreen>
       } catch (_) {
         // Fallback: if network fails, allow entry but subsequent calls will fail if blocked
       }
+
+      // Check subscription status for logged in users
+      final token = UserSession.instance.token;
+      if (token != null) {
+        try {
+          final subRes = await http.get(
+            Uri.parse(ApiConfig.subscriptionStatusEndpoint),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ).timeout(const Duration(seconds: 10));
+
+          if (subRes.statusCode == 200) {
+            final subJson = jsonDecode(subRes.body);
+            final userSub = subJson['user'] as Map?;
+            final subStatus = userSub?['subscriptionStatus']?.toString();
+            final isSubscribed = (subStatus == 'active' || subStatus == 'trial');
+
+            if (!isSubscribed) {
+              await _logoController.forward();
+              if (mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SubscriptionsPage(autoNavigateOnActivation: true),
+                  ),
+                );
+                return;
+              }
+            }
+          }
+        } catch (_) {
+          // Fail-open on network timeout so users are not blocked if offline
+        }
+      }
     }
 
     await _logoController.forward();
