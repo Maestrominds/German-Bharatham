@@ -71,7 +71,8 @@ router.post("/", async (req, res) => {
         propertyDetails:  data.propertyDetails || null,
         amenities:        data.amenities || null,
         media:            data.media || null,
-        area:             data.area && !isNaN(parseFloat(data.area)) ? parseFloat(data.area) : null,
+        area:             data.propertyDetails?.sizeSqm ? parseFloat(data.propertyDetails.sizeSqm) : (data.sizeSqm ? parseFloat(data.sizeSqm) : null),
+        state:            data.area || null,
         ...meta,
       };
       doc = await prisma.accommodation.create({ data: accPayload });
@@ -221,7 +222,8 @@ router.put("/:category/:id", async (req, res) => {
         propertyDetails:  data.propertyDetails || null,
         amenities:        data.amenities || null,
         media:            data.media || null,
-        area:             data.area && !isNaN(parseFloat(data.area)) ? parseFloat(data.area) : null,
+        area:             data.propertyDetails?.sizeSqm ? parseFloat(data.propertyDetails.sizeSqm) : (data.sizeSqm ? parseFloat(data.sizeSqm) : null),
+        state:            data.area || null,
         ...meta,
       };
       updatedDoc = await prisma.accommodation.update({ where: { id: numericId }, data: accPayload });

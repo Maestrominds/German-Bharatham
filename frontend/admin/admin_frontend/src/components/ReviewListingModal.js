@@ -32,11 +32,11 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       description: raw.description || '',
       contactPhone: raw.contactPhone || raw.contact || raw.phone || raw.email || '',
       city: raw.city || raw.location || raw.address || '',
-      area: raw.area || '',
+      area: raw.state ? String(raw.state) : (typeof raw.area === 'string' ? raw.area : ''),
       
       // Accommodation details
-      propertyType: raw.propertyType || 'Apartment',
-      postalCode: raw.zipCode || raw.postalCode || '',
+      propertyType: raw.propertyType || raw.type || 'Apartment',
+      postalCode: (raw.zipCode !== undefined && raw.zipCode !== null) ? String(raw.zipCode) : (raw.postalCode ? String(raw.postalCode) : ''),
       address: raw.address || '',
       rentDetails: {
         coldRent: raw.rentDetails?.coldRent ?? '',
@@ -129,7 +129,8 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         contactPhone: formData.contactPhone?.trim() || '',
         phone: formData.contactPhone?.trim() || '',
         address: formData.address?.trim() || null,
-        area: formData.area?.trim() || null,
+        area: formData.propertyDetails.sizeSqm !== '' ? parseFloat(formData.propertyDetails.sizeSqm) : null,
+        state: formData.area?.trim() || null,
         postalCode: formData.postalCode?.trim() || null,
         zipCode: formData.postalCode?.trim() || null,
         type: formData.propertyType || null,
@@ -502,9 +503,13 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
           </div>
         </div>
         <div className="review-actions" style={{ padding: '15px 24px', display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #e5e7eb' }}>
-          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
-          <button onClick={handleSaveClick} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Save Pending</button>
-          <button onClick={handleApproveClick} style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Approve</button>
+          <button onClick={onClose} disabled={saving !== null} style={{ padding: '8px 16px', borderRadius: '6px', cursor: saving !== null ? 'not-allowed' : 'pointer', opacity: saving !== null ? 0.6 : 1 }}>Cancel</button>
+          <button onClick={handleSaveClick} disabled={saving !== null} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: saving !== null ? 'not-allowed' : 'pointer', opacity: saving !== null ? 0.6 : 1 }}>
+            {saving === 'pending' ? 'Saving...' : 'Save Pending'}
+          </button>
+          <button onClick={handleApproveClick} disabled={saving !== null} style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: saving !== null ? 'not-allowed' : 'pointer', opacity: saving !== null ? 0.6 : 1 }}>
+            {saving === 'active' || saving === 'approved' ? 'Approving...' : 'Approve'}
+          </button>
         </div>
       </div>
     </div>
