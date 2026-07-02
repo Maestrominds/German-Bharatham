@@ -6,7 +6,7 @@ class ApiConfig {
       static String get verifyOtpEndpoint => '$baseUrl/api/user/verify-otp';
     static String get paymentHistoryEndpoint => '$baseUrl/api/subscriptions/user/payment-history';
   // Production backend
-  static const String _prodBaseUrl = 'https://german-bharatham-five.vercel.app/';
+  static const String _prodBaseUrl = 'https://german-bharatham-five.vercel.app';
 
   // Google Sign-In
   // Web OAuth client ID (also used as server client ID to obtain ID token on Android
