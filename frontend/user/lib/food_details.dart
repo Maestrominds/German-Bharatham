@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -33,6 +34,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
   Rating? _userRating;
   int _currentImageIndex = 0;
   late PageController _pageController;
+  Timer? _slideshowTimer;
 
   @override
   void initState() {
@@ -40,10 +42,31 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     isSaved = SavedFoodManager.instance.isSaved(widget.item.id);
     _pageController = PageController();
     _loadRatingData();
+    _startSlideshow();
+  }
+
+  void _startSlideshow() {
+    final imgs = widget.item.images;
+    if (imgs.length <= 1) return;
+    _slideshowTimer?.cancel();
+    _slideshowTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) {
+      if (_pageController.hasClients) {
+        int nextPage = _pageController.page!.toInt() + 1;
+        if (nextPage >= imgs.length) {
+          nextPage = 0;
+        }
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
+    _slideshowTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }

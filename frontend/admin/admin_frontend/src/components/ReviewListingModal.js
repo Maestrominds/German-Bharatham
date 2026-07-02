@@ -109,8 +109,9 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    if (images.length + files.length > 3) {
-      alert("You can upload a maximum of 3 images.");
+    const maxLimit = listing.category === 'Jobs' ? 1 : 3;
+    if (images.length + files.length > maxLimit) {
+      alert(`You can upload a maximum of ${maxLimit} image${maxLimit > 1 ? 's' : ''}.`);
       return;
     }
 
@@ -120,7 +121,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         const base64 = uploadEvent.target.result;
         if (base64) {
           setImages(prev => {
-            if (prev.length >= 3) return prev;
+            if (prev.length >= maxLimit) return prev;
             return [...prev, base64];
           });
         }
@@ -197,6 +198,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         location: formData.city?.trim() || '',
         contact: formData.contactPhone?.trim() || null,
         companyName: formData.companyName?.trim() || null,
+        companyLogo: images.length > 0 ? images[0] : null,
         jobType: formData.jobType || 'Full Time',
         salary: formData.salary?.trim() || null,
         applyUrl: formData.applyUrl?.trim() || null,

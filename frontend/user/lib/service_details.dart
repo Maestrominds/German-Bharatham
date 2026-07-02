@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:async';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -12,6 +13,7 @@ import 'saved_service_manager.dart';
 import 'services/rating_service.dart';
 import 'models/rating_model.dart';
 import 'widgets/rating_dialog.dart';
+import 'services/api_config.dart';
 
 Widget _buildServiceImage(
   String src, {
@@ -35,9 +37,18 @@ Widget _buildServiceImage(
     return fallback;
   }
 
-  if (src.startsWith('data:image')) {
+  // Prepend base API URL to relative image paths
+  String absoluteSrc = src;
+  if (!src.startsWith('data:image') &&
+      !src.startsWith('http://') &&
+      !src.startsWith('https://') &&
+      !src.startsWith('assets/')) {
+    absoluteSrc = ApiConfig.getImageUrl(src);
+  }
+
+  if (absoluteSrc.startsWith('data:image')) {
     try {
-      final Uint8List bytes = base64Decode(src.split(',').last);
+      final Uint8List bytes = base64Decode(absoluteSrc.split(',').last);
       return Image.memory(
         bytes,
         width: width,
@@ -50,9 +61,9 @@ Widget _buildServiceImage(
     }
   }
 
-  if (src.startsWith('http://') || src.startsWith('https://')) {
+  if (absoluteSrc.startsWith('http://') || absoluteSrc.startsWith('https://')) {
     return Image.network(
-      src,
+      absoluteSrc,
       width: width,
       height: height,
       fit: BoxFit.cover,
@@ -61,7 +72,7 @@ Widget _buildServiceImage(
   }
 
   return Image.asset(
-    src,
+    absoluteSrc,
     width: width,
     height: height,
     fit: BoxFit.cover,
@@ -84,6 +95,9 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   Rating? _userRating;
   late bool _isSaved;
   late final String _displayImage;
+  int _currentImageIndex = 0;
+  late PageController _pageController;
+  Timer? _slideshowTimer;
 
   @override
   void initState() {
@@ -92,7 +106,35 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
     _displayImage = widget.item.images.isNotEmpty
         ? widget.item.images.first
         : (widget.item.image ?? '');
+    _pageController = PageController();
     _loadRatingData();
+    _startSlideshow();
+  }
+
+  void _startSlideshow() {
+    final imgs = widget.item.images;
+    if (imgs.length <= 1) return;
+    _slideshowTimer?.cancel();
+    _slideshowTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) {
+      if (_pageController.hasClients) {
+        int nextPage = _pageController.page!.toInt() + 1;
+        if (nextPage >= imgs.length) {
+          nextPage = 0;
+        }
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _slideshowTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadRatingData() async {
@@ -366,102 +408,121 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
         : '0.0';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Image.asset(
-            'assets/images/left-arrow.png',
-            height: 22,
-            width: 22,
-            color: Colors.black,
-          ),
-        ),
-        title: const Text(
-          "Service Details",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-        actions: const [],
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// IMAGE HEADER
+                  Stack(
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            height: 80,
-                            width: 80,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: Colors.grey.shade200,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: widget.item.images.isNotEmpty
-                                  ? PageView.builder(
-                                      itemCount: widget.item.images.length,
-                                      itemBuilder: (_, i) => _buildServiceImage(
-                                        widget.item.images[i],
-                                        width: 80,
-                                        height: 80,
-                                      ),
-                                    )
-                                  : _buildServiceImage(
-                                      _displayImage,
-                                      width: 80,
-                                      height: 80,
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        widget.item.title,
-                                        style: const TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
+                      SizedBox(
+                        height: 300,
+                        child: widget.item.images.isNotEmpty
+                            ? Stack(
+                                children: [
+                                  PageView.builder(
+                                    controller: _pageController,
+                                    itemCount: widget.item.images.length,
+                                    onPageChanged: (i) => setState(() => _currentImageIndex = i),
+                                    itemBuilder: (_, i) => _buildServiceImage(widget.item.images[i], width: double.infinity, height: 300),
+                                  ),
+                                  if (widget.item.images.length > 1)
+                                    Positioned(
+                                      bottom: 12,
+                                      left: 0,
+                                      right: 0,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: List.generate(
+                                          widget.item.images.length,
+                                          (i) => Container(
+                                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                                            width: _currentImageIndex == i ? 12 : 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(4),
+                                              color: _currentImageIndex == i
+                                                  ? const Color(0xFF4E7F6D)
+                                                  : Colors.white.withOpacity(0.6),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                    InkWell(
-                                      onTap: _toggleSave,
-                                      child: Image.asset(
-                                        'assets/images/bookmark.png',
-                                        height: 22,
-                                        width: 22,
-                                        color:
-                                            _isSaved
-                                                ? const Color(0xFF4E7F6D)
-                                                : Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
+                                ],
+                              )
+                            : _buildServiceImage('', width: double.infinity, height: 300),
+                      ),
+                      Positioned(
+                        top: 12,
+                        left: 12,
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6)],
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            child: Image.asset(
+                              'assets/images/left-arrow.png',
+                              height: 22,
+                              width: 22,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: GestureDetector(
+                          onTap: _toggleSave,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6)],
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            child: Image.asset(
+                              'assets/images/bookmark.png',
+                              height: 22,
+                              width: 22,
+                              color: _isSaved ? const Color(0xFF4E7F6D) : Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  /// CONTENT
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.item.title,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                                 Row(
                                   children: [
                                     Image.asset(
@@ -514,16 +575,12 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                         constraints: const BoxConstraints(),
                                       ),
                                     ],
-                                  ],
-                                ),
                               ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
                 const SizedBox(height: 16),
 
@@ -840,8 +897,9 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _infoRow({
     required String iconAsset,

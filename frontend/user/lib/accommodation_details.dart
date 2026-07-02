@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -13,6 +14,7 @@ import 'widgets/rating_dialog.dart';
 import 'services/rating_service.dart';
 import 'models/rating_model.dart';
 import 'saved_manager.dart';
+import 'services/api_config.dart';
 
 class AccommodationDetailPage extends StatefulWidget {
   final dynamic item;
@@ -41,6 +43,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   bool _isSaved = false;
   int _currentImageIndex = 0;
   final PageController _pageController = PageController();
+  Timer? _slideshowTimer;
 
   @override
   void initState() {
@@ -52,6 +55,34 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
       _isSaved = false;
     }
     _loadRatingData();
+    _startSlideshow();
+  }
+
+  void _startSlideshow() {
+    final imgs = _allImages;
+    if (imgs.length <= 1) return;
+    _slideshowTimer?.cancel();
+    _slideshowTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) {
+      if (_pageController.hasClients) {
+        int nextPage = _pageController.page!.toInt() + 1;
+        if (nextPage >= imgs.length) {
+          nextPage = 0;
+        }
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  String _toAbsoluteUrl(String src) {
+    if (src.isEmpty) return '';
+    if (src.startsWith('data:image')) return src;
+    if (src.startsWith('http://') || src.startsWith('https://')) return src;
+    if (src.startsWith('assets/')) return src;
+    return ApiConfig.getImageUrl(src);
   }
 
   void _normalizeData() {
@@ -127,6 +158,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
 
   @override
   void dispose() {
+    _slideshowTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -283,21 +315,21 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     return [];
   }
 
-  // ── Image display helper ──────────────────────────────────────────────────────
   Widget _buildImageWidget(String src, {double? height}) {
     final h = height ?? 280.0;
     if (src.isEmpty) return _placeholder(h);
-    if (src.startsWith('data:image')) {
+    final absoluteSrc = _toAbsoluteUrl(src);
+    if (absoluteSrc.startsWith('data:image')) {
       try {
-        final Uint8List bytes = base64Decode(src.split(',').last);
+        final Uint8List bytes = base64Decode(absoluteSrc.split(',').last);
         return Image.memory(bytes, width: double.infinity, height: h, fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => _placeholder(h));
       } catch (_) {
         return _placeholder(h);
       }
     }
-    if (src.startsWith('http')) {
-      return Image.network(src, width: double.infinity, height: h, fit: BoxFit.cover,
+    if (absoluteSrc.startsWith('http')) {
+      return Image.network(absoluteSrc, width: double.infinity, height: h, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => _placeholder(h));
     }
     return _placeholder(h);

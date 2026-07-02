@@ -180,13 +180,12 @@ class FoodGrocery {
     final chosenImage = (explicitImage != null && explicitImage.trim().isNotEmpty) ? explicitImage : mediaImage;
 
     final List<String> rawImages = [];
-    if (json['images'] is List) {
-      rawImages.addAll(_toStringList(json['images']));
-    } else if (json['media'] is Map && json['media']['images'] is List) {
-      rawImages.addAll(_toStringList(json['media']['images']));
-    }
-    if (rawImages.isEmpty && chosenImage.trim().isNotEmpty) {
-      rawImages.add(chosenImage);
+    if (chosenImage.trim().isNotEmpty) {
+      if (chosenImage.contains(';;;')) {
+        rawImages.addAll(chosenImage.split(';;;').map((s) => s.trim()).where((s) => s.isNotEmpty));
+      } else {
+        rawImages.add(chosenImage);
+      }
     }
     final absoluteImages = rawImages.map((img) => _toAbsoluteImageUrl(img)).toList();
 
