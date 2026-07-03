@@ -82,7 +82,7 @@ const Listings = () => {
   const handleStatusChange = async (item, newStatus) => {
     const conf = APIS[item.category];
     if (!conf) return;
-    setUpdatingStatusId(item._id);
+    setUpdatingStatusId(`${item.category}-${item._id}`);
     try {
       const token = localStorage.getItem('adminToken');
       const res = await fetch(conf.patch(item._id), {
@@ -202,7 +202,7 @@ const Listings = () => {
                         <option value="pending">Pending</option>
                         <option value="inactive">Inactive</option>
                       </select>
-                      {updatingStatusId === listing._id && (
+                      {updatingStatusId === `${listing.category}-${listing._id}` && (
                         <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '6px' }}>updating...</span>
                       )}
                     </td>

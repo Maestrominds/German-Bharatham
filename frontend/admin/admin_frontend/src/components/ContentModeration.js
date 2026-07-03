@@ -78,7 +78,7 @@ const ContentModeration = () => {
 
   const updateStatus = async (listing, status) => {
     const isApprove = status === 'active' || status === 'Active';
-    setSaving(isApprove ? 'active' : 'rejecting');
+    setSaving(`${listing.category}-${listing.id}-${isApprove ? 'approve' : 'reject'}`);
     try {
       const res = await fetch(PATCH_URLS[listing.category](listing.id), {
         method: 'PATCH',
@@ -99,7 +99,7 @@ const ContentModeration = () => {
 
   const handleSaveListing = async (listing, editedPayload, finalStatus) => {
     const statusLower = String(finalStatus).toLowerCase();
-    setSaving(statusLower);
+    setSaving(`${listing.category}-${listing.id}-${statusLower === 'active' ? 'approve' : 'save'}`);
     try {
       const res = await fetch(DELETE_URLS[listing.category](listing.id), {
         method: 'PUT',
@@ -127,7 +127,7 @@ const ContentModeration = () => {
   const handleApprove = (listing) => updateStatus(listing, listing.category === 'Jobs' ? 'Active' : 'active');
 
   const handleReject = async (listing) => {
-    setSaving('rejecting');
+    setSaving(`${listing.category}-${listing.id}-reject`);
     try {
       if (listing.creatorType === 'user') {
         await updateStatus(listing, 'Rejected');
@@ -198,10 +198,10 @@ const ContentModeration = () => {
                 <Edit size={16} /> Edit
               </button>
               <button className="action-btn approve-btn" disabled={saving !== null} onClick={() => handleApprove(listing)}>
-                <Check size={16} /> {saving === 'active' ? 'Approving...' : 'Approve'}
+                <Check size={16} /> {saving === `${listing.category}-${listing.id}-approve` ? 'Approving...' : 'Approve'}
               </button>
               <button className="action-btn reject-btn" disabled={saving !== null} onClick={() => handleReject(listing)}>
-                <X size={16} /> {saving === 'rejecting' ? 'Rejecting...' : 'Reject'}
+                <X size={16} /> {saving === `${listing.category}-${listing.id}-reject` ? 'Rejecting...' : 'Reject'}
               </button>
             </div>
           </div>
@@ -212,7 +212,7 @@ const ContentModeration = () => {
         <ReviewListingModal
           listing={selectedListing}
           onClose={() => setShowReviewModal(false)}
-          saving={saving}
+          saving={saving ? (saving.includes('-approve') ? 'active' : 'pending') : null}
           onApprove={async (editedPayload) => {
             const status = selectedListing.category === 'Jobs' ? 'Active' : 'active';
             await handleSaveListing(selectedListing, editedPayload, status);
