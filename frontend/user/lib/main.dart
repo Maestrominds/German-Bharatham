@@ -41,6 +41,49 @@ Future<void> main() async {
     SavedServiceManager.instance.initialize(),
   ]);
 
+  // Catch global Flutter rendering/layout errors and show a clean, user-friendly UI instead of a red/grey screen
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FA),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 54),
+              const SizedBox(height: 18),
+              const Text(
+                'Something went wrong',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'An unexpected error occurred. Please try again or restart the app.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              if (kDebugMode) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    details.exception.toString(),
+                    style: const TextStyle(fontSize: 12, fontFamily: 'monospace', color: Colors.red),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  };
+
   // Enables OS-level notification popups + tap-to-open.
   await NotificationManager.instance.init(navigatorKey: rootNavigatorKey);
 

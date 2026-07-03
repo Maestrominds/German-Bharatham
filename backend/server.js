@@ -272,6 +272,11 @@ app.get("/reset-password", (req, res) => {
   </html>`);
 });
 
+// Health Check endpoint (used by uptime monitors & Vercel Crons to avoid cold starts)
+app.get("/api/health", (req, res) => {
+  res.json({ status: "OK", message: "Server is warm and healthy" });
+});
+
 // Connect DB and start server
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || "0.0.0.0";

@@ -218,7 +218,7 @@ class InfoPage extends StatelessWidget {
                 'Groceries, restaurants, and job leads',
               ),
               _buildCard(
-                _leadingImage('assets/images/trust.jpg'),
+                _leadingImage('assets/images/communication.png'),
                 'Community support',
                 'Guides and resources from Indians',
               ),

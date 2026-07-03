@@ -9,6 +9,7 @@ PreferredSizeWidget appBar(BuildContext context, String title, {bool showLeading
     backgroundColor: Colors.white,
     foregroundColor: Colors.black,
     elevation: 0,
+    automaticallyImplyLeading: showLeading,
     leading: showLeading
         ? IconButton(
             onPressed: () {
@@ -124,6 +125,37 @@ ButtonStyle buttonStyle() {
     minimumSize: const Size(double.infinity, 48),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
+    ),
+  );
+}
+
+String getFriendlyErrorMessage(dynamic e) {
+  final str = e.toString().toLowerCase();
+  if (str.contains('socketexception') || str.contains('connection failed') || str.contains('handshake failed') || str.contains('network_error')) {
+    return 'No internet connection. Please check your network connection and try again.';
+  }
+  if (str.contains('timeoutexception') || str.contains('timeout')) {
+    return 'The connection timed out. The server might be waking up or offline. Please try again.';
+  }
+  if (str.contains('formatexception')) {
+    return 'Received an invalid response format from server. Please try again later.';
+  }
+  String msg = e.toString();
+  if (msg.startsWith('Exception: ')) {
+    msg = msg.substring('Exception: '.length);
+  }
+  return msg;
+}
+
+void showErrorSnackBar(BuildContext context, dynamic error) {
+  final message = getFriendlyErrorMessage(error);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.red[850],
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      duration: const Duration(seconds: 4),
     ),
   );
 }

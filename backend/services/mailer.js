@@ -52,8 +52,14 @@ async function sendViaBrevo({ to, subject, text, html, from }) {
   } catch (err) {
     const status = err?.response?.status;
     const data   = err?.response?.data;
+    let errMsg = "";
+    if (data) {
+      errMsg = typeof data === "object" ? JSON.stringify(data) : String(data);
+    } else {
+      errMsg = err.message || "Unknown error";
+    }
     const e = new Error(
-      `Brevo API request failed${status ? ` (HTTP ${status})` : ""}: ${JSON.stringify(data)}`
+      `Brevo API request failed${status ? ` (HTTP ${status})` : ""}: ${errMsg}`
     );
     e.code    = "BREVO_REQUEST_FAILED";
     e.status  = status;
@@ -105,8 +111,14 @@ async function sendViaResend({ to, subject, text, html, from }) {
   } catch (err) {
     const status = err?.response?.status;
     const data   = err?.response?.data;
+    let errMsg = "";
+    if (data) {
+      errMsg = typeof data === "object" ? JSON.stringify(data) : String(data);
+    } else {
+      errMsg = err.message || "Unknown error";
+    }
     const e = new Error(
-      `Resend API request failed${status ? ` (HTTP ${status})` : ""}`
+      `Resend API request failed${status ? ` (HTTP ${status})` : ""}: ${errMsg}`
     );
     e.code    = "RESEND_REQUEST_FAILED";
     e.status  = status;

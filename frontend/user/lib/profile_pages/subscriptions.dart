@@ -30,6 +30,7 @@ class SubscriptionsPage extends StatefulWidget {
 class _SubscriptionsPageState extends State<SubscriptionsPage> {
 
   bool _loading = true;
+  bool _checkoutLoading = false;
   String? _error;
 
   List<Map<String, dynamic>> _plans = [];
@@ -62,6 +63,24 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
     return {"data": decoded};
   }
 
+  String _getFriendlyErrorMessage(dynamic e) {
+    final str = e.toString().toLowerCase();
+    if (str.contains('socketexception') || str.contains('connection failed') || str.contains('handshake failed') || str.contains('network_error')) {
+      return 'No internet connection. Please check your network connection and try again.';
+    }
+    if (str.contains('timeoutexception') || str.contains('timeout')) {
+      return 'The connection timed out. The server might be waking up or offline. Please try again.';
+    }
+    if (str.contains('formatexception')) {
+      return 'Received an invalid response format from server. Please try again later.';
+    }
+    String msg = e.toString();
+    if (msg.startsWith('Exception: ')) {
+      msg = msg.substring('Exception: '.length);
+    }
+    return msg;
+  }
+
   Future<void> _loadPlans() async {
 
     try {
@@ -81,14 +100,14 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
         headers: {
           "Authorization": "Bearer $token"
         },
-      );
+      ).timeout(const Duration(seconds: 15));
 
       final statusResponse = await http.get(
         Uri.parse(ApiConfig.subscriptionStatusEndpoint),
         headers: {
           "Authorization": "Bearer $token"
         },
-      );
+      ).timeout(const Duration(seconds: 15));
 
       final plansJson = _decode(plansResponse.body);
       final statusJson = _decode(statusResponse.body);
@@ -117,7 +136,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
     } catch (e) {
 
       setState(() {
-        _error = e.toString();
+        _error = _getFriendlyErrorMessage(e);
         _loading = false;
       });
 
@@ -163,6 +182,10 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
   }
 
   Future<void> _subscribe(String planId) async {
+    if (_checkoutLoading) return;
+    setState(() {
+      _checkoutLoading = true;
+    });
 
     try {
 
@@ -297,8 +320,14 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
     } catch (e) {
 
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+          .showSnackBar(SnackBar(content: Text(_getFriendlyErrorMessage(e))));
 
+    } finally {
+      if (mounted) {
+        setState(() {
+          _checkoutLoading = false;
+        });
+      }
     }
 
   }
@@ -417,23 +446,54 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
       return true;
     }).toList();
 
-    final content = basePage(
-      context: context,
-      title: 'Subscription Plans',
-      showLeading: !widget.autoNavigateOnActivation,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final gap = 12.0;
-          final cardWidth = (constraints.maxWidth - gap) / 2;
-          return Wrap(
-            spacing: gap,
-            runSpacing: gap,
-            children: displayPlans
-                .map((p) => SizedBox(width: cardWidth, child: _planCard(p)))
-                .toList(),
-          );
-        },
-      ),
+    final content = Stack(
+      children: [
+        basePage(
+          context: context,
+          title: 'Subscription Plans',
+          showLeading: !widget.autoNavigateOnActivation,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final gap = 12.0;
+              final cardWidth = (constraints.maxWidth - gap) / 2;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: displayPlans
+                    .map((p) => SizedBox(width: cardWidth, child: _planCard(p)))
+                    .toList(),
+              );
+            },
+          ),
+        ),
+        if (_checkoutLoading)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.4),
+              child: const Center(
+                child: Card(
+                  elevation: 4,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Processing...',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
 
     if (!widget.autoNavigateOnActivation) return content;
