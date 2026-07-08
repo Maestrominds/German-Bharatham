@@ -1,6 +1,6 @@
 // API Configuration
-const PROD_API_URL = 'https://german-bharatham-five.vercel.app';
-const DEV_API_URL = 'https://german-bharatham-five.vercel.app';
+const PROD_API_URL = 'http://72.60.177.51';
+const DEV_API_URL = 'http://72.60.177.51';
 
 const API_URL =
 	process.env.REACT_APP_API_URL ||

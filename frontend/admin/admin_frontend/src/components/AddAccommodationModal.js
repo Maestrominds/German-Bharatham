@@ -59,36 +59,40 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
     return null;
   };
 
-  const toBase64 = file => new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onloadend = () => res(r.result);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-
   const handleSubmit = async () => {
     const err = validate();
     if (err) { alert(err); return; }
     setSubmitting(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const base64Images = await Promise.all(images.map(toBase64));
-      const payload = {
-        title:        form.title.trim(),
-        propertyType: form.propertyType,
-        city:         form.location.trim(),
-        contactPhone: form.contact.trim(),
-        description:  form.description.trim(),
-        status:       form.status === 'inactive' ? 'disabled' : form.status,
-        rentDetails:  { warmRent: parseFloat(form.price) || 0 },
-        amenities:    selectedAmenities.reduce((acc, a) => { acc[a.toLowerCase().replace(/\s+/g, '_')] = true; return acc; }, {}),
-        media:        { images: base64Images },
-        adminControls: { isActive: form.status === 'active' },
-      };
+
+      const formData = new FormData();
+      // Append raw image files directly - no base64 conversion needed
+      images.forEach(file => formData.append('images', file));
+
+      // Append text fields
+      formData.append('title',         form.title.trim());
+      formData.append('city',          form.location.trim());
+      formData.append('propertyType',  form.propertyType);
+      formData.append('contactPhone',  form.contact.trim());
+      formData.append('description',   form.description.trim());
+      formData.append('status',        form.status === 'inactive' ? 'disabled' : form.status);
+      formData.append('creatorType',   'admin');
+
+      // Append JSON fields as strings (backend parses them)
+      formData.append('rentDetails',    JSON.stringify({ warmRent: parseFloat(form.price) || 0 }));
+      formData.append('amenities',      JSON.stringify(
+        selectedAmenities.reduce((acc, a) => {
+          acc[a.toLowerCase().replace(/\s+/g, '_')] = true;
+          return acc;
+        }, {})
+      ));
+      formData.append('adminControls',  JSON.stringify({ isActive: form.status === 'active' }));
+
       const res = await fetch(`${BASE}/api/accommodation/admin`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(payload),
+        headers: { Authorization: `Bearer ${token}` }, // NO Content-Type - browser sets multipart boundary
+        body: formData,
       });
       if (res.ok) { onSuccess && onSuccess(); onClose(); }
       else { const d = await res.json().catch(() => ({})); alert('Error: ' + (d.message || 'Failed to create')); }

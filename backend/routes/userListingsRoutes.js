@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const prisma = require("../config/prisma");
+const upload = require('../middleware/upload');
+const { uploadImage } = require('../services/cloudinaryService');
 
 const mapItem = (item) => {
   if (!item) return null;
@@ -37,9 +39,28 @@ router.get("/", async (req, res) => {
 });
 
 // POST submit a new listing
-router.post("/", async (req, res) => {
+router.post("/", upload.array('images', 5), async (req, res) => {
   try {
-    const { category, data } = req.body;
+    // Support both JSON body and multipart/form-data (Flutter sends multipart when images are attached)
+    let category = req.body.category;
+    let data = req.body.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch (_) { data = {}; }
+    }
+    data = data || {};
+
+    // Upload any attached images to Cloudinary and inject URLs into data
+    if (req.files && req.files.length > 0) {
+      const uploads = await Promise.all(req.files.map(f => uploadImage(f.buffer, 'listings')));
+      const urls = uploads.map(r => r.secure_url);
+      if (category === 'Jobs') {
+        data.companyLogo = urls[0];
+      } else {
+        data.media = { images: [...(data.media?.images || []), ...urls] };
+        data.images = [...(data.images || []), ...urls];
+      }
+    }
+
     const numericUserId = parseInt(req.user.id);
     if (isNaN(numericUserId)) return res.status(401).json({ message: "Invalid session" });
 
@@ -159,10 +180,28 @@ router.post("/", async (req, res) => {
 });
 
 // PUT update a pending listing
-router.put("/:category/:id", async (req, res) => {
+router.put("/:category/:id", upload.array('images', 5), async (req, res) => {
   try {
     const { category, id } = req.params;
-    const { data } = req.body;
+    // Support both JSON body and multipart/form-data
+    let data = req.body.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch (_) { data = {}; }
+    }
+    data = data || req.body;
+
+    // Upload any attached images to Cloudinary and inject URLs into data
+    if (req.files && req.files.length > 0) {
+      const uploads = await Promise.all(req.files.map(f => uploadImage(f.buffer, 'listings')));
+      const urls = uploads.map(r => r.secure_url);
+      if (category === 'Jobs') {
+        data.companyLogo = urls[0];
+      } else {
+        data.media = { images: [...(data.media?.images || []), ...urls] };
+        data.images = [...(data.images || []), ...urls];
+      }
+    }
+
     const numericId = parseInt(id);
     const numericUserId = parseInt(req.user.id);
 

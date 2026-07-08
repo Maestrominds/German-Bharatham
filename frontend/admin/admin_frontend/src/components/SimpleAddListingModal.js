@@ -76,14 +76,6 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
     return null;
   };
 
-  const toBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onloadend = () => resolve(r.result);
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-
   const handleSubmit = async () => {
     const err = validate();
     if (err) { alert(err); return; }
@@ -92,33 +84,34 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
     try {
       const token = localStorage.getItem("adminToken");
 
-      // Convert image files to base64 so we can send JSON
-      const base64Images = await Promise.all(images.map(toBase64));
+      const formData = new FormData();
+      // Append raw image files directly - no base64 conversion needed
+      images.forEach(file => formData.append('images', file));
 
-      const payload = {
-        title: form.title.trim(),
-        city: form.location.trim(),
-        propertyType: form.propertyType || undefined,
-        contactPhone: form.contact.trim(),
-        description: form.description.trim(),
-        status: form.status.toLowerCase(),
-        rentDetails: { warmRent: parseFloat(form.price) || 0 },
-        amenities: selectedAmenities.reduce((acc, a) => {
+      // Append text fields
+      formData.append('title',        form.title.trim());
+      formData.append('city',         form.location.trim());
+      formData.append('contactPhone', form.contact.trim());
+      formData.append('description',  form.description.trim());
+      formData.append('status',       form.status.toLowerCase());
+      formData.append('creatorType',  'admin');
+      if (form.propertyType) formData.append('propertyType', form.propertyType);
+
+      // Append JSON fields as strings (backend parses them)
+      formData.append('rentDetails',   JSON.stringify({ warmRent: parseFloat(form.price) || 0 }));
+      formData.append('amenities',     JSON.stringify(
+        selectedAmenities.reduce((acc, a) => {
           const key = a.toLowerCase().replace(/\s+/g, "_");
           acc[key] = true;
           return acc;
-        }, {}),
-        media: { images: base64Images },
-        adminControls: { isActive: form.status.toLowerCase() === "active" },
-      };
+        }, {})
+      ));
+      formData.append('adminControls', JSON.stringify({ isActive: form.status.toLowerCase() === "active" }));
 
       const res = await fetch(`${API_URL}/api/accommodation/admin`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
+        headers: { Authorization: `Bearer ${token}` }, // NO Content-Type - browser sets multipart boundary
+        body: formData,
       });
 
       if (res.ok) {

@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const prisma = require("../config/prisma");
 const { notifyListingActivated } = require('../userModule/user/services/notificationService');
+const upload = require('../middleware/upload');
+const { uploadImage } = require('../services/cloudinaryService');
 
 // Helper to map PostgreSQL Prisma accommodation to match frontend expectations
 const mapAccommodation = (item) => {
@@ -104,7 +106,7 @@ router.get("/:id", adminCheck, async (req, res) => {
 });
 
 // CREATE
-router.post("/", adminCheck, async (req, res) => {
+router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
   const start = Date.now();
   console.log(`🚀 [START] POST /accommodation/admin/ called at ${new Date().toISOString()}`);
   try {
@@ -121,16 +123,30 @@ router.post("/", adminCheck, async (req, res) => {
 
     console.log(`📝 [VALIDATION] Creating accommodation with title="${title}", city="${city}"`);
 
+    // Upload any attached image files to Cloudinary
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      const uploads = await Promise.all(
+        req.files.map(f => uploadImage(f.buffer, 'accommodations'))
+      );
+      imageUrls = uploads.map(r => r.secure_url);
+    }
+
     // Extract flat helper fields for SQL search/sort performance
-    const rentVal = req.body.rentDetails?.coldRent ? parseFloat(req.body.rentDetails.coldRent) : null;
-    const depositVal = req.body.rentDetails?.deposit ? parseFloat(req.body.rentDetails.deposit) : null;
-    const bedroomsVal = req.body.propertyDetails?.bedrooms ? parseInt(req.body.propertyDetails.bedrooms, 10) : null;
-    const bathroomsVal = req.body.propertyDetails?.bathrooms ? parseInt(req.body.propertyDetails.bathrooms, 10) : null;
-    const sizeVal = req.body.propertyDetails?.sizeSqm ? parseFloat(req.body.propertyDetails.sizeSqm) : null;
-    const isFurnished = req.body.amenities?.furnished === true;
-    const isPetsAllowed = req.body.amenities?.petsAllowed === true;
-    const isParking = req.body.amenities?.parking === true;
-    const firstImg = Array.isArray(req.body.media?.images) && req.body.media.images.length > 0 ? req.body.media.images[0] : null;
+    const rentDetails = req.body.rentDetails ? JSON.parse(req.body.rentDetails) : {};
+    const propertyDetails = req.body.propertyDetails ? JSON.parse(req.body.propertyDetails) : {};
+    const amenities = req.body.amenities ? JSON.parse(req.body.amenities) : {};
+    const adminControls = req.body.adminControls ? JSON.parse(req.body.adminControls) : {};
+
+    const rentVal = rentDetails?.coldRent ? parseFloat(rentDetails.coldRent) : null;
+    const depositVal = rentDetails?.deposit ? parseFloat(rentDetails.deposit) : null;
+    const bedroomsVal = propertyDetails?.bedrooms ? parseInt(propertyDetails.bedrooms, 10) : null;
+    const bathroomsVal = propertyDetails?.bathrooms ? parseInt(propertyDetails.bathrooms, 10) : null;
+    const sizeVal = propertyDetails?.sizeSqm ? parseFloat(propertyDetails.sizeSqm) : null;
+    const isFurnished = amenities?.furnished === true || amenities?.furnished === 'true';
+    const isPetsAllowed = amenities?.petsAllowed === true || amenities?.petsAllowed === 'true';
+    const isParking = amenities?.parking === true || amenities?.parking === 'true';
+    const firstImg = imageUrls.length > 0 ? imageUrls[0] : null;
 
     console.log(`🔍 [DB QUERY] Creating new Accommodation document in Prisma`);
     const saveStart = Date.now();
@@ -169,12 +185,12 @@ router.post("/", adminCheck, async (req, res) => {
         creatorType: req.body.creatorType || "admin",
         
         // JSON configurations
-        rentDetails: req.body.rentDetails || {},
-        propertyDetails: req.body.propertyDetails || {},
-        amenities: req.body.amenities || {},
-        locationHighlights: req.body.locationHighlights || {},
-        media: req.body.media || {},
-        adminControls: req.body.adminControls || {},
+        rentDetails: rentDetails,
+        propertyDetails: propertyDetails,
+        amenities: amenities,
+        locationHighlights: req.body.locationHighlights ? JSON.parse(req.body.locationHighlights) : {},
+        media: { images: imageUrls },
+        adminControls: adminControls,
         contactPhone,
       }
     });

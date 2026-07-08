@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../config/prisma');
 const { notifyListingActivated } = require('../userModule/user/services/notificationService');
+const upload = require('../middleware/upload');
+const { uploadImage } = require('../services/cloudinaryService');
 
 const adminCheck = (req, res, next) => {
   if (!req.user || req.user.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
@@ -90,7 +92,7 @@ router.get('/:id', adminCheck, async (req, res) => {
 });
 
 // CREATE
-router.post('/', adminCheck, async (req, res) => {
+router.post('/', adminCheck, upload.single('companyLogo'), async (req, res) => {
   const start = Date.now();
   console.log(`🚀 [START] POST /jobs/admin/ called at ${new Date().toISOString()}`);
   try {
@@ -99,10 +101,9 @@ router.post('/', adminCheck, async (req, res) => {
 
     console.log(`📝 [VALIDATION] Creating Job with title="${title}"`);
 
-    // Handle base64 logo upload to Cloudinary if present
-    if (req.body.companyLogo && req.body.companyLogo.startsWith('data:')) {
-      const { uploadBase64 } = require('../services/cloudinaryService');
-      const uploadRes = await uploadBase64(req.body.companyLogo, "company-logos");
+    // Handle file upload to Cloudinary if an image was sent
+    if (req.file) {
+      const uploadRes = await uploadImage(req.file.buffer, 'company-logos');
       req.body.companyLogo = uploadRes.secure_url;
     }
 
@@ -141,7 +142,7 @@ router.post('/', adminCheck, async (req, res) => {
 });
 
 // UPDATE (full)
-router.put('/:id', adminCheck, async (req, res) => {
+router.put('/:id', adminCheck, upload.single('companyLogo'), async (req, res) => {
   const start = Date.now();
   console.log(`🚀 [START] PUT /jobs/admin/:id called with id=${req.params.id} at ${new Date().toISOString()}`);
   try {
@@ -152,10 +153,9 @@ router.put('/:id', adminCheck, async (req, res) => {
       req.body.status = normalizeStatus(req.body.status, req.body.status);
     }
 
-    // Handle base64 logo upload to Cloudinary if present
-    if (req.body.companyLogo && req.body.companyLogo.startsWith('data:')) {
-      const { uploadBase64 } = require('../services/cloudinaryService');
-      const uploadRes = await uploadBase64(req.body.companyLogo, "company-logos");
+    // Handle file upload to Cloudinary if a new image was sent
+    if (req.file) {
+      const uploadRes = await uploadImage(req.file.buffer, 'company-logos');
       req.body.companyLogo = uploadRes.secure_url;
     }
 

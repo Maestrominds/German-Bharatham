@@ -2,7 +2,7 @@ param(
   [string]$DeviceId = "",
   [int]$Port = 5000,
   # Default to the Render backend. (Override with -ApiBaseUrl=... if needed.)
-  [string]$ApiBaseUrl = "https://german-bharatham-five.vercel.app"
+  [string]$ApiBaseUrl = "http://72.60.177.51"
 )
 
 $ErrorActionPreference = "Stop"

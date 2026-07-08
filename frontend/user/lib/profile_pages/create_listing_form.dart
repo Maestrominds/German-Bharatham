@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
@@ -26,8 +27,10 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
   final _picker = ImagePicker();
   bool _submitting = false;
 
-  // List of base64 images (either loaded initially or picked by user)
-  List<String> _imagesBase64 = [];
+  // NEW: track picked image files directly - no base64 conversion
+  List<XFile> _imageFiles = [];
+  // Keep existing image URLs when editing (already uploaded to Cloudinary)
+  List<String> _existingImageUrls = [];
 
   // Controllers
   final Map<String, TextEditingController> _controllers = {};
@@ -95,9 +98,9 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       
       _propertyType = data?['propertyType'] ?? 'apartment';
 
-      // Load initial images
+      // Load existing image URLs when editing
       final List<dynamic> initImgs = data?['media']?['images'] ?? [];
-      _imagesBase64 = List<String>.from(initImgs);
+      _existingImageUrls = List<String>.from(initImgs.whereType<String>().where((s) => s.startsWith('http')));
 
       // Load amenities
       final Map<String, dynamic> initAmenities = data?['amenities'] ?? {};
@@ -160,8 +163,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       _controllers['applyUrl'] = TextEditingController(text: data?['applyUrl'] ?? '');
 
       _jobType = data?['jobType'] ?? data?['type'] ?? 'Full Time';
-      if (data?['companyLogo'] != null) {
-        _imagesBase64 = [data!['companyLogo']];
+      if (data?['companyLogo'] != null && (data!['companyLogo'] as String).startsWith('http')) {
+        _existingImageUrls = [data!['companyLogo']];
       }
     } 
     else if (widget.category == 'Services') {
@@ -191,14 +194,18 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       _servicePriceRange = rawSvcPr.replaceAll(r'$', '€');
 
       final List<dynamic> initImgs = data?['images'] ?? data?['media']?['images'] ?? [];
-      _imagesBase64 = List<String>.from(initImgs);
+      _existingImageUrls = List<String>.from(initImgs.whereType<String>().where((s) => s.startsWith('http')));
     }
   }
 
+  // Total images count = existing URLs + newly picked files
+  int get _totalImageCount => _existingImageUrls.length + _imageFiles.length;
+
   Future<void> _pickImage() async {
-    if (widget.category != 'Jobs' && _imagesBase64.length >= 3) {
+    final maxImages = widget.category == 'Jobs' ? 1 : 3;
+    if (_totalImageCount >= maxImages) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You can upload a maximum of 3 images.')),
+        SnackBar(content: Text('You can upload a maximum of $maxImages image${maxImages > 1 ? 's' : ''}.')),
       );
       return;
     }
@@ -206,15 +213,13 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       final XFile? file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
       if (file == null) return;
 
-      final bytes = await file.readAsBytes();
-      final base64String = 'data:image/${file.name.split('.').last};base64,${base64Encode(bytes)}';
-
       setState(() {
         if (widget.category == 'Jobs') {
           // Jobs only supports one companyLogo
-          _imagesBase64 = [base64String];
+          _imageFiles = [file];
+          _existingImageUrls = [];
         } else {
-          _imagesBase64.add(base64String);
+          _imageFiles.add(file);
         }
       });
     } catch (e) {
@@ -250,7 +255,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
           map[dbKey] = true;
           return map;
         }),
-        'media': {'images': _imagesBase64},
+        // Images are sent as multipart files - no base64 here
+        'media': {'images': _existingImageUrls},
       };
     } 
     else if (widget.category == 'Food') {
@@ -277,7 +283,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         'cateringAvailable': _cateringAvailable,
         'image': _controllers['image']?.text.trim().isNotEmpty == true 
             ? _controllers['image']?.text.trim() 
-            : (_imagesBase64.isNotEmpty ? _imagesBase64[0] : ''),
+            : (_existingImageUrls.isNotEmpty ? _existingImageUrls[0] : ''),
         'category': 'Food',
       };
     } 
@@ -292,7 +298,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         'salary': _controllers['salary']?.text.trim().isEmpty == true ? null : _controllers['salary']?.text.trim(),
         'company': _controllers['companyName']?.text.trim(),
         'companyName': _controllers['companyName']?.text.trim(),
-        'companyLogo': _imagesBase64.isNotEmpty ? _imagesBase64[0] : null,
+        // companyLogo is sent as multipart file - existing URL passed here only
+        'companyLogo': _existingImageUrls.isNotEmpty ? _existingImageUrls[0] : null,
         'jobType': _jobType,
         'type': _jobType,
         'requirements': _controllers['requirements']?.text.trim().isEmpty == true ? null : _controllers['requirements']?.text.trim(),
@@ -321,8 +328,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         'website': _controllers['website']?.text.trim().isEmpty == true ? null : _controllers['website']?.text.trim(),
         'latitude': lat,
         'longitude': lon,
-        'images': _imagesBase64,
-        'media': {'images': _imagesBase64},
+        'images': _existingImageUrls,
+        'media': {'images': _existingImageUrls},
         'amenities': amenitiesList,
         'serviceType': _serviceType,
         'city': _controllers['city']?.text.trim(),
@@ -338,8 +345,6 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
 
-    // Accommodation photo is now optional, validation check removed
-
     setState(() => _submitting = true);
 
     try {
@@ -354,21 +359,52 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       };
 
       final bool isEditing = widget.initialData != null;
-      final String url = isEditing 
+      final String url = isEditing
           ? '${ApiConfig.baseUrl}/api/user/listings/${widget.category}/${widget.initialData!['_id']}'
           : '${ApiConfig.baseUrl}/api/user/listings';
 
-      final response = await (isEditing 
-          ? http.put(
-              Uri.parse(url),
-              headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-              body: jsonEncode(payload),
-            )
-          : http.post(
-              Uri.parse(url),
-              headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-              body: jsonEncode(payload),
-            ));
+      http.Response response;
+
+      if (_imageFiles.isNotEmpty) {
+        // Use MultipartRequest to send files + JSON payload together
+        final uri = Uri.parse(url);
+        final request = isEditing
+            ? (http.MultipartRequest('PUT', uri))
+            : (http.MultipartRequest('POST', uri));
+
+        request.headers['Authorization'] = 'Bearer $token';
+
+        // Attach the JSON payload as a field
+        request.fields['category'] = widget.category;
+        request.fields['data'] = jsonEncode(_buildPayload());
+
+        // Attach files (images) directly as binary streams
+        final fieldName = widget.category == 'Jobs' ? 'companyLogo' : 'images';
+        for (final file in _imageFiles) {
+          final bytes = await file.readAsBytes();
+          request.files.add(http.MultipartFile.fromBytes(
+            fieldName,
+            bytes,
+            filename: file.name,
+          ));
+        }
+
+        final streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      } else {
+        // No new images - just send JSON as before
+        response = await (isEditing
+            ? http.put(
+                Uri.parse(url),
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+                body: jsonEncode(payload),
+              )
+            : http.post(
+                Uri.parse(url),
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+                body: jsonEncode(payload),
+              ));
+      }
 
       final json = jsonDecode(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -505,38 +541,32 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              ..._imagesBase64.asMap().entries.map((entry) {
+              // Show existing Cloudinary image URLs
+              ..._existingImageUrls.asMap().entries.map((entry) {
                 final idx = entry.key;
-                final img = entry.value;
+                final url = entry.value;
                 return Stack(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: img.startsWith('data:image') 
-                          ? Image.memory(
-                              base64Decode(img.split(',').last),
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.network(
-                              ApiConfig.getImageUrl(img),
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                width: 80,
-                                height: 80,
-                                color: Colors.grey.shade300,
-                                child: const Icon(Icons.broken_image),
-                              ),
-                            ),
+                      child: Image.network(
+                        url,
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 80,
+                          height: 80,
+                          color: Colors.grey.shade300,
+                          child: const Icon(Icons.broken_image),
+                        ),
+                      ),
                     ),
                     Positioned(
                       top: 2,
                       right: 2,
                       child: GestureDetector(
-                        onTap: () => setState(() => _imagesBase64.removeAt(idx)),
+                        onTap: () => setState(() => _existingImageUrls.removeAt(idx)),
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
@@ -547,7 +577,57 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
                   ],
                 );
               }),
-              if ((widget.category != 'Jobs' && _imagesBase64.length < 3) || (widget.category == 'Jobs' && _imagesBase64.isEmpty))
+              // Show newly picked local image files
+              ..._imageFiles.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final file = entry.value;
+                return FutureBuilder<Uint8List>(
+                  future: file.readAsBytes(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Container(
+                        width: 80,
+                        height: 80,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
+                    return Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(
+                            snapshot.data!,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: () => setState(() => _imageFiles.removeAt(idx)),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                              child: const Icon(Icons.close, size: 12, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }),
+              if (_totalImageCount < (widget.category == 'Jobs' ? 1 : 3) ||
+                  (widget.category == 'Jobs' && _totalImageCount == 0))
                 GestureDetector(
                   onTap: _pickImage,
                   child: Container(

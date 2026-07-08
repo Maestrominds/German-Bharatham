@@ -20,9 +20,14 @@ const ACCOMMODATION_AMENITIES = [
 ];
 
 const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePending, saving }) => {
-  const [images, setImages] = useState(Array.isArray(listing.images) && listing.images.length > 0
-    ? listing.images
-    : (listing.image ? [listing.image] : []));
+  // 'images' holds either string URLs (existing) or File objects (newly picked)
+  const [images, setImages] = useState(
+    Array.isArray(listing.images) && listing.images.length > 0
+      ? listing.images
+      : (listing.image ? [listing.image] : [])
+  );
+  // Track object URLs created for new File objects so we can display them
+  const [previewUrls, setPreviewUrls] = useState([]);
 
   const [formData, setFormData] = useState(() => {
     const raw = listing.raw || {};
@@ -115,31 +120,59 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       return;
     }
 
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const base64 = uploadEvent.target.result;
-        if (base64) {
-          setImages(prev => {
-            if (prev.length >= maxLimit) return prev;
-            return [...prev, base64];
-          });
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    // Use object URLs for instant preview - no FileReader/base64 needed
+    const newPreviews = files.map(f => URL.createObjectURL(f));
+    setImages(prev => [...prev, ...files].slice(0, maxLimit));
+    setPreviewUrls(prev => [...prev, ...newPreviews].slice(0, maxLimit));
+  };
+
+  // Helper to get a displayable URL for any image entry (existing URL or new File)
+  const getDisplayUrl = (img, index) => {
+    if (typeof img === 'string') return img;
+    // It's a File object - find its preview URL
+    const newFileIndex = images.filter((v, i) => i < index && v instanceof File).length;
+    return previewUrls[newFileIndex] || '';
   };
 
   const removeImage = (index) => {
+    const removed = images[index];
+    if (removed instanceof File) {
+      // Also remove its preview URL
+      const newFileIndex = images.filter((v, i) => i < index && v instanceof File).length;
+      setPreviewUrls(prev => prev.filter((_, i) => i !== newFileIndex));
+    }
     setImages(images.filter((_, i) => i !== index));
   };
 
-  const prepareSubmitPayload = (status) => {
+  // Upload any new File objects to Cloudinary via backend endpoint, returns final URL array
+  const resolveImageUrls = async (token) => {
+    const resolved = [];
+    for (const img of images) {
+      if (typeof img === 'string') {
+        resolved.push(img); // already a URL
+      } else {
+        // Upload the File to Cloudinary
+        const fd = new FormData();
+        fd.append('image', img);
+        const res = await fetch(`${require('../config').default}/api/admin/upload-image`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Image upload failed');
+        resolved.push(data.url);
+      }
+    }
+    return resolved;
+  };
+
+  const prepareSubmitPayload = (status, resolvedImages = []) => {
     const common = {
       title: formData.title?.trim() || '',
       city: formData.city?.trim() || '',
       description: formData.description?.trim() || '',
-      images: images,
+      images: resolvedImages,
       status
     };
 
@@ -166,7 +199,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         },
         amenities: formData.amenities && typeof formData.amenities === 'object' ? formData.amenities : {},
         media: {
-          images: images
+          images: resolvedImages
         },
       };
     }
@@ -198,7 +231,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         location: formData.city?.trim() || '',
         contact: formData.contactPhone?.trim() || null,
         companyName: formData.companyName?.trim() || null,
-        companyLogo: images.length > 0 ? images[0] : null,
+        companyLogo: resolvedImages.length > 0 ? resolvedImages[0] : null,
         jobType: formData.jobType || 'Full Time',
         salary: formData.salary?.trim() || null,
         applyUrl: formData.applyUrl?.trim() || null,
@@ -231,14 +264,22 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
     return { ...common, status };
   };
 
-  const handleSaveClick = () => {
-    const payload = prepareSubmitPayload(listing.category === 'Jobs' ? 'Pending' : 'pending');
-    onSavePending(payload);
+  const handleSaveClick = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const resolvedImages = await resolveImageUrls(token);
+      const payload = prepareSubmitPayload(listing.category === 'Jobs' ? 'Pending' : 'pending', resolvedImages);
+      onSavePending(payload);
+    } catch (e) { alert('Image upload failed: ' + e.message); }
   };
 
-  const handleApproveClick = () => {
-    const payload = prepareSubmitPayload(listing.category === 'Jobs' ? 'Active' : 'active');
-    onApprove(payload);
+  const handleApproveClick = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const resolvedImages = await resolveImageUrls(token);
+      const payload = prepareSubmitPayload(listing.category === 'Jobs' ? 'Active' : 'active', resolvedImages);
+      onApprove(payload);
+    } catch (e) { alert('Image upload failed: ' + e.message); }
   };
 
   const inputStyle = { width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', marginTop: '4px', boxSizing: 'border-box' };
@@ -497,7 +538,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
               {images.map((img, idx) => (
                 <div key={idx} style={{ position: 'relative' }}>
-                  <img src={img} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }} />
+                  <img src={getDisplayUrl(img, idx)} alt={`img-${idx}`} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }} />
                   <button onClick={() => removeImage(idx)} style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', padding: 2, cursor: 'pointer' }}><Trash2 size={12} /></button>
                 </div>
               ))}

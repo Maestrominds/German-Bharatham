@@ -18,7 +18,7 @@ const AccommodationListings = () => {
   const fetchAccommodations = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://german-bharatham-five.vercel.app/api/accommodation/admin', {
+      const response = await fetch('http://72.60.177.51/api/accommodation/admin', {
         headers: {
           'x-user-role': 'admin',
           'x-user-id': 'admin123'
@@ -27,11 +27,11 @@ const AccommodationListings = () => {
       if (response.ok) {
         const result = await response.json();
         // Only display accommodations that have valid title and city (mongo-saved records)
-        const validAccommodations = (result.data || []).filter(acc => 
+        const validAccommodations = (result.data || []).filter(acc =>
           acc && acc._id && acc.title && acc.city
         );
         setAccommodations(validAccommodations);
-        setStats({ 
+        setStats({
           count: result.count || 0,
           activeCount: result.activeCount || 0
         });
@@ -53,7 +53,7 @@ const AccommodationListings = () => {
     if (!window.confirm(`Delete "${title}"?`)) return;
 
     try {
-      const response = await fetch(`https://german-bharatham-five.vercel.app/api/accommodation/admin/${id}`, {
+      const response = await fetch(`http://72.60.177.51/api/accommodation/admin/${id}`, {
         method: 'DELETE',
         headers: {
           'x-user-role': 'admin',
@@ -91,12 +91,12 @@ const AccommodationListings = () => {
     <div className="listings">
       <div className="listings-header">
         <div>
-          <button 
-            onClick={() => navigate('/categories')} 
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              color: '#6b9976', 
+          <button
+            onClick={() => navigate('/categories')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#6b9976',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -111,7 +111,7 @@ const AccommodationListings = () => {
           <p>Total: {stats.count}</p>
         </div>
         <div className="header-actions">
-          <button 
+          <button
             className="add-listing-btn"
             onClick={() => setShowAddModal(true)}
           >
@@ -205,7 +205,7 @@ const AccommodationListings = () => {
                   <td>{formatDate(accommodation.createdAt)}</td>
                   <td>
                     <div className="action-buttons">
-                      <button 
+                      <button
                         className="action-btn view-btn"
                         onClick={() => setSelectedAccommodation(accommodation)}
                         style={{
@@ -220,7 +220,7 @@ const AccommodationListings = () => {
                       >
                         View Details
                       </button>
-                      <button 
+                      <button
                         className="action-btn delete-btn"
                         onClick={() => handleDelete(accommodation._id, accommodation.title)}
                       >
@@ -236,8 +236,8 @@ const AccommodationListings = () => {
       )}
 
       {showAddModal && (
-        <AddAccommodationModal 
-          onClose={() => setShowAddModal(false)} 
+        <AddAccommodationModal
+          onClose={() => setShowAddModal(false)}
           onSuccess={fetchAccommodations}
         />
       )}
@@ -249,14 +249,14 @@ const AccommodationListings = () => {
               <h2>{selectedAccommodation.title}</h2>
               <button className="close-btn" onClick={() => setSelectedAccommodation(null)}>×</button>
             </div>
-            
+
             <div style={{ padding: '20px' }}>
               {/* Property Type Badge */}
               <div style={{ marginBottom: '20px' }}>
-                <span style={{ 
-                  padding: '8px 16px', 
-                  background: '#28a745', 
-                  color: 'white', 
+                <span style={{
+                  padding: '8px 16px',
+                  background: '#28a745',
+                  color: 'white',
                   borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: 'bold',
@@ -268,9 +268,9 @@ const AccommodationListings = () => {
 
               {/* Key Highlights Section */}
               {selectedAccommodation.highlights && selectedAccommodation.highlights.length > 0 && (
-                <div style={{ 
-                  marginBottom: '25px', 
-                  padding: '20px', 
+                <div style={{
+                  marginBottom: '25px',
+                  padding: '20px',
                   background: '#28a745',
                   borderRadius: '12px',
                   boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
@@ -358,11 +358,11 @@ const AccommodationListings = () => {
               <div style={{ marginBottom: '20px', padding: '15px', background: 'white', border: '2px solid #28a745', borderRadius: '8px' }}>
                 <h3 style={{ fontSize: '16px', marginBottom: '15px', color: '#333' }}>🛋️ Amenities</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-                  {selectedAccommodation.amenities && Object.entries(selectedAccommodation.amenities).map(([key, value]) => 
+                  {selectedAccommodation.amenities && Object.entries(selectedAccommodation.amenities).map(([key, value]) =>
                     value && (
-                      <div key={key} style={{ 
-                        padding: '8px 12px', 
-                        background: '#d4edda', 
+                      <div key={key} style={{
+                        padding: '8px 12px',
+                        background: '#d4edda',
                         borderRadius: '6px',
                         fontSize: '13px',
                         fontWeight: '500'

@@ -73,5 +73,19 @@ router.get("/pending-listings", protect, adminOnly, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+// Generic image upload for admin review workflow
+const upload = require('../../middleware/upload');
+const { uploadImage } = require('../../services/cloudinaryService');
+
+router.post('/upload-image', protect, adminOnly, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No image file provided' });
+    const result = await uploadImage(req.file.buffer, 'listings');
+    res.json({ url: result.secure_url });
+  } catch (error) {
+    console.error('❌ upload-image error:', error.message);
+    res.status(500).json({ message: 'Image upload failed: ' + error.message });
+  }
+});
 
 module.exports = router;

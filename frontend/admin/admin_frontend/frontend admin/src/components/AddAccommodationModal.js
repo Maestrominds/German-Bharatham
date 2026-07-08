@@ -9,14 +9,14 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
     propertyType: 'shared_rooms',
     highlights: [],
     contactPhone: '',
-    
+
     city: '',
     area: '',
     postalCode: '',
     address: '',
     latitude: '',
     longitude: '',
-    
+
     rentDetails: {
       coldRent: '',
       warmRent: '',
@@ -236,7 +236,7 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
         }
       };
 
-      const response = await fetch('https://german-bharatham-five.vercel.app/api/accommodation/admin', {
+      const response = await fetch('http://72.60.177.51/api/accommodation/admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -306,7 +306,7 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
                 <label>Title <span style={{ color: 'red' }}>*</span></label>
                 <input type="text" value={formData.title} onChange={(e) => handleChange(null, 'title', e.target.value)} required placeholder="Cozy 2-Bedroom Apartment" />
               </div>
-              
+
               <div className="form-group">
                 <label>Description</label>
                 <textarea value={formData.description} onChange={(e) => handleChange(null, 'description', e.target.value)} rows={5} placeholder="Detailed description..." />
@@ -336,9 +336,9 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
 
               <div className="form-group">
                 <label>Key Highlights (press Enter to add)</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g., Near University, Fully Furnished, Parking Available..." 
+                <input
+                  type="text"
+                  placeholder="e.g., Near University, Fully Furnished, Parking Available..."
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -355,18 +355,18 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
                 />
                 <div className="highlights-list" style={{ marginTop: '10px' }}>
                   {formData.highlights.map((highlight, index) => (
-                    <span key={index} className="highlight-tag" style={{ 
-                      display: 'inline-block', 
-                      background: '#28a745', 
-                      color: 'white', 
-                      padding: '5px 10px', 
-                      margin: '5px', 
+                    <span key={index} className="highlight-tag" style={{
+                      display: 'inline-block',
+                      background: '#28a745',
+                      color: 'white',
+                      padding: '5px 10px',
+                      margin: '5px',
                       borderRadius: '15px',
                       fontSize: '14px'
                     }}>
                       <span style={{ color: 'red', marginRight: '5px' }}>★</span>
                       {highlight}
-                      <button 
+                      <button
                         type="button"
                         onClick={() => {
                           setFormData(prev => ({
@@ -374,11 +374,11 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
                             highlights: prev.highlights.filter((_, i) => i !== index)
                           }));
                         }}
-                        style={{ 
-                          marginLeft: '8px', 
-                          background: 'transparent', 
-                          border: 'none', 
-                          color: 'white', 
+                        style={{
+                          marginLeft: '8px',
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'white',
                           cursor: 'pointer',
                           fontSize: '16px'
                         }}
@@ -460,32 +460,32 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
               <div className="form-row">
                 <div className="form-group">
                   <label>Size (sqm) <span style={{ color: 'red' }}>*</span></label>
-                  <input 
-                    type="number" 
-                    value={formData.propertyDetails.sizeSqm} 
-                    onChange={(e) => handleChange('propertyDetails', 'sizeSqm', e.target.value)} 
-                    placeholder="50" 
-                    required 
+                  <input
+                    type="number"
+                    value={formData.propertyDetails.sizeSqm}
+                    onChange={(e) => handleChange('propertyDetails', 'sizeSqm', e.target.value)}
+                    placeholder="50"
+                    required
                   />
                 </div>
                 <div className="form-group">
                   <label>Bedrooms <span style={{ color: 'red' }}>*</span></label>
-                  <input 
-                    type="number" 
-                    value={formData.propertyDetails.bedrooms} 
-                    onChange={(e) => handleChange('propertyDetails', 'bedrooms', e.target.value)} 
-                    placeholder="2" 
-                    required 
+                  <input
+                    type="number"
+                    value={formData.propertyDetails.bedrooms}
+                    onChange={(e) => handleChange('propertyDetails', 'bedrooms', e.target.value)}
+                    placeholder="2"
+                    required
                   />
                 </div>
                 <div className="form-group">
                   <label>Bathrooms <span style={{ color: 'red' }}>*</span></label>
-                  <input 
-                    type="number" 
-                    value={formData.propertyDetails.bathrooms} 
-                    onChange={(e) => handleChange('propertyDetails', 'bathrooms', e.target.value)} 
-                    placeholder="1" 
-                    required 
+                  <input
+                    type="number"
+                    value={formData.propertyDetails.bathrooms}
+                    onChange={(e) => handleChange('propertyDetails', 'bathrooms', e.target.value)}
+                    placeholder="1"
+                    required
                   />
                 </div>
               </div>
@@ -493,12 +493,12 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
               <div className="form-row">
                 <div className="form-group">
                   <label>Total Floors <span style={{ color: 'red' }}>*</span></label>
-                  <input 
-                    type="number" 
-                    value={formData.propertyDetails.totalFloors} 
-                    onChange={(e) => handleChange('propertyDetails', 'totalFloors', e.target.value)} 
-                    placeholder="5" 
-                    required 
+                  <input
+                    type="number"
+                    value={formData.propertyDetails.totalFloors}
+                    onChange={(e) => handleChange('propertyDetails', 'totalFloors', e.target.value)}
+                    placeholder="5"
+                    required
                   />
                 </div>
               </div>
@@ -510,18 +510,18 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
               <h3 style={{ marginBottom: '20px', color: '#333' }}>Property Amenities</h3>
               <div className="features-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
                 {Object.keys(formData.amenities).map(amenity => (
-                  <label key={amenity} className="checkbox-label" style={{ 
-                    padding: '12px', 
-                    border: '1px solid #ddd', 
+                  <label key={amenity} className="checkbox-label" style={{
+                    padding: '12px',
+                    border: '1px solid #ddd',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                     backgroundColor: formData.amenities[amenity] ? '#d4edda' : 'white'
                   }}>
-                    <input 
-                      type="checkbox" 
-                      checked={formData.amenities[amenity]} 
-                      onChange={(e) => handleChange('amenities', amenity, e.target.checked)} 
+                    <input
+                      type="checkbox"
+                      checked={formData.amenities[amenity]}
+                      onChange={(e) => handleChange('amenities', amenity, e.target.checked)}
                       style={{ marginRight: '10px' }}
                     />
                     <span style={{ fontWeight: formData.amenities[amenity] ? '600' : '400' }}>
@@ -538,26 +538,26 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
               <div className="form-row">
                 <div className="form-group">
                   <label>Latitude</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="any"
-                    value={formData.latitude} 
-                    onChange={(e) => handleChange(null, 'latitude', e.target.value)} 
-                    placeholder="48.1351" 
+                    value={formData.latitude}
+                    onChange={(e) => handleChange(null, 'latitude', e.target.value)}
+                    placeholder="48.1351"
                   />
                 </div>
                 <div className="form-group">
                   <label>Longitude</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="any"
-                    value={formData.longitude} 
-                    onChange={(e) => handleChange(null, 'longitude', e.target.value)} 
-                    placeholder="11.5820" 
+                    value={formData.longitude}
+                    onChange={(e) => handleChange(null, 'longitude', e.target.value)}
+                    placeholder="11.5820"
                   />
                 </div>
                 <div className="form-group">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => {
                       if (navigator.geolocation) {
@@ -594,10 +594,10 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
               </div>
 
               {formData.latitude && formData.longitude && (
-                <div className="map-preview" style={{ 
-                  marginTop: '20px', 
-                  padding: '15px', 
-                  border: '2px solid #007bff', 
+                <div className="map-preview" style={{
+                  marginTop: '20px',
+                  padding: '15px',
+                  border: '2px solid #007bff',
                   borderRadius: '8px',
                   backgroundColor: '#f8f9fa'
                 }}>
@@ -671,16 +671,16 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
               Cancel
             </button>
             {activeTab === 'location' ? (
-              <button 
-                type="submit" 
-                className="create-btn" 
+              <button
+                type="submit"
+                className="create-btn"
                 disabled={isSubmitting}
-                style={{ 
-                  background: '#28a745', 
-                  color: 'white', 
-                  padding: '12px 24px', 
-                  border: 'none', 
-                  borderRadius: '6px', 
+                style={{
+                  background: '#28a745',
+                  color: 'white',
+                  padding: '12px 24px',
+                  border: 'none',
+                  borderRadius: '6px',
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   fontWeight: '600',
                   opacity: isSubmitting ? 0.6 : 1
@@ -689,20 +689,20 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
                 {isSubmitting ? 'Adding...' : 'Add Accommodation'}
               </button>
             ) : (
-              <button 
-                type="button" 
-                className="next-btn" 
+              <button
+                type="button"
+                className="next-btn"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   handleNext();
                 }}
-                style={{ 
-                  background: '#28a745', 
-                  color: 'white', 
-                  padding: '12px 24px', 
-                  border: 'none', 
-                  borderRadius: '6px', 
+                style={{
+                  background: '#28a745',
+                  color: 'white',
+                  padding: '12px 24px',
+                  border: 'none',
+                  borderRadius: '6px',
                   cursor: 'pointer',
                   fontWeight: '600'
                 }}
