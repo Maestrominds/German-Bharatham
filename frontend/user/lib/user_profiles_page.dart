@@ -20,6 +20,7 @@ class PublicUserProfile {
   final String? email;
   final String? phone;
   final String? photoBase64;
+  final ImageProvider? avatarImage;
 
   PublicUserProfile({
     required this.id,
@@ -30,9 +31,22 @@ class PublicUserProfile {
     this.email,
     this.phone,
     this.photoBase64,
+    this.avatarImage,
   });
 
   factory PublicUserProfile.fromJson(Map<String, dynamic> json) {
+    final photo = json['photo']?.toString();
+    ImageProvider? cachedImage;
+
+    if (photo != null && photo.trim().isNotEmpty) {
+      try {
+        final raw = photo.contains(',')
+            ? photo.split(',').last
+            : photo;
+        cachedImage = MemoryImage(base64Decode(raw));
+      } catch (_) {}
+    }
+
     return PublicUserProfile(
       id: (json['_id'] ?? json['id'] ?? '').toString(),
       name: (json['name'] ?? 'User').toString(),
@@ -41,7 +55,8 @@ class PublicUserProfile {
       location: json['location']?.toString(),
       email: json['email']?.toString(),
       phone: json['phone']?.toString(),
-      photoBase64: json['photo']?.toString(),
+      photoBase64: photo,
+      avatarImage: cachedImage,
     );
   }
 }
@@ -210,14 +225,9 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     }
   }
 
-  ImageProvider _avatarProvider(String? photoBase64) {
-    if (photoBase64 != null && photoBase64.trim().isNotEmpty) {
-      try {
-        final raw = photoBase64.contains(',')
-            ? photoBase64.split(',').last
-            : photoBase64;
-        return MemoryImage(base64Decode(raw));
-      } catch (_) {}
+  ImageProvider _avatarProvider(PublicUserProfile user) {
+    if (user.avatarImage != null) {
+      return user.avatarImage!;
     }
     return const AssetImage('assets/images/person.jpeg');
   }
@@ -602,7 +612,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: _avatarProvider(user.photoBase64),
+                    image: _avatarProvider(user),
                     fit: BoxFit.cover,
                     alignment: Alignment.topCenter,
                   ),
