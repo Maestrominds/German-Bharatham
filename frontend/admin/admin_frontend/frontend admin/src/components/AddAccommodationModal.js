@@ -236,7 +236,7 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
         }
       };
 
-      const response = await fetch('http://72.60.177.51/api/accommodation/admin', {
+      const response = await fetch('https://germanbharatham.cloud/api/accommodation/admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

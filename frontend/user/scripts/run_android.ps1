@@ -2,7 +2,7 @@ param(
   [string]$DeviceId = "",
   [int]$Port = 5000,
   # Default to the Render backend. (Override with -ApiBaseUrl=... if needed.)
-  [string]$ApiBaseUrl = "http://72.60.177.51"
+  [string]$ApiBaseUrl = "https://germanbharatham.cloud"
 )
 
 $ErrorActionPreference = "Stop"
