@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account & Data - German Bharatham</title>
+    <style>
+        :root {
+            --primary: #c2410c;
+            --primary-hover: #9a3412;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --card-bg: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border: #334155;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2.25rem;
+            margin-top: 0;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 12px;
+        }
+
+        p {
+            font-size: 1rem;
+            color: var(--text-main);
+            margin-bottom: 20px;
+        }
+
+        .alert-box {
+            background-color: rgba(194, 65, 12, 0.08);
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 24px;
+        }
+
+        .alert-box p {
+            margin: 0;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input[type="email"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(78, 127, 109, 0.1);
+            border: 1px solid #4E7F6D;
+            border-radius: 8px;
+            color: #4E7F6D;
+            font-weight: 600;
+        }
+
+        .footer-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.875rem;
+        }
+
+        .footer-link a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Delete Account & Data</h1>
+        <p>If you wish to delete your account and associated data for the <strong>German Bharatham</strong> app, please fill out the form below. Once submitted, your request will be processed, and all your personal information, listings, and configurations will be permanently removed from our active servers within 30 days.</p>
+
+        <div class="alert-box">
+            <p>Warning: This action is permanent and cannot be undone. You will lose access to all your listings and account history.</p>
+        </div>
+
+        <form id="deletionForm" action="mailto:support@germanbharatham.com" method="post" enctype="text/plain">
+            <div>
+                <label for="email">Registered Email Address *</label>
+                <input type="email" id="email" name="Email" required placeholder="Enter the email associated with your account">
+            </div>
+
+            <div>
+                <label for="reason">Reason for deletion (Optional)</label>
+                <textarea id="reason" name="Reason" rows="3" placeholder="Tell us why you want to delete your account..."></textarea>
+            </div>
+
+            <button type="submit">Submit Deletion Request</button>
+        </form>
+
+        <div id="successMsg" class="success-message">
+            Thank you. Your request has been submitted. We will contact you at the provided email address to confirm deletion.
+        </div>
+
+        <div class="footer-link">
+            <a href="/privacy-policy.html">Back to Privacy Policy</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('deletionForm').addEventListener('submit', function(e) {
+            // Give a visual confirmation before redirecting to mail client
+            setTimeout(function() {
+                document.getElementById('deletionForm').style.display = 'none';
+                document.querySelector('.alert-box').style.display = 'none';
+                document.getElementById('successMsg').style.display = 'block';
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -26,8 +26,9 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Serve static files (uploaded images)
+// Serve static files (uploaded images and public webpages)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(express.static(path.join(__dirname, "public")));
 
 // ── User Module ─────────────────────────────────────────────────────────────
 app.use("/api/admin", require("./userModule/admin/adminRoutes"));
