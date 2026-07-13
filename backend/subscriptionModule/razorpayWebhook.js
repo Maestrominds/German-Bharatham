@@ -76,7 +76,7 @@ const activate = async ({ userId, planId, providerIds, eventType }) => {
     status: "active",
     currentPeriodStart,
     currentPeriodEnd,
-    metadata: { lastEvent: eventType },
+    metadata: { lastEvent: eventType, amountPaid: Number(plan.priceInr) },
   };
 
   if (providerIds && providerIds.razorpayPaymentLinkId) {

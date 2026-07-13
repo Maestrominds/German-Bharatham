@@ -45,7 +45,10 @@ exports.getDashboardStats = async (req, res) => {
 
     let totalRevenue = 0;
     for (const sub of activeSubscriptions) {
-      if (sub.plan && sub.plan.priceInr) {
+      const meta = sub.metadata && typeof sub.metadata === 'object' ? sub.metadata : {};
+      if (meta.amountPaid !== undefined) {
+        totalRevenue += Number(meta.amountPaid) || 0;
+      } else if (sub.plan && sub.plan.priceInr) {
         totalRevenue += sub.plan.priceInr;
       }
     }

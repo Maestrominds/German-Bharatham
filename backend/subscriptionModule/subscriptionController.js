@@ -552,7 +552,7 @@ exports.verifyRazorpayPayment = async (req, res) => {
       currentPeriodStart,
       currentPeriodEnd,
       razorpayPaymentId: String(razorpay_payment_id),
-      metadata: { verifiedAt: new Date().toISOString(), via: "manual_verify" }
+      metadata: { verifiedAt: new Date().toISOString(), via: "manual_verify", amountPaid: Number(plan.priceInr) }
     };
 
     if (existingSub) {
@@ -598,7 +598,7 @@ exports.listAllSubscriptions = async (_req, res) => {
       }
     },
     include: { user: true },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { updatedAt: 'desc' },
     take: 10
   });
 
