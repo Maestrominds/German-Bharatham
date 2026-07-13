@@ -162,6 +162,45 @@ module.exports = async function razorpayWebhook(req, res) {
       };
 
       await activate({ userId: String(userId), planId: String(planId), providerIds, eventType });
+
+    } else if (eventType === "payment.failed") {
+      // Mark the pending subscription as failed.
+      // SAFETY: never downgrade an already-active subscription —
+      // a late failure event must not cancel a subscription the user already paid for.
+      const payment = event?.payload?.payment?.entity;
+      const notes = payment?.notes || {};
+      const userId = notes.userId || notes.user_id || null;
+
+      if (!userId) {
+        return res.status(200).json({ received: true, ignored: true });
+      }
+
+      const numericUserId = parseInt(userId);
+      if (isNaN(numericUserId)) {
+        return res.status(200).json({ received: true, ignored: true });
+      }
+
+      // Only touch rows that are still pending — never touch active ones.
+      const pendingSub = await prisma.subscription.findFirst({
+        where: { userId: numericUserId, provider: "razorpay", status: "pending" },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (pendingSub) {
+        await prisma.subscription.update({
+          where: { id: pendingSub.id },
+          data: {
+            status: "failed",
+            metadata: {
+              lastEvent: eventType,
+              failedAt: new Date().toISOString(),
+              razorpayErrorCode: payment?.error_code || null,
+              razorpayErrorDesc: payment?.error_description || null,
+            },
+          },
+        });
+        console.log(`[razorpayWebhook] payment.failed — marked subscription ${pendingSub.id} as failed for user ${numericUserId}`);
+      }
     }
 
     return res.status(200).json({ received: true });
