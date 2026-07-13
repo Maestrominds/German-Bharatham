@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, TrendingUp, FolderOpen, Users, Clock, Bell } from 'lucide-react';
+import { Plus, TrendingUp, FolderOpen, Users, Clock, Bell, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AddListingModal from './AddListingModal';
 import API_URL from '../config';
@@ -10,6 +10,7 @@ const Dashboard = () => {
   const [categoryCounts, setCategoryCounts] = useState({ Accommodation: 0, Food: 0, Jobs: 0, Services: 0 });
   const [userCount, setUserCount]           = useState(0);
   const [pendingReviews, setPendingReviews] = useState(0);
+  const [totalRevenue, setTotalRevenue]     = useState(0);
   const [categoryCount, setCategoryCount]   = useState(4);
   const [recentListings, setRecentListings] = useState([]);
   const [problemReports, setProblemReports] = useState([]);
@@ -89,6 +90,7 @@ const Dashboard = () => {
         setTotalCount(s.totalListings || 0);
         setPendingReviews(s.pendingReviews || 0);
         setUserCount(s.totalUsers || 0);
+        setTotalRevenue(s.totalRevenue || 0);
 
         // map category stats
         const catCounts = { Accommodation: 0, Food: 0, Jobs: 0, Services: 0 };
@@ -124,6 +126,7 @@ const Dashboard = () => {
     { label: 'Categories',     value: categoryCount, icon: FolderOpen },
     { label: 'Total Users',    value: userCount,     icon: Users      },
     { label: 'Pending Reviews',value: pendingReviews, icon: Clock      },
+    { label: 'Total Revenue',  value: `₹${totalRevenue}`, icon: CreditCard },
   ];
 
   const categoryStats = [

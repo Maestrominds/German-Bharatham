@@ -30,14 +30,25 @@ exports.getDashboardStats = async (req, res) => {
   console.log(`🚀 [START] getDashboardStats called at ${new Date().toISOString()}`);
   try {
     const countStart = Date.now();
-    const [accommodationCount, foodCount, jobCount, serviceCount, userCount] = await Promise.all([
+    const [accommodationCount, foodCount, jobCount, serviceCount, userCount, activeSubscriptions] = await Promise.all([
       prisma.accommodation.count(),
       prisma.foodGrocery.count(),
       prisma.jobListing.count(),
       prisma.service.count(),
-      prisma.user.count({ where: { role: "user" } })
+      prisma.user.count({ where: { role: "user" } }),
+      prisma.subscription.findMany({
+        where: { status: "active" },
+        include: { plan: true }
+      })
     ]);
     console.log(`✅ [DB RESULT] counted all documents in ${Date.now() - countStart}ms`);
+
+    let totalRevenue = 0;
+    for (const sub of activeSubscriptions) {
+      if (sub.plan && sub.plan.priceInr) {
+        totalRevenue += sub.plan.priceInr;
+      }
+    }
 
     const totalListings = accommodationCount + foodCount + jobCount + serviceCount;
     const totalCategories = 4; // Accommodation, Food, Services, Jobs
@@ -115,7 +126,8 @@ exports.getDashboardStats = async (req, res) => {
         totalListings,
         totalCategories,
         totalUsers: userCount,
-        pendingReviews: totalPending
+        pendingReviews: totalPending,
+        totalRevenue
       },
       categoryStats: [
         { name: 'Accommodation', count: accommodationCount, icon: '🏠' },

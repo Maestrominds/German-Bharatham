@@ -592,9 +592,14 @@ exports.verifyRazorpayPayment = async (req, res) => {
 
 exports.listAllSubscriptions = async (_req, res) => {
   const items = await prisma.subscription.findMany({
+    where: {
+      user: {
+        email: { not: "admin@german.com" }
+      }
+    },
     include: { user: true },
     orderBy: { createdAt: 'desc' },
-    take: 500
+    take: 10
   });
 
   const out = items.map((it) => {
