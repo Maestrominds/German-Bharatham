@@ -43,10 +43,7 @@ exports.getDashboardStats = async (req, res) => {
     const totalCategories = 4; // Accommodation, Food, Services, Jobs
 
     const pendingFilter = {
-      OR: [
-        { status: { equals: 'pending', mode: 'insensitive' } },
-        { status: null }
-      ]
+      status: { equals: 'pending', mode: 'insensitive' }
     };
 
     console.log(`🔍 [DB QUERY] counting pending documents from all collections`);

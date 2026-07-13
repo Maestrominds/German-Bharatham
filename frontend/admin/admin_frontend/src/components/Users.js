@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API_URL from '../config';
+import SkeletonLoader from './SkeletonLoader';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -9,6 +10,7 @@ const Users = () => {
   const [users, setUsers]     = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const BASE = API_URL;
 
   const getUserPhotoSrc = (user) => {
@@ -30,6 +32,7 @@ const Users = () => {
   }, [currentPage, filterBy, sortBy]);
 
 const fetchUsers = async () => {
+  setLoading(true);
   try {
     const token = localStorage.getItem("adminToken");
 
@@ -64,6 +67,8 @@ const fetchUsers = async () => {
 
   } catch (error) {
     console.error("Error fetching users:", error);
+  } finally {
+    setLoading(false);
   }
 };
   const handleUserAction = async (userId, action) => {
@@ -134,52 +139,56 @@ const fetchUsers = async () => {
         return (
           <>
             <div className="users-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>NAME</th>
-                    <th>EMAIL</th>
-                    <th>JOINED DATE</th>
-                    <th>STATUS</th>
-                    <th>ACTION</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageSlice.length === 0 ? (
-                    <tr><td colSpan={5} style={{ textAlign: 'center', padding: 24, color: '#6b7280' }}>No users found.</td></tr>
-                  ) : pageSlice.map((user) => (
-                    <tr key={user._id}>
-                      <td>
-                        <div className="user-info">
-                          <img
-                            src={
-                              getUserPhotoSrc(user) ||
-                              `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=6b9976&color=fff`
-                            }
-                            alt={user.name}
-                            className="user-avatar"
-                          />
-                          <span className="user-name">{user.name}</span>
-                        </div>
-                      </td>
-                      <td>{user.email}</td>
-                      <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                      <td>
-                        <span className={`status ${user.isActive !== false ? 'active' : 'inactive'}`}>
-                          {user.isActive !== false ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td>
-                        {user.isActive !== false ? (
-                          <button className="action-btn deactivate-btn" onClick={() => handleUserAction(user._id, 'deactivate')}>Deactivate</button>
-                        ) : (
-                          <button className="action-btn activate-btn" onClick={() => handleUserAction(user._id, 'activate')}>Activate</button>
-                        )}
-                      </td>
+              {loading ? (
+                <SkeletonLoader rows={5} columns={5} type="table" />
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>NAME</th>
+                      <th>EMAIL</th>
+                      <th>JOINED DATE</th>
+                      <th>STATUS</th>
+                      <th>ACTION</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {pageSlice.length === 0 ? (
+                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: 24, color: '#6b7280' }}>No users found.</td></tr>
+                    ) : pageSlice.map((user) => (
+                      <tr key={user._id}>
+                        <td>
+                          <div className="user-info">
+                            <img
+                              src={
+                                getUserPhotoSrc(user) ||
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=6b9976&color=fff`
+                              }
+                              alt={user.name}
+                              className="user-avatar"
+                            />
+                            <span className="user-name">{user.name}</span>
+                          </div>
+                        </td>
+                        <td>{user.email}</td>
+                        <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <span className={`status ${user.isActive !== false ? 'active' : 'inactive'}`}>
+                            {user.isActive !== false ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td>
+                          {user.isActive !== false ? (
+                            <button className="action-btn deactivate-btn" onClick={() => handleUserAction(user._id, 'deactivate')}>Deactivate</button>
+                          ) : (
+                            <button className="action-btn activate-btn" onClick={() => handleUserAction(user._id, 'activate')}>Activate</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
 
             {totalPages > 1 && (
