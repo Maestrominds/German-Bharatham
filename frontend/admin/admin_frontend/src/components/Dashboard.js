@@ -123,7 +123,6 @@ const Dashboard = () => {
 
   const stats = [
     { label: 'Total Listings', value: totalCount,    icon: TrendingUp },
-    { label: 'Categories',     value: categoryCount, icon: FolderOpen },
     { label: 'Total Users',    value: userCount,     icon: Users      },
     { label: 'Pending Reviews',value: pendingReviews, icon: Clock      },
     { label: 'Total Revenue',  value: `₹${totalRevenue}`, icon: CreditCard },
