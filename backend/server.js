@@ -6,6 +6,8 @@ const { protect, adminOnly } = require("./middleware/auth");
 
 const app = express();
 
+app.set('etag', false); // Disable ETag caching to prevent CORS preflight issues with If-None-Match headers
+
 // Middleware
 app.use(
   cors({
