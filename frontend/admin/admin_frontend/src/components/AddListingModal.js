@@ -405,8 +405,8 @@ const JobsForm = ({ data, set }) => {
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label>Contact {REQ}</label>
-            <input value={data.contact} onChange={e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); set(p => ({...p, contact: e.target.value}))}} placeholder="4952148765397" required maxLength={50} />
+            <label>Contact Details</label>
+            <input value={data.contact} onChange={e => set(p => ({...p, contact: e.target.value}))} placeholder="Email or Phone number" maxLength={100} />
           </div>
         </div>
       </div>
@@ -425,8 +425,8 @@ const JobsForm = ({ data, set }) => {
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>💼 Job Details</h4>
         <div className="form-row">
           <div className="form-group">
-            <label>Salary {REQ}</label>
-            <input value={data.salary} onChange={e => set(p => ({...p, salary: e.target.value}))} placeholder="€3,000/month" required maxLength={50} />
+            <label>Salary</label>
+            <input value={data.salary} onChange={e => set(p => ({...p, salary: e.target.value}))} placeholder="€3,000/month" maxLength={50} />
           </div>
         </div>
         <div className="form-row">

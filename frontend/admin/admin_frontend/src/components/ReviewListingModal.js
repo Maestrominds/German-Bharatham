@@ -573,8 +573,18 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
                 <input type="text" name="city" value={formData.city} onChange={handleFieldChange} style={inputStyle} required maxLength={50} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>Contact Phone *</label>
-                <input type="text" name="contactPhone" value={formData.contactPhone} onChange={handleFieldChange} style={inputStyle} required maxLength={20} />
+                <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>
+                  {listing.category === 'Jobs' ? 'Contact Details' : 'Contact Phone *'}
+                </label>
+                <input 
+                  type="text" 
+                  name="contactPhone" 
+                  value={formData.contactPhone} 
+                  onChange={handleFieldChange} 
+                  style={inputStyle} 
+                  required={listing.category !== 'Jobs'} 
+                  maxLength={100} 
+                />
               </div>
             </div>
             <div>

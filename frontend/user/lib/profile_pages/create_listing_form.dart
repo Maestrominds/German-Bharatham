@@ -872,18 +872,18 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
   List<Widget> _buildJobsForm() {
     return [
       _buildField(key: 'title', label: 'Job Title', hint: 'Software Engineer', maxLength: 100, minLength: 20),
-      _buildField(key: 'companyName', label: 'Company Name', hint: 'Tech Solutions GmbH', maxLength: 100, minLength: 20),
-      _buildField(key: 'location', label: 'Location (City)', hint: 'Munich', maxLength: 100, minLength: 20),
+      _buildField(key: 'companyName', label: 'Company Name', hint: 'Tech Solutions GmbH', maxLength: 100, minLength: 1),
+      _buildField(key: 'location', label: 'Location (City)', hint: 'Munich', maxLength: 100, minLength: 1),
       _buildField(
         key: 'contact',
-        label: 'Contact Phone',
-        hint: '49123456789',
-        maxLength: 50,
-        minLength: 10,
-        keyboardType: TextInputType.phone,
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+]'))],
+        label: 'Contact Details',
+        hint: 'Email or Phone number',
+        required: false,
+        maxLength: 100,
+        minLength: 1,
+        keyboardType: TextInputType.text,
       ),
-      _buildField(key: 'salary', label: 'Salary', hint: '€3,000/month', maxLength: 50, minLength: 20),
+      _buildField(key: 'salary', label: 'Salary', hint: '€3,000/month', required: false, maxLength: 50, minLength: 1),
       _buildField(key: 'applyUrl', label: 'Apply URL', hint: 'https://company.com/apply', maxLength: 500, minLength: 10, keyboardType: TextInputType.url),
       _buildDropdown(
         label: 'Job Type',
