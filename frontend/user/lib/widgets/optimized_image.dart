@@ -44,13 +44,21 @@ class OptimizedImage extends StatelessWidget {
       return errorWidget ?? _defaultErrorWidget();
     }
 
-    return CachedNetworkImage(
-      imageUrl: optimizedUrl,
+    return Image(
+      image: CachedNetworkImageProvider(optimizedUrl),
       width: width,
       height: height,
       fit: fit,
-      placeholder: (context, url) => placeholder ?? _defaultPlaceholder(),
-      errorWidget: (context, url, error) => errorWidget ?? _defaultErrorWidget(),
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded) {
+          return child;
+        }
+        if (frame == null) {
+          return placeholder ?? _defaultPlaceholder();
+        }
+        return child;
+      },
+      errorBuilder: (context, error, stackTrace) => errorWidget ?? _defaultErrorWidget(),
     );
   }
 
