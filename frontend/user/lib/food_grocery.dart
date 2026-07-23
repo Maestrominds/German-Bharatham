@@ -9,6 +9,7 @@ import 'services/api_service.dart';
 import 'services/api_config.dart';
 import 'services/cache_service.dart';
 import 'widgets/star_rating_widget.dart';
+import 'widgets/optimized_image.dart';
 
 class FoodGroceryPage extends StatefulWidget {
   const FoodGroceryPage({super.key});
@@ -316,13 +317,13 @@ class _FoodCardState extends State<FoodCard> {
                           }
                         })()
                       : (widget.item.image!.startsWith('http')
-                          ? Image.network(
-                              widget.item.image!,
+                          ? OptimizedImage(
+                              imageUrl: widget.item.image!,
                               width: 80,
                               height: 80,
                               fit: BoxFit.cover,
-                              gaplessPlayback: true,
-                              errorBuilder: (_, _, _) => _placeholderImage(),
+                              errorWidget: _placeholderImage(),
+                              placeholder: _placeholderImage(),
                             )
                           : Image.asset(
                               widget.item.image!,

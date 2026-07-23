@@ -7,6 +7,7 @@ import 'job_details.dart';
 import 'jobs_filter_page.dart';
 import 'services/api_config.dart';
 import 'services/cache_service.dart';
+import 'widgets/optimized_image.dart';
 
 class JobsPage extends StatefulWidget {
   const JobsPage({super.key});
@@ -363,10 +364,14 @@ class _JobCardState extends State<JobCard> {
                       }
                     }
                     final url = ApiConfig.getImageUrl(logo);
-                    return Image.network(
-                      url,
+                    return OptimizedImage(
+                      imageUrl: url,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Image.asset(
+                      errorWidget: Image.asset(
+                        'assets/images/google.png',
+                        fit: BoxFit.cover,
+                      ),
+                      placeholder: Image.asset(
                         'assets/images/google.png',
                         fit: BoxFit.cover,
                       ),

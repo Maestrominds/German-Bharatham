@@ -7,6 +7,7 @@ import 'service_details.dart';
 import 'service_filter_page.dart';
 import 'services/api_service.dart';
 import 'services/cache_service.dart';
+import 'widgets/optimized_image.dart';
 
 class ServicesPage extends StatefulWidget {
   const ServicesPage({super.key});
@@ -537,18 +538,20 @@ Widget _buildServiceImage(
   }
 
   if (src.startsWith('http://') || src.startsWith('https://')) {
-    return Image.network(
-      src,
+    final Widget placeholder = Image.asset(
+      placeholderAsset,
       width: width,
       height: height,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Image.asset(
-        placeholderAsset,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-      ),
+      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+    );
+    return OptimizedImage(
+      imageUrl: src,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      errorWidget: placeholder,
+      placeholder: placeholder,
     );
   }
 

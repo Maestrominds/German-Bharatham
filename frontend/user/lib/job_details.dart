@@ -6,6 +6,7 @@ import 'services/api_config.dart';
 import 'saved_job_manager.dart';
 import 'widgets/star_rating_widget.dart';
 import 'widgets/rating_dialog.dart';
+import 'widgets/optimized_image.dart';
 import 'services/rating_service.dart';
 import 'models/rating_model.dart';
 
@@ -277,18 +278,49 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                 const SizedBox(height: 16),
               ],
               if (widget.item.phone != null && widget.item.phone!.trim().isNotEmpty) ...[
-                const Text('Contact Phone', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.phone_outlined, color: Color(0xFF4E7F6D), size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      widget.item.phone!.trim(),
-                      style: const TextStyle(fontSize: 14, color: Color(0xFF444444), fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
+                (() {
+                  final isEmail = widget.item.phone!.contains('@');
+                  final label = isEmail ? 'Contact Email' : 'Contact Phone';
+                  final icon = isEmail ? Icons.mail_outline : Icons.phone_outlined;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final value = widget.item.phone!.trim();
+                          if (isEmail) {
+                            final Uri emailUri = Uri(scheme: 'mailto', path: value);
+                            if (await canLaunchUrl(emailUri)) {
+                              await launchUrl(emailUri);
+                            }
+                          } else {
+                            final Uri phoneUri = Uri(scheme: 'tel', path: value);
+                            if (await canLaunchUrl(phoneUri)) {
+                              await launchUrl(phoneUri);
+                            }
+                          }
+                        },
+                        child: Row(
+                          children: [
+                            Icon(icon, color: const Color(0xFF4E7F6D), size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.item.phone!.trim(),
+                              style: const TextStyle(
+                                fontSize: 14, 
+                                color: Color(0xFF4E7F6D), 
+                                fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                })(),
                 const SizedBox(height: 16),
               ],
               if (widget.item.requirements.isNotEmpty) ...[
@@ -405,10 +437,11 @@ class _CompanyLogo extends StatelessWidget {
               }
             }
             final url = ApiConfig.getImageUrl(logo);
-            return Image.network(
-              url,
+            return OptimizedImage(
+              imageUrl: url,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Image.asset('assets/images/google.png', fit: BoxFit.cover),
+              errorWidget: Image.asset('assets/images/google.png', fit: BoxFit.cover),
+              placeholder: Image.asset('assets/images/google.png', fit: BoxFit.cover),
             );
           }
           return Image.asset('assets/images/google.png', fit: BoxFit.cover);

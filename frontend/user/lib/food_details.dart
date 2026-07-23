@@ -12,6 +12,7 @@ import 'models/food_grocery_model.dart';
 import 'saved_food_manager.dart';
 import 'widgets/star_rating_widget.dart';
 import 'widgets/rating_dialog.dart';
+import 'widgets/optimized_image.dart';
 import 'services/rating_service.dart';
 import 'models/rating_model.dart';
 
@@ -612,13 +613,13 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     }
 
     if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
+      return OptimizedImage(
+        imageUrl: imageUrl,
         width: double.infinity,
         height: height,
         fit: BoxFit.cover,
-        gaplessPlayback: true,
-        errorBuilder: (context, error, stackTrace) => _placeholderImage(height),
+        errorWidget: _placeholderImage(height),
+        placeholder: _placeholderImage(height),
       );
     } else {
       return Image.asset(

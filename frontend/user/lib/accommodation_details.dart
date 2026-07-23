@@ -11,6 +11,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'widgets/star_rating_widget.dart';
 import 'widgets/rating_dialog.dart';
+import 'widgets/optimized_image.dart';
 import 'services/rating_service.dart';
 import 'models/rating_model.dart';
 import 'saved_manager.dart';
@@ -340,13 +341,13 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
       }
     }
     if (absoluteSrc.startsWith('http')) {
-      return Image.network(
-        absoluteSrc,
+      return OptimizedImage(
+        imageUrl: absoluteSrc,
         width: double.infinity,
         height: h,
         fit: BoxFit.cover,
-        gaplessPlayback: true,
-        errorBuilder: (_, __, ___) => _placeholder(h),
+        errorWidget: _placeholder(h),
+        placeholder: _placeholder(h),
       );
     }
     return _placeholder(h);

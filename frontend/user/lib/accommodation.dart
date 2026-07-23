@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
 import 'widgets/star_rating_widget.dart';
+import 'widgets/optimized_image.dart';
 
 /// =======================
 /// DATA MODEL
@@ -759,12 +760,13 @@ class AccommodationCard extends StatelessWidget {
       } catch (_) {}
     }
     if (src.startsWith('http')) {
-      return Image.network(
-        src,
+      return OptimizedImage(
+        imageUrl: src,
         width: w,
         height: h,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholderImage(),
+        errorWidget: _placeholderImage(),
+        placeholder: _placeholderImage(),
       );
     }
     return Image.asset(

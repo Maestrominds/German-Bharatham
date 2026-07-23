@@ -72,7 +72,25 @@ async function notifyListingActivated({ module, entityId, listingTitle }) {
   });
 }
 
+async function deleteOldNotifications(days = 30) {
+  try {
+    const expiryDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const result = await prisma.notification.deleteMany({
+      where: {
+        createdAt: {
+          lt: expiryDate
+        }
+      }
+    });
+    console.log(`🧹 [CLEANUP] Deleted ${result.count} notifications older than ${days} days.`);
+    return result;
+  } catch (err) {
+    console.error("❌ [CLEANUP ERROR] Failed to delete old notifications:", err);
+  }
+}
+
 module.exports = {
   broadcastNotification,
   notifyListingActivated,
+  deleteOldNotifications,
 };

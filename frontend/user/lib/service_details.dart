@@ -14,6 +14,7 @@ import 'services/rating_service.dart';
 import 'models/rating_model.dart';
 import 'widgets/rating_dialog.dart';
 import 'services/api_config.dart';
+import 'widgets/optimized_image.dart';
 
 Widget _buildServiceImage(
   String src, {
@@ -70,13 +71,13 @@ Widget _buildServiceImage(
   }
 
   if (absoluteSrc.startsWith('http://') || absoluteSrc.startsWith('https://')) {
-    return Image.network(
-      absoluteSrc,
+    return OptimizedImage(
+      imageUrl: absoluteSrc,
       width: width,
       height: height,
       fit: BoxFit.cover,
-      gaplessPlayback: true,
-      errorBuilder: (_, __, ___) => fallback,
+      errorWidget: fallback,
+      placeholder: fallback,
     );
   }
 
