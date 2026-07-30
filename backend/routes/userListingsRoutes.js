@@ -120,7 +120,7 @@ router.post("/", upload.array('images', 5), async (req, res) => {
         takeoutAvailable:  !!data.takeoutAvailable,
         dineInAvailable:   !!data.dineInAvailable,
         cateringAvailable: !!data.cateringAvailable,
-        image:             data.image || null,
+        image:             (data.images && data.images.length > 0) ? data.images[0] : (data.image || null),
         ...meta,
       };
       doc = await prisma.foodGrocery.create({ data: foodPayload });
@@ -288,7 +288,7 @@ router.put("/:category/:id", upload.array('images', 5), async (req, res) => {
         takeoutAvailable:  !!data.takeoutAvailable,
         dineInAvailable:   !!data.dineInAvailable,
         cateringAvailable: !!data.cateringAvailable,
-        image:             data.image || null,
+        image:             (data.images && data.images.length > 0) ? data.images[0] : (data.image || null),
         ...meta,
       };
       updatedDoc = await prisma.foodGrocery.update({ where: { id: numericId }, data: foodPayload });

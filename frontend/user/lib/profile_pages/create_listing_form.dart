@@ -85,7 +85,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
       _controllers['city'] = TextEditingController(text: data?['city']?.toString() ?? '');
       _controllers['postalCode'] = TextEditingController(text: (data?['postalCode'] ?? data?['zipCode'])?.toString() ?? '');
-      _controllers['area'] = TextEditingController(text: data?['area']?.toString() ?? '');
+      _controllers['area'] = TextEditingController(text: data?['state']?.toString() ?? '');
       _controllers['address'] = TextEditingController(text: data?['address']?.toString() ?? '');
       _controllers['contactPhone'] = TextEditingController(text: (data?['contactPhone'] ?? data?['phone'])?.toString() ?? '');
       _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');

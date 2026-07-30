@@ -32,6 +32,8 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
   const [specialtyInput, setSpecialtyInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -39,6 +41,13 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleImageUpload = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setImageFile(e.target.files[0]);
+      setImagePreview(URL.createObjectURL(e.target.files[0]));
+    }
   };
 
   const handleAddCuisine = (e) => {
@@ -84,42 +93,48 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      // Prepare data with location field
-      const submitData = {
-        title: formData.title,
-        subCategory: formData.subCategory,
-        type: formData.type,
-        location: `${formData.city}, ${formData.address}`,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        phone: formData.phone,
-        email: formData.email,
-        website: formData.website,
-        description: formData.description,
-        openingHours: formData.openingHours,
-        priceRange: formData.priceRange,
-        cuisine: formData.cuisine,
-        specialties: formData.specialties,
-        deliveryAvailable: formData.deliveryAvailable,
-        takeoutAvailable: formData.takeoutAvailable,
-        dineInAvailable: formData.dineInAvailable,
-        cateringAvailable: formData.cateringAvailable,
-        image: formData.image,
-        featured: formData.featured,
-        verified: formData.verified,
-        status: 'Pending',
-        category: 'Food'
-      };
+      const submitData = new FormData();
       
+      submitData.append('title', formData.title);
+      submitData.append('subCategory', formData.subCategory);
+      submitData.append('type', formData.type);
+      submitData.append('location', `${formData.city}, ${formData.address}`);
+      submitData.append('address', formData.address);
+      submitData.append('city', formData.city);
+      submitData.append('state', formData.state);
+      submitData.append('zipCode', formData.zipCode);
+      submitData.append('phone', formData.phone);
+      submitData.append('email', formData.email);
+      submitData.append('website', formData.website);
+      submitData.append('description', formData.description);
+      submitData.append('openingHours', formData.openingHours);
+      submitData.append('priceRange', formData.priceRange);
+      
+      submitData.append('cuisine', JSON.stringify(formData.cuisine));
+      submitData.append('specialties', JSON.stringify(formData.specialties));
+      
+      submitData.append('deliveryAvailable', formData.deliveryAvailable);
+      submitData.append('takeoutAvailable', formData.takeoutAvailable);
+      submitData.append('dineInAvailable', formData.dineInAvailable);
+      submitData.append('cateringAvailable', formData.cateringAvailable);
+      
+      if (imageFile) {
+        submitData.append('images', imageFile);
+      } else if (formData.image) {
+        submitData.append('image', formData.image);
+      }
+      
+      submitData.append('featured', formData.featured);
+      submitData.append('verified', formData.verified);
+      submitData.append('status', 'Pending');
+      submitData.append('category', 'Food');
+
       const response = await fetch(`${API_URL}/api/admin/foodgrocery`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(submitData)
+        body: submitData
       });
 
       if (!response.ok) {
@@ -127,12 +142,9 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
         throw new Error(errorData.message || 'Failed to create listing');
       }
 
-      const data = await response.json();
-      console.log('Created listing:', data);
       onSuccess();
     } catch (err) {
       setError(err.message);
-      console.error('Error creating listing:', err);
     } finally {
       setLoading(false);
     }
@@ -460,26 +472,24 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
             </div>
           </div>
 
-          {/* Image URL */}
+          {/* Image Upload */}
           <div className="form-section">
             <h3 className="section-title">
               <Upload size={18} />
-              Image
+              Image Upload
             </h3>
             
             <div className="form-group">
-              <label>Image URL <span className="required">*</span></label>
+              <label>Upload Image <span className="required">*</span></label>
               <input
-                type="url"
-                name="image"
-                placeholder="https://example.com/image.jpg"
-                value={formData.image}
-                onChange={handleChange}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
               />
-              <p className="form-help">Enter the URL of the restaurant/store image</p>
-              {formData.image && (
-                <div className="image-preview">
-                  <img src={formData.image} alt="Preview" />
+              <p className="form-help">Select an image from your computer</p>
+              {imagePreview && (
+                <div className="image-preview" style={{ marginTop: '10px' }}>
+                  <img src={imagePreview} alt="Preview" style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
               )}
             </div>

@@ -1,5 +1,6 @@
 const prisma = require("../../../config/prisma");
 const axios = require("axios");
+const { uploadImage } = require("../../../services/cloudinaryService");
 
 // Helper to map PostgreSQL Prisma FoodGrocery to match frontend _id expectations
 const mapFoodGrocery = (item) => {
@@ -146,13 +147,13 @@ exports.createFoodGrocery = async (req, res) => {
         openingHours: req.body.openingHours || null,
         priceRange: req.body.priceRange || null,
         rating: req.body.rating ? parseFloat(req.body.rating) : 0,
-        cuisine: Array.isArray(req.body.cuisine) ? req.body.cuisine.map(c => String(c)) : [],
-        specialties: Array.isArray(req.body.specialties) ? req.body.specialties.map(s => String(s)) : [],
+        cuisine: (typeof req.body.cuisine === 'string') ? JSON.parse(req.body.cuisine || '[]').map(c => String(c)) : (Array.isArray(req.body.cuisine) ? req.body.cuisine.map(c => String(c)) : []),
+        specialties: (typeof req.body.specialties === 'string') ? JSON.parse(req.body.specialties || '[]').map(s => String(s)) : (Array.isArray(req.body.specialties) ? req.body.specialties.map(s => String(s)) : []),
         deliveryAvailable: req.body.deliveryAvailable === true,
         takeoutAvailable: req.body.takeoutAvailable === true,
-        dineInAvailable: req.body.dineInAvailable === true,
-        cateringAvailable: req.body.cateringAvailable === true,
-        image: req.body.image || null,
+        dineInAvailable: req.body.dineInAvailable === true || req.body.dineInAvailable === 'true',
+        cateringAvailable: req.body.cateringAvailable === true || req.body.cateringAvailable === 'true',
+        image: (req.files && req.files.length > 0) ? (await Promise.all(req.files.map(f => uploadImage(f.buffer, 'listings'))))[0].secure_url : (req.body.image || null),
         latitude,
         longitude,
         averageRating: 0,
@@ -199,6 +200,11 @@ exports.updateFoodGrocery = async (req, res) => {
     if (b.openingHours!= null) updateData.openingHours= String(b.openingHours).trim() || null;
     if (b.priceRange  != null) updateData.priceRange  = String(b.priceRange).trim() || null;
     if (b.website     != null) updateData.website     = String(b.website).trim() || null;
+    if (req.files && req.files.length > 0) {
+        updateData.image = (await Promise.all(req.files.map(f => uploadImage(f.buffer, 'listings'))))[0].secure_url;
+    } else if (b.image != null) {
+        updateData.image = String(b.image).trim() || null;
+    }
     if (b.status      != null) updateData.status      = b.status;
     if (b.featured    != null) updateData.featured    = !!b.featured;
     if (b.verified    != null) updateData.verified    = !!b.verified;
@@ -208,8 +214,11 @@ exports.updateFoodGrocery = async (req, res) => {
     if (b.takeoutAvailable != null) updateData.takeoutAvailable = !!b.takeoutAvailable;
     if (b.cateringAvailable!= null) updateData.cateringAvailable= !!b.cateringAvailable;
 
-    if (Array.isArray(b.cuisine))     updateData.cuisine     = b.cuisine.map(c => String(c));
-    if (Array.isArray(b.specialties)) updateData.specialties = b.specialties.map(s => String(s));
+    if (typeof b.cuisine === 'string') updateData.cuisine = JSON.parse(b.cuisine || '[]').map(c => String(c));
+    else if (Array.isArray(b.cuisine)) updateData.cuisine = b.cuisine.map(c => String(c));
+    
+    if (typeof b.specialties === 'string') updateData.specialties = JSON.parse(b.specialties || '[]').map(s => String(s));
+    else if (Array.isArray(b.specialties)) updateData.specialties = b.specialties.map(s => String(s));
 
     console.log(`🖼️ [IMAGE UPDATE DEBUG] Received b.images:`, b.images);
     console.log(`🖼️ [IMAGE UPDATE DEBUG] Received b.image:`, b.image);
