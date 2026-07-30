@@ -1,7 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+require('dotenv').config();
+const prisma = require('../config/prisma');
 const bcrypt = require('bcryptjs');
-
-const prisma = new PrismaClient();
 
 async function main() {
   // 👇 CHANGE THESE TO YOUR PREFERRED ADMIN DETAILS
