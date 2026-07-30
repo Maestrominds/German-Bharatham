@@ -1,9 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'services/api_config.dart';
 
 /// Singleton that holds the currently logged-in user's data.
-/// Data is persisted with SharedPreferences so it survives app restarts.
-/// Each user's photo is stored under a user-specific key so multiple
-/// accounts on the same device don't overwrite each other's photo.
 class UserSession {
   UserSession._internal();
   static final UserSession instance = UserSession._internal();
@@ -51,10 +52,15 @@ class UserSession {
     await prefs.setString('sess_token', token);
     await prefs.setString('sess_name', name);
     await prefs.setString('sess_email', email);
-    if (phone != null) await prefs.setString('sess_phone', phone);
-    if (photoBase64 != null) {
-      await prefs.setString('sess_photo_$userId', photoBase64);
+    if (this.phone != null) {
+      await prefs.setString('sess_phone', this.phone!);
     }
+    if (this.photoBase64 != null) {
+      await prefs.setString('sess_photo_$userId', this.photoBase64!);
+    }
+    
+    // Sync FCM Token immediately on login
+    syncFcmToken();
 
     // Track first/last login per user (used for subscription prompt)
     final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -64,6 +70,36 @@ class UserSession {
       await prefs.setInt(firstKey, nowMs);
     }
     await prefs.setInt(lastKey, nowMs);
+  }
+
+  /// Retrieves the FCM token and sends it to the backend.
+  Future<void> syncFcmToken() async {
+    if (!isLoggedIn) return;
+    try {
+      final messaging = FirebaseMessaging.instance;
+      // Request permissions for iOS and newer Androids
+      await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      
+      final fcmToken = await messaging.getToken();
+      if (fcmToken != null) {
+        final url = Uri.parse('${ApiConfig.baseUrl}/api/user/fcm-token');
+        await http.put(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'fcmToken': fcmToken}),
+        );
+        print("FCM Token synced: $fcmToken");
+      }
+    } catch (e) {
+      print("Failed to sync FCM token: $e");
+    }
   }
 
   Future<DateTime?> getFirstLoginAt() async {

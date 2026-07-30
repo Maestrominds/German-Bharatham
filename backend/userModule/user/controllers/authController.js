@@ -816,3 +816,24 @@ exports.resetPasswordOtp = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+// UPDATE FCM TOKEN
+exports.updateFcmToken = async (req, res) => {
+  try {
+    const numericId = parseInt(req.user.id);
+    const { fcmToken } = req.body;
+
+    if (isNaN(numericId)) return res.status(401).json({ message: "Invalid session user ID" });
+    if (!fcmToken) return res.status(400).json({ message: "fcmToken is required" });
+
+    await prisma.user.update({
+      where: { id: numericId },
+      data: { fcmToken: String(fcmToken) }
+    });
+
+    return res.status(200).json({ message: "FCM token updated successfully." });
+  } catch (error) {
+    console.error(`❌ [ERROR] updateFcmToken failed: ${error.message}`);
+    return res.status(500).json({ message: error.message });
+  }
+};

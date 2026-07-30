@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:country_code_picker/country_code_picker.dart';
@@ -30,8 +32,21 @@ import 'welcome_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Handling a background message: ${message.messageId}");
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch(e) {
+    print("Firebase init failed: $e");
+  }
 
   // Ensure saved/bookmarked items are loaded before the UI renders.
   await Future.wait([
@@ -1619,6 +1634,9 @@ class _SplashScreenState extends State<SplashScreen>
         SavedServiceManager.instance.switchUser(UserSession.instance.userId!),
         SavedGuidesManager.instance.switchUser(UserSession.instance.userId!),
       ]);
+      
+      // Update FCM Token on startup if logged in
+      UserSession.instance.syncFcmToken();
 
       // 🛡️ Check if account is deactivated before proceeding
       // We do this in the background while the logo animation plays

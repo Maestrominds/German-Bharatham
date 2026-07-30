@@ -29,6 +29,7 @@ model User {
   passport              String         @default("")
   resetPasswordToken    String?
   resetPasswordExpires  DateTime?
+  fcmToken              String?
   subscriptionStatus    String         @default("none")
   subscriptionPlan      String?
   subscriptionExpiresAt DateTime?

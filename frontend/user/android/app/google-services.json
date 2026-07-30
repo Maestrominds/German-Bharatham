@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "382722331036",
+    "project_id": "german-bharatham",
+    "storage_bucket": "german-bharatham.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:382722331036:android:80606a8245788cadb5b859",
+        "android_client_info": {
+          "package_name": "com.german.german_bharatham_admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBisHHG__jd7L0EwxdV1x4kxwnMnLy3M98"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -19,6 +19,7 @@ router.post("/verify-email", controller.verifyEmailCode);
 router.get("/profile", protect, controller.getProfile);
 router.put("/profile", protect, controller.updateProfile);
 router.put("/change-password", protect, controller.changePassword);
+router.put("/fcm-token", protect, controller.updateFcmToken);
 
 // Notifications (protected)
 router.get("/notifications", protect, notificationController.getMyNotifications);

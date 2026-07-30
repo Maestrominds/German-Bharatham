@@ -18,7 +18,7 @@ async function broadcastNotification({
   try {
     const pgRecipients = await prisma.user.findMany({
       where: { role: 'user', isActive: true },
-      select: { id: true }
+      select: { id: true, fcmToken: true }
     });
     if (pgRecipients.length) {
       let pgSenderId = null;
@@ -39,9 +39,35 @@ async function broadcastNotification({
       }));
       await prisma.notification.createMany({ data: pgDocs });
       postgresInserted = pgDocs.length;
+
+      // Extract users with valid FCM tokens
+      const fcmTokens = pgRecipients
+        .filter(u => u.fcmToken && u.fcmToken.trim().length > 0)
+        .map(u => u.fcmToken);
+
+      if (fcmTokens.length > 0) {
+        const sendPushNotification = require('../../../utils/sendPushNotification');
+        const admin = require('../../../config/firebase');
+        
+        // FCM limit is 500 tokens per multicast message
+        const chunkSize = 500;
+        for (let i = 0; i < fcmTokens.length; i += chunkSize) {
+          const chunk = fcmTokens.slice(i, i + chunkSize);
+          const pushMessage = {
+            notification: { title, body: message },
+            data: data ? Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])) : {},
+            tokens: chunk,
+          };
+          try {
+            await admin.messaging().sendEachForMulticast(pushMessage);
+          } catch (pushErr) {
+            console.error("Failed to broadcast FCM chunk:", pushErr);
+          }
+        }
+      }
     }
   } catch (err) {
-    console.error("Failed to broadcast notification to PostgreSQL:", err);
+    console.error("Failed to broadcast notification:", err);
   }
 
   return { inserted: postgresInserted };

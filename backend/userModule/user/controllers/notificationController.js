@@ -51,7 +51,7 @@ exports.createLikeNotification = async (req, res) => {
 
     const targetUser = await prisma.user.findUnique({
       where: { id: numericTargetId },
-      select: { id: true, name: true, photo: true }
+      select: { id: true, name: true, photo: true, fcmToken: true }
     });
 
     if (!targetUser) {
@@ -97,6 +97,17 @@ exports.createLikeNotification = async (req, res) => {
         }
       })
     ]);
+
+    // Send Push Notification if target user has FCM Token
+    if (targetUser.fcmToken) {
+      const sendPushNotification = require('../../../../utils/sendPushNotification');
+      await sendPushNotification(
+        targetUser.fcmToken,
+        'Profile liked',
+        `${senderName} liked your profile`,
+        { module: 'profiles', action: 'like_received', senderUserId: String(req.user.id) }
+      );
+    }
 
     return res.status(201).json({
       received: formatNotification(received),
