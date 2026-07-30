@@ -115,3 +115,29 @@ exports.deactivateUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// 🎁 Grant Lifetime Free Access
+exports.grantFreeAccess = async (req, res) => {
+  try {
+    const numericId = parseInt(req.params.id);
+    if (isNaN(numericId)) return res.status(400).json({ message: "Invalid ID format" });
+
+    // Set expiry to 10 years from now
+    const tenYearsFromNow = new Date();
+    tenYearsFromNow.setFullYear(tenYearsFromNow.getFullYear() + 10);
+
+    const user = await prisma.user.update({
+      where: { id: numericId },
+      data: { 
+        subscriptionStatus: "active",
+        subscriptionPlan: "free",
+        subscriptionExpiresAt: tenYearsFromNow
+      }
+    });
+    console.log(`🎁 [ADMIN] Granted lifetime free access to: ${user.email} (${user.id})`);
+    res.json({ message: "Lifetime free access granted", user });
+  } catch (error) {
+    console.error("Error granting free access:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

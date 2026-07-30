@@ -178,11 +178,29 @@ const fetchUsers = async () => {
                           </span>
                         </td>
                         <td>
-                          {user.isActive !== false ? (
-                            <button className="action-btn deactivate-btn" onClick={() => handleUserAction(user._id, 'deactivate')}>Deactivate</button>
-                          ) : (
-                            <button className="action-btn activate-btn" onClick={() => handleUserAction(user._id, 'activate')}>Activate</button>
-                          )}
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            {user.isActive !== false ? (
+                              <button className="action-btn deactivate-btn" onClick={() => handleUserAction(user._id, 'deactivate')}>Deactivate</button>
+                            ) : (
+                              <button className="action-btn activate-btn" onClick={() => handleUserAction(user._id, 'activate')}>Activate</button>
+                            )}
+                            
+                            {user.subscriptionStatus === 'active' && user.subscriptionPlan === 'free' && user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getFullYear() > new Date().getFullYear() + 5 ? (
+                              <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 'bold' }}>✓ Lifetime Access</span>
+                            ) : (
+                              <button 
+                                className="action-btn activate-btn" 
+                                style={{ backgroundColor: '#10b981' }} 
+                                onClick={() => {
+                                  if(window.confirm(`Grant lifetime free access to ${user.name}?`)) {
+                                    handleUserAction(user._id, 'grant-free-access');
+                                  }
+                                }}
+                              >
+                                Grant Access
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
