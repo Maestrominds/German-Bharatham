@@ -16,13 +16,14 @@ const fileFilter = (req, file, cb) => {
     "image/jpg",
     "image/png",
     "image/gif",
-    "image/webp"
+    "image/webp",
+    "application/octet-stream"
   ];
 
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Only image files are allowed (jpeg, jpg, png, gif, webp)"), false);
+    cb(new Error(`Only image files are allowed. Received: ${file.mimetype}`), false);
   }
 };
 
