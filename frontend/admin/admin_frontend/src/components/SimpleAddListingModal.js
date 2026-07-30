@@ -68,11 +68,6 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
   };
 
   const validate = () => {
-    if (!form.title.trim()) return "Title is required";
-    if (!form.location.trim()) return "Location is required";
-    if (!form.contact.trim()) return "Contact is required";
-    if (!form.description.trim()) return "Description is required";
-    if (!form.price.trim()) return "Price is required";
     return null;
   };
 
@@ -154,13 +149,11 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 placeholder="Room"
                 value={form.title}
                 onChange={handleChange}
-                required
-                maxLength={100}
               />
             </div>
             <div className="form-group">
               <label>Category</label>
-              <select name="category" value={form.category} onChange={handleCategoryChange} required>
+              <select name="category" value={form.category} onChange={handleCategoryChange}>
                 <option>Accommodation</option>
                 <option>Food</option>
                 <option>Jobs</option>
@@ -176,7 +169,7 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 <label>
                   Property Type <span style={{ color: "red" }}>*</span>
                 </label>
-                <select name="propertyType" value={form.propertyType} onChange={handleChange} required>
+                <select name="propertyType" value={form.propertyType} onChange={handleChange}>
                   <option value="Apartment">Apartment</option>
                   <option value="Shared Room">Shared Room</option>
                   <option value="Temporary Stays">Temporary Stays</option>
@@ -196,8 +189,6 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 placeholder="Munich"
                 value={form.location}
                 onChange={handleChange}
-                required
-                maxLength={100}
               />
             </div>
             <div className="form-group">
@@ -212,8 +203,6 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                   e.target.value = e.target.value.replace(/[^0-9]/g, '');
                   handleChange(e);
                 }}
-                required
-                maxLength={50}
               />
             </div>
           </div>
@@ -229,8 +218,6 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
               placeholder="Enter Description"
               value={form.description}
               onChange={handleChange}
-              required
-              maxLength={5000}
             />
           </div>
 
@@ -245,13 +232,11 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 placeholder="€1,000/month"
                 value={form.price}
                 onChange={handleChange}
-                required
-                maxLength={50}
               />
             </div>
             <div className="form-group">
               <label>Status</label>
-              <select name="status" value="Pending" disabled required>
+              <select name="status" value="Pending" disabled>
                 <option value="Pending">Pending</option>
               </select>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
@@ -294,7 +279,6 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
                 placeholder="Type custom amenity…"
                 value={customAmenity}
                 onChange={(e) => setCustomAmenity(e.target.value)}
-                maxLength={50}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") { e.preventDefault(); addCustomAmenity(); }
                 }}

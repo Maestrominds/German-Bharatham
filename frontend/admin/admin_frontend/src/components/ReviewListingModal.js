@@ -303,17 +303,17 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Postal Code</label>
-              <input type="text" name="postalCode" value={formData.postalCode} onChange={handleFieldChange} style={inputStyle} maxLength={20} />
+              <input type="text" name="postalCode" value={formData.postalCode} onChange={handleFieldChange} style={inputStyle} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Area</label>
-              <input type="text" name="area" value={formData.area || ''} onChange={handleFieldChange} style={inputStyle} maxLength={100} />
+              <input type="text" name="area" value={formData.area || ''} onChange={handleFieldChange} style={inputStyle} />
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Address</label>
-              <input type="text" name="address" value={formData.address} onChange={handleFieldChange} style={inputStyle} maxLength={200} />
+              <input type="text" name="address" value={formData.address} onChange={handleFieldChange} style={inputStyle} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '15px' }}>
@@ -386,31 +386,41 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Address</label>
-              <input type="text" name="address" value={formData.address || ''} onChange={handleFieldChange} style={inputStyle} maxLength={200} />
+              <input type="text" name="address" value={formData.address || ''} onChange={handleFieldChange} style={inputStyle} />
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Postal Code</label>
-              <input type="text" name="zipCode" value={formData.zipCode || ''} onChange={handleFieldChange} style={inputStyle} maxLength={20} />
+              <input type="text" name="zipCode" value={formData.zipCode || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>State/Region</label>
+              <input type="text" name="state" value={formData.state || ''} onChange={handleFieldChange} style={inputStyle} placeholder="Bavaria" />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Website</label>
+              <input type="url" name="website" value={formData.website || ''} onChange={handleFieldChange} placeholder="https://..." style={inputStyle} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Type (e.g. Veg/Non-Veg)</label>
-              <input type="text" name="type" value={formData.type || ''} onChange={handleFieldChange} style={inputStyle} placeholder="Vegetarian" maxLength={100} />
+              <input type="text" name="type" value={formData.type || ''} onChange={handleFieldChange} style={inputStyle} placeholder="Vegetarian" />
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Opening Hours</label>
-              <input type="text" name="openingHours" value={formData.openingHours || ''} onChange={handleFieldChange} placeholder="e.g. 10:00 AM - 10:00 PM" style={inputStyle} maxLength={200} />
+              <input type="text" name="openingHours" value={formData.openingHours || ''} onChange={handleFieldChange} placeholder="e.g. 10:00 AM - 10:00 PM" style={inputStyle} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Cuisines (comma separated)</label>
-              <input type="text" name="cuisine" value={formData.cuisine} onChange={handleFieldChange} placeholder="South Indian, Punjabi, etc." style={inputStyle} maxLength={500} />
+              <input type="text" name="cuisine" value={formData.cuisine} onChange={handleFieldChange} placeholder="South Indian, Punjabi, etc." style={inputStyle} />
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Specialties (comma separated)</label>
-              <input type="text" name="specialties" value={formData.specialties} onChange={handleFieldChange} placeholder="Biryani, Masala Dosa, etc." style={inputStyle} maxLength={500} />
+              <input type="text" name="specialties" value={formData.specialties} onChange={handleFieldChange} placeholder="Biryani, Masala Dosa, etc." style={inputStyle} />
             </div>
           </div>
           <h5 style={{ margin: '15px 0 8px 0', color: '#374151', fontSize: '13px', fontWeight: '600' }}>Options</h5>
@@ -438,7 +448,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Company Name</label>
-              <input type="text" name="companyName" value={formData.companyName} onChange={handleFieldChange} style={inputStyle} maxLength={100} />
+              <input type="text" name="companyName" value={formData.companyName} onChange={handleFieldChange} style={inputStyle} />
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Job Type</label>
@@ -454,20 +464,20 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Salary Info</label>
-              <input type="text" name="salary" value={formData.salary} onChange={handleFieldChange} placeholder="e.g. €45,000 - €55,000 / year" style={inputStyle} maxLength={50} />
+              <input type="text" name="salary" value={formData.salary} onChange={handleFieldChange} placeholder="e.g. €45,000 - €55,000 / year" style={inputStyle} />
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Apply URL</label>
-              <input type="text" name="applyUrl" value={formData.applyUrl} onChange={handleFieldChange} placeholder="https://..." style={inputStyle} maxLength={500} />
+              <input type="text" name="applyUrl" value={formData.applyUrl} onChange={handleFieldChange} placeholder="https://..." style={inputStyle} />
             </div>
           </div>
           <div style={{ marginBottom: '12px' }}>
             <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Requirements</label>
-            <textarea name="requirements" rows={3} value={formData.requirements} onChange={handleFieldChange} style={textareaStyle} maxLength={2000} />
+            <textarea name="requirements" rows={3} value={formData.requirements} onChange={handleFieldChange} style={textareaStyle} />
           </div>
           <div style={{ marginBottom: '12px' }}>
             <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Benefits</label>
-            <textarea name="benefits" rows={3} value={formData.benefits} onChange={handleFieldChange} style={textareaStyle} maxLength={2000} />
+            <textarea name="benefits" rows={3} value={formData.benefits} onChange={handleFieldChange} style={textareaStyle} />
           </div>
         </div>
       );
@@ -496,26 +506,26 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Provider Name</label>
-              <input type="text" name="providerName" value={formData.providerName} onChange={handleFieldChange} style={inputStyle} maxLength={100} />
+              <input type="text" name="providerName" value={formData.providerName} onChange={handleFieldChange} style={inputStyle} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Area</label>
-              <input type="text" name="area" value={formData.area} onChange={handleFieldChange} style={inputStyle} maxLength={100} />
+              <input type="text" name="area" value={formData.area} onChange={handleFieldChange} style={inputStyle} />
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Postal Code</label>
-              <input type="text" name="postalCode" value={formData.postalCode || ''} onChange={handleFieldChange} style={inputStyle} maxLength={20} />
+              <input type="text" name="postalCode" value={formData.postalCode || ''} onChange={handleFieldChange} style={inputStyle} />
             </div>
           </div>
           <div style={{ marginBottom: '12px' }}>
             <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Address</label>
-            <input type="text" name="address" value={formData.address || ''} onChange={handleFieldChange} style={inputStyle} maxLength={200} />
+            <input type="text" name="address" value={formData.address || ''} onChange={handleFieldChange} style={inputStyle} />
           </div>
           <div style={{ marginBottom: '12px' }}>
             <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Services Offered (comma separated)</label>
-            <input type="text" name="servicesOfferedText" value={formData.servicesOfferedText} onChange={handleFieldChange} style={inputStyle} maxLength={2000} />
+            <input type="text" name="servicesOfferedText" value={formData.servicesOfferedText} onChange={handleFieldChange} style={inputStyle} />
           </div>
         </div>
       );
@@ -565,12 +575,12 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
           <div className="review-details" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>Title / Name *</label>
-              <input type="text" name="title" value={formData.title} onChange={handleFieldChange} style={inputStyle} required maxLength={100} />
+              <input type="text" name="title" value={formData.title} onChange={handleFieldChange} style={inputStyle} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>City *</label>
-                <input type="text" name="city" value={formData.city} onChange={handleFieldChange} style={inputStyle} required maxLength={50} />
+                <input type="text" name="city" value={formData.city} onChange={handleFieldChange} style={inputStyle} />
               </div>
               <div>
                 <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>
@@ -582,14 +592,12 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
                   value={formData.contactPhone} 
                   onChange={handleFieldChange} 
                   style={inputStyle} 
-                  required={listing.category !== 'Jobs'} 
-                  maxLength={100} 
                 />
               </div>
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>Description *</label>
-              <textarea name="description" rows={4} value={formData.description} onChange={handleFieldChange} style={textareaStyle} required maxLength={5000} />
+              <textarea name="description" rows={4} value={formData.description} onChange={handleFieldChange} style={textareaStyle} />
             </div>
             {renderCategoryFields()}
           </div>

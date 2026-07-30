@@ -168,8 +168,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   placeholder="Restaurant or Grocery Store name"
                   value={formData.title}
                   onChange={handleChange}
-                  required
-                  maxLength={100}
                 />
               </div>
               <div className="form-group">
@@ -178,7 +176,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   name="subCategory"
                   value={formData.subCategory}
                   onChange={handleChange}
-                  required
                 >
                   <option value="Restaurant">Restaurant</option>
                   <option value="Grocery Store">Grocery Store</option>
@@ -200,8 +197,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   placeholder="e.g., Indian, Italian, Organic, Veg/Non-Veg"
                   value={formData.type}
                   onChange={handleChange}
-                  required
-                  maxLength={100}
                 />
               </div>
               <div className="form-group">
@@ -210,7 +205,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   name="priceRange"
                   value={formData.priceRange}
                   onChange={handleChange}
-                  required
                 >
                   <option value="€">€ - Budget Friendly</option>
                   <option value="€€">€€ - Moderate</option>
@@ -236,8 +230,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                 placeholder="Street address"
                 value={formData.address}
                 onChange={handleChange}
-                required
-                maxLength={200}
               />
             </div>
 
@@ -250,8 +242,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   placeholder="Munich"
                   value={formData.city}
                   onChange={handleChange}
-                  required
-                  maxLength={50}
                 />
               </div>
               <div className="form-group">
@@ -262,8 +252,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   placeholder="Bavaria"
                   value={formData.state}
                   onChange={handleChange}
-                  required
-                  maxLength={50}
                 />
               </div>
               <div className="form-group">
@@ -277,8 +265,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                     e.target.value = e.target.value.replace(/[^0-9]/g, '');
                     handleChange(e);
                   }}
-                  required
-                  maxLength={20}
                 />
               </div>
             </div>
@@ -303,8 +289,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                     e.target.value = e.target.value.replace(/[^0-9]/g, '');
                     handleChange(e);
                   }}
-                  required
-                  maxLength={20}
                 />
               </div>
               <div className="form-group">
@@ -315,8 +299,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   placeholder="contact@restaurant.com"
                   value={formData.email}
                   onChange={handleChange}
-                  required
-                  maxLength={100}
                 />
               </div>
             </div>
@@ -329,8 +311,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                 placeholder="https://www.restaurant.com"
                 value={formData.website}
                 onChange={handleChange}
-                required
-                maxLength={200}
               />
             </div>
           </div>
@@ -347,8 +327,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                required
-                maxLength={5000}
               />
             </div>
 
@@ -363,8 +341,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                 placeholder="e.g., Mon-Fri: 9:00 AM - 10:00 PM, Sat-Sun: 10:00 AM - 11:00 PM"
                 value={formData.openingHours}
                 onChange={handleChange}
-                required
-                maxLength={200}
               />
             </div>
           </div>
@@ -382,7 +358,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   value={cuisineInput}
                   onChange={(e) => setCuisineInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAddCuisine(e)}
-                  maxLength={50}
                 />
                 <button 
                   type="button" 
@@ -416,7 +391,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                   value={specialtyInput}
                   onChange={(e) => setSpecialtyInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAddSpecialty(e)}
-                  maxLength={50}
                 />
                 <button 
                   type="button" 
@@ -501,8 +475,6 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
                 placeholder="https://example.com/image.jpg"
                 value={formData.image}
                 onChange={handleChange}
-                required
-                maxLength={500}
               />
               <p className="form-help">Enter the URL of the restaurant/store image</p>
               {formData.image && (

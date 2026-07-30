@@ -362,11 +362,23 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
     final status = (user is Map) ? user['subscriptionStatus']?.toString() : null;
     final freeTrialCompleted = (user is Map && user['freeTrialCompleted'] == true);
 
+    bool isVIP = false;
+    if (user is Map) {
+      final uPlan = user['subscriptionPlan']?.toString();
+      final uExpires = user['subscriptionExpiresAt'];
+      if (status == 'active' && uPlan == 'free' && uExpires != null) {
+        final dt = DateTime.tryParse(uExpires.toString());
+        if (dt != null && dt.year > DateTime.now().year + 5) {
+          isVIP = true;
+        }
+      }
+    }
+
     final isCurrent = _activePlanId == id && (status == 'active' || status == 'trial');
     final isFreePlan = id == 'free' || id == 'free'.toString();
 
     // HIDE the free trial plan if freeTrialCompleted is true (already used or not eligible)
-    if (isFreePlan && freeTrialCompleted) {
+    if (isFreePlan && (freeTrialCompleted || isVIP)) {
       return const SizedBox.shrink();
     }
 
@@ -400,16 +412,16 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
           Align(
             alignment: Alignment.centerLeft,
             child: ElevatedButton(
-              onPressed: isCurrent ? null : () => _subscribe(id),
+              onPressed: (isCurrent || isVIP) ? null : () => _subscribe(id),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isCurrent ? Colors.grey : primaryGreen,
+                backgroundColor: (isCurrent || isVIP) ? Colors.grey : primaryGreen,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               child: Text(
-                isCurrent ? 'Subscribed' : 'Subscribe',
-                style: TextStyle(color: isCurrent ? Colors.black : Colors.white),
+                isVIP ? 'Included in VIP' : (isCurrent ? 'Subscribed' : 'Subscribe'),
+                style: TextStyle(color: (isCurrent || isVIP) ? Colors.black : Colors.white),
               ),
             ),
           ),
@@ -440,9 +452,22 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
     final user = _subscriptionStatus?['user'];
     final freeTrialCompleted = user is Map && user['freeTrialCompleted'] == true;
 
+    bool isVIP = false;
+    if (user is Map) {
+      final uStatus = user['subscriptionStatus']?.toString();
+      final uPlan = user['subscriptionPlan']?.toString();
+      final uExpires = user['subscriptionExpiresAt'];
+      if (uStatus == 'active' && uPlan == 'free' && uExpires != null) {
+        final dt = DateTime.tryParse(uExpires.toString());
+        if (dt != null && dt.year > DateTime.now().year + 5) {
+          isVIP = true;
+        }
+      }
+    }
+
     final displayPlans = _plans.where((p) {
       final pid = (p['_id'] ?? p['id'] ?? '').toString();
-      if (freeTrialCompleted && pid == 'free') return false;
+      if ((freeTrialCompleted || isVIP) && pid == 'free') return false;
       return true;
     }).toList();
 
@@ -452,9 +477,48 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
           context: context,
           title: 'Subscription Plans',
           showLeading: !widget.autoNavigateOnActivation,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final gap = 12.0;
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isVIP)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE6F4EA),
+                    border: Border.all(color: primaryGreen, width: 2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 40),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              "Lifetime VIP Access",
+                              style: TextStyle(
+                                color: primaryGreen,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "You have been granted unrestricted lifetime access to all features by the admin.",
+                              style: TextStyle(color: Colors.black87, fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final gap = 12.0;
               final cardWidth = (constraints.maxWidth - gap) / 2;
               return Wrap(
                 spacing: gap,
@@ -464,6 +528,8 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                     .toList(),
               );
             },
+          ),
+            ],
           ),
         ),
         if (_checkoutLoading)

@@ -121,8 +121,6 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
               type="text"
               value={postData.title}
               onChange={(e) => setPostData({ ...postData, title: e.target.value })}
-              required
-              maxLength={200}
             />
           </div>
 
@@ -132,7 +130,6 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
               <select
                 value={postData.category}
                 onChange={(e) => setPostData({ ...postData, category: e.target.value })}
-                required
               >
                 <option value="Guide">Guide</option>
                 <option value="Announcement">Announcement</option>
@@ -148,7 +145,6 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
                 value={postData.readTime}
                 onChange={(e) => setPostData({ ...postData, readTime: e.target.value })}
                 min="1"
-                required
               />
             </div>
           </div>
@@ -159,8 +155,6 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
               rows={3}
               value={postData.description}
               onChange={(e) => setPostData({ ...postData, description: e.target.value })}
-              required
-              maxLength={1000}
             />
           </div>
 
@@ -171,7 +165,6 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
               value={postData.keyPoints}
               onChange={(e) => setPostData({ ...postData, keyPoints: e.target.value })}
               placeholder="Point 1&#10;Point 2&#10;Point 3"
-              maxLength={2000}
             />
           </div>
 
@@ -183,7 +176,6 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
                 value={postData.officialWebsites}
                 onChange={(e) => setPostData({ ...postData, officialWebsites: e.target.value })}
                 placeholder="https://..."
-                maxLength={500}
               />
             </div>
             <div className="form-group">
@@ -193,7 +185,6 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
                 value={postData.communityDiscussions}
                 onChange={(e) => setPostData({ ...postData, communityDiscussions: e.target.value })}
                 placeholder="https://..."
-                maxLength={500}
               />
             </div>
           </div>
@@ -204,8 +195,6 @@ const EditPostModal = ({ post, onClose, onPostUpdated }) => {
               type="text"
               value={postData.author}
               onChange={(e) => setPostData({ ...postData, author: e.target.value })}
-              required
-              maxLength={100}
             />
           </div>
 

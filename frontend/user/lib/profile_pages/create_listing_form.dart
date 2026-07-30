@@ -210,7 +210,13 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       return;
     }
     try {
-      final XFile? file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      // Heavy compression to save Cloudinary bandwidth & avoid Nginx limits!
+      final XFile? file = await _picker.pickImage(
+        source: ImageSource.gallery, 
+        imageQuality: 60,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
       if (file == null) return;
 
       setState(() {
@@ -406,21 +412,44 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
               ));
       }
 
-      final json = jsonDecode(response.body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(json['message'] ?? 'Submitted successfully!')),
-        );
-        Navigator.pop(context, true); // Return success flag
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Listing saved successfully!')),
+          );
+          Navigator.pop(context, true); // true indicates success
+        }
       } else {
-        throw Exception(json['message'] ?? 'Failed to submit listing');
+        String errorMsg = 'Failed to save listing';
+        try {
+          final resData = jsonDecode(response.body);
+          if (resData['message'] != null) {
+            errorMsg = resData['message'];
+          }
+        } catch (e) {
+          // If the server returns HTML (like Nginx 413 Payload Too Large or 502 Bad Gateway)
+          if (response.body.contains('<html') || response.body.contains('<!DOC')) {
+            if (response.statusCode == 413) {
+              errorMsg = "Images are too large. Please upload smaller images or increase server limit.";
+            } else {
+              errorMsg = "Server Error ${response.statusCode}. Please check server logs.";
+            }
+          } else {
+            errorMsg = response.body.isNotEmpty ? response.body : errorMsg;
+          }
+        }
+        throw Exception(errorMsg);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString().replaceAll("Exception: ", "")}')),
+        );
+      }
     } finally {
-      setState(() => _submitting = false);
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
   }
 
