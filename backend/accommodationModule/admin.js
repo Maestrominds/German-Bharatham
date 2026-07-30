@@ -132,11 +132,11 @@ router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
       imageUrls = uploads.map(r => r.secure_url);
     }
 
-    // Extract flat helper fields for SQL search/sort performance
-    const rentDetails = req.body.rentDetails ? JSON.parse(req.body.rentDetails) : {};
-    const propertyDetails = req.body.propertyDetails ? JSON.parse(req.body.propertyDetails) : {};
-    const amenities = req.body.amenities ? JSON.parse(req.body.amenities) : {};
-    const adminControls = req.body.adminControls ? JSON.parse(req.body.adminControls) : {};
+    // Extract flat helper fields for SQL search/sort performance safely
+    const rentDetails = typeof req.body.rentDetails === 'string' ? JSON.parse(req.body.rentDetails) : (req.body.rentDetails || {});
+    const propertyDetails = typeof req.body.propertyDetails === 'string' ? JSON.parse(req.body.propertyDetails) : (req.body.propertyDetails || {});
+    const amenities = typeof req.body.amenities === 'string' ? JSON.parse(req.body.amenities) : (req.body.amenities || {});
+    const adminControls = typeof req.body.adminControls === 'string' ? JSON.parse(req.body.adminControls) : (req.body.adminControls || {});
 
     const rentVal = rentDetails?.coldRent ? parseFloat(rentDetails.coldRent) : null;
     const depositVal = rentDetails?.deposit ? parseFloat(rentDetails.deposit) : null;
@@ -188,7 +188,7 @@ router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
         rentDetails: rentDetails,
         propertyDetails: propertyDetails,
         amenities: amenities,
-        locationHighlights: req.body.locationHighlights ? JSON.parse(req.body.locationHighlights) : {},
+        locationHighlights: typeof req.body.locationHighlights === 'string' ? JSON.parse(req.body.locationHighlights) : (req.body.locationHighlights || {}),
         media: { images: imageUrls },
         adminControls: adminControls,
         contactPhone,
