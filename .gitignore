@@ -95,3 +95,10 @@ tmp_*.json
 .wip_*.patch
 .wip_unmerged_files.txt
 *.md
+
+
+
+# Google Services JSON files
+google-services.json
+GoogleService-Info.plist
+firebase-service-account.json
