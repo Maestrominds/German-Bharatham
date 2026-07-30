@@ -247,7 +247,8 @@ router.patch('/:id/status', adminCheck, async (req, res) => {
     console.log(`✅ [DB RESULT] Accommodation updated in ${Date.now() - updateStart}ms`);
 
     const wasActive = String(before.status || '').toLowerCase() === 'active';
-    if (!wasActive && isActive) {
+    const isNowActive = String(normalised || '').toLowerCase() === 'active';
+    if (!wasActive && isNowActive) {
       console.log(`🔔 [NOTIFICATION] Notifying activation for listing: ${doc.id}`);
       notifyListingActivated({
         module: 'accommodation',

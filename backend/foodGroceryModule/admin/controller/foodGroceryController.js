@@ -301,14 +301,27 @@ exports.updateStatus = async (req, res) => {
     
     console.log(`🔍 [DB QUERY] Updating FoodGrocery status to: ${status}`);
     const updateStart = Date.now();
-    const updated = await prisma.foodGrocery.update({
+    const before = await prisma.foodGrocery.findUnique({ where: { id: numericId } });
+    const saved = await prisma.foodGrocery.update({
       where: { id: numericId },
       data: { status }
     });
     console.log(`✅ [DB RESULT] Status update completed in ${Date.now() - updateStart}ms`);
+
+    const isNowActive = String(status || '').toLowerCase() === 'active';
+    const wasActive = String(before?.status || '').toLowerCase() === 'active';
+    if (!wasActive && isNowActive) {
+      console.log(`🔔 [NOTIFICATION] Notifying activation for Food listing: ${saved.id}`);
+      const { notifyListingActivated } = require('../../../userModule/user/services/notificationService');
+      notifyListingActivated({
+        module: 'foodgrocery',
+        entityId: String(saved.id),
+        listingTitle: saved.title,
+      }).catch((err) => console.error('Notification trigger error:', err));
+    }
     
     console.log(`📤 [RESPONSE] Sending 200 response after ${Date.now() - start}ms`);
-    res.json(mapFoodGrocery(updated));
+    res.json(mapFoodGrocery(saved));
   } catch (err) {
     console.error(`❌ [ERROR] updateStatus failed: ${err.message} after ${Date.now() - start}ms`);
     res.status(500).json({ message: err.message });

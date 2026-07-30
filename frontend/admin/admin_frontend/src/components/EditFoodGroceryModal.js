@@ -468,7 +468,7 @@ const EditFoodGroceryModal = ({ item, onClose, onSuccess }) => {
             </h3>
             
             <div className="form-group">
-              <label>Image URL <span className="required">*</span></label>
+              <label>Image URL</label>
               <input
                 type="url"
                 name="image"

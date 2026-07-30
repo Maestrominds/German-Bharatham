@@ -8,7 +8,7 @@ const REQ = <span style={{ color: 'red' }}>*</span>;
 
 const ImageUpload = ({ images, onChange }) => (
   <div className="form-group">
-    <label>Photos <span style={{ color: 'red' }}>*</span> <span style={{ color: '#6b7280', fontSize: 12 }}>(JPG, JPEG, PNG — at least 1 required)</span></label>
+    <label>Photos <span style={{ color: '#6b7280', fontSize: 12 }}>(Optional - JPG, JPEG, PNG)</span></label>
     <input type="file" accept="image/*" multiple onChange={e => {
       const valid = Array.from(e.target.files).filter(f => /^image\//.test(f.type));
       if (valid.length !== e.target.files.length) alert('Only image files are allowed.');
@@ -621,7 +621,6 @@ const validate = (category, data) => {
     if (!data.sizeSqm) return 'Size (sqm) is required';
     if (!data.bedrooms) return 'Bedrooms is required';
     if (!data.bathrooms) return 'Bathrooms is required';
-    if (!data.images || data.images.length === 0) return 'At least one photo (JPG/JPEG/PNG) is required';
   }
   if (category === 'Food') {
   }

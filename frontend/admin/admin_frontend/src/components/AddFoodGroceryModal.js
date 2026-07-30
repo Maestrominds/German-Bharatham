@@ -480,7 +480,7 @@ const AddFoodGroceryModal = ({ onClose, onSuccess }) => {
             </h3>
             
             <div className="form-group">
-              <label>Upload Image <span className="required">*</span></label>
+              <label>Upload Image</label>
               <input
                 type="file"
                 accept="image/*"
