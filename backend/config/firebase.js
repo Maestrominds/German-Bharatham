@@ -1,13 +1,13 @@
 const admin = require('firebase-admin');
-const path = require('path');
 
 try {
-  // We explicitly load the service account from the config directory
   const serviceAccount = require('./firebase-service-account.json');
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential ? admin.credential.cert(serviceAccount) : require('firebase-admin/app').cert(serviceAccount)
+    });
+  }
 
   console.log('✅ Firebase Admin SDK initialized successfully');
 } catch (error) {
