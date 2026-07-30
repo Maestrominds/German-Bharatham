@@ -41,3 +41,8 @@ uploads/*
 .cache/
 
 /generated/prisma
+
+# Google Services JSON files
+google-services.json
+GoogleService-Info.plist
+firebase-service-account.json
