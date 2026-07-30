@@ -604,13 +604,20 @@ exports.listAllSubscriptions = async (_req, res) => {
 
   const out = items.map((it) => {
     const user = it.user || null;
+    
+    // Check if the subscription is expired based on current time
+    let computedStatus = it.status || null;
+    if (computedStatus === 'active' && it.currentPeriodEnd && new Date(it.currentPeriodEnd) < new Date()) {
+      computedStatus = 'expired';
+    }
+
     return {
       id: String(it.id),
       userId: user ? String(user.id) : null,
       userEmail: user ? String(user.email) : null,
       provider: it.provider || null,
       planId: it.planId || null,
-      status: it.status || null,
+      status: computedStatus,
       periodStart: it.currentPeriodStart ? new Date(it.currentPeriodStart).toISOString() : null,
       periodEnd: it.currentPeriodEnd ? new Date(it.currentPeriodEnd).toISOString() : null,
       razorpayPaymentLinkId: it.razorpayPaymentLinkId || null,

@@ -112,18 +112,124 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) {
+    final amountDisplay = widget.amount != null
+        ? '₹${(widget.amount / 100).toStringAsFixed(0)}'
+        : '';
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 12),
-            const Text('Opening payment…'),
-            const SizedBox(height: 8),
-            Text('Amount: ${widget.amount} ${widget.currency}'),
-          ],
+      backgroundColor: const Color(0xFF0A0E1A),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Logo / Icon
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6C63FF).withOpacity(0.4),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.lock_outline_rounded,
+                    color: Colors.white,
+                    size: 38,
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // Title
+                const Text(
+                  'Secure Payment',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Subtitle
+                Text(
+                  'German Bharatham — ${widget.planId.toUpperCase()} Plan',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.55),
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // Amount
+                if (amountDisplay.isNotEmpty)
+                  Text(
+                    amountDisplay,
+                    style: const TextStyle(
+                      color: Color(0xFF3ECFCF),
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
+
+                const SizedBox(height: 36),
+
+                // Loading indicator
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      const Color(0xFF6C63FF).withOpacity(0.9),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                Text(
+                  'Opening Razorpay checkout…',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.45),
+                    fontSize: 13,
+                  ),
+                ),
+
+                const SizedBox(height: 48),
+
+                // Powered by badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.shield_outlined,
+                        size: 14, color: Colors.white.withOpacity(0.3)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Powered by Razorpay  •  256-bit SSL',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.3),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

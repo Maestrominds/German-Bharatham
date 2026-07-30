@@ -59,9 +59,10 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<bool> _isSubscriptionActive() async {
+  /// Returns true if user has an active paid OR trial subscription that hasn't expired.
+  Future<Map<String, dynamic>?> _fetchSubscriptionUser() async {
     final token = UserSession.instance.token;
-    if (token == null) return false;
+    if (token == null) return null;
     try {
       final res = await http
           .get(
@@ -72,16 +73,15 @@ class _HomePageState extends State<HomePage> {
             },
           )
           .timeout(const Duration(seconds: 12));
-
-      if (res.statusCode != 200) return false;
+      if (res.statusCode != 200) return null;
       final json = jsonDecode(res.body);
-      final user = (json is Map<String, dynamic>) ? json['user'] : null;
-      if (user is Map && user['subscriptionStatus'] != null) {
-        return user['subscriptionStatus'].toString() == 'active';
+      if (json is Map<String, dynamic>) {
+        final user = json['user'];
+        if (user is Map<String, dynamic>) return user;
       }
-      return false;
+      return null;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 
@@ -89,21 +89,45 @@ class _HomePageState extends State<HomePage> {
     final session = UserSession.instance;
     if (!session.isLoggedIn) return;
 
-    final firstLoginAt = await session.getFirstLoginAt();
-    if (firstLoginAt == null) return;
-
-    final now = DateTime.now();
-    final dueAt = firstLoginAt.add(const Duration(days: 7));
-    if (now.isBefore(dueAt)) return;
-
     final uid = session.userId;
     if (uid == null) return;
 
-    final active = await _isSubscriptionActive();
-    if (active) return;
+    // Fetch subscription status from backend (uses admin-configured durations)
+    final user = await _fetchSubscriptionUser();
+    if (user == null) return;
 
-    // Previously we recorded the prompt show time to throttle it once per day.
-    // Removed throttle so the subscription prompt appears every app open after trial ends.
+    final status = user['subscriptionStatus']?.toString();
+    final expiresRaw = user['subscriptionExpiresAt'];
+
+    // ✅ FIX 1: Treat both 'active' (paid) AND 'trial' (free trial) as subscribed
+    if (status == 'active' || status == 'trial') {
+      // Still subscribed — but check if trial is expiring soon
+      if (expiresRaw != null) {
+        final expiresAt = DateTime.tryParse(expiresRaw.toString());
+        if (expiresAt != null && expiresAt.isAfter(DateTime.now())) {
+          return; // Trial/subscription still valid, do nothing
+        }
+      } else {
+        return; // Active status with no expiry = paid subscription, do nothing
+      }
+    }
+
+    // ✅ FIX 2: Use subscriptionExpiresAt from backend (admin-configured, e.g. 70 days)
+    // instead of hardcoded 7 days from firstLoginAt
+    if (expiresRaw != null) {
+      final expiresAt = DateTime.tryParse(expiresRaw.toString());
+      if (expiresAt != null && expiresAt.isAfter(DateTime.now())) {
+        return; // Subscription not yet expired, do not show prompt
+      }
+    } else {
+      // No subscription at all yet — also check firstLoginAt as fallback
+      final firstLoginAt = await session.getFirstLoginAt();
+      if (firstLoginAt == null) return;
+      // Only show prompt if no trial was ever started (status is 'none')
+      // and user hasn't set up subscription yet
+      if (status != 'none' && status != null) return;
+    }
+
     if (!mounted) return;
 
     showDialog(
@@ -127,7 +151,6 @@ class _HomePageState extends State<HomePage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  // Exit the app when user taps Exit
                   try {
                     SystemNavigator.pop();
                   } catch (_) {
@@ -140,7 +163,6 @@ class _HomePageState extends State<HomePage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  // Replace direct SubscriptionsPage navigation with utility
                   openSubscriptionsPage(context, autoNavigateOnActivation: true);
                 },
                 style: ElevatedButton.styleFrom(
