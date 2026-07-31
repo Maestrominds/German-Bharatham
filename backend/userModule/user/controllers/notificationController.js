@@ -100,7 +100,7 @@ exports.createLikeNotification = async (req, res) => {
 
     // Send Push Notification if target user has FCM Token
     if (targetUser.fcmToken) {
-      const sendPushNotification = require('../../../../utils/sendPushNotification');
+      const sendPushNotification = require('../../../utils/sendPushNotification');
       await sendPushNotification(
         targetUser.fcmToken,
         'Profile liked',
