@@ -29,6 +29,11 @@ router.post(
 	notificationController.createLikeNotification
 );
 router.put(
+	"/notifications/read-all",
+	protect,
+	notificationController.markAllRead
+);
+router.put(
 	"/notifications/:id/read",
 	protect,
 	notificationController.markNotificationRead

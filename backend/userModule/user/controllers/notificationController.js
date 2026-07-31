@@ -138,3 +138,20 @@ exports.markNotificationRead = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// PUT /api/user/notifications/read-all
+exports.markAllRead = async (req, res) => {
+  try {
+    const recipientId = parseInt(req.user.id);
+    if (isNaN(recipientId)) return res.status(400).json({ message: 'Invalid recipient ID' });
+
+    await prisma.notification.updateMany({
+      where: { recipientId: recipientId, read: false },
+      data: { read: true }
+    });
+
+    return res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

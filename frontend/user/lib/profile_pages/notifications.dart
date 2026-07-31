@@ -89,6 +89,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   static const Duration _notifCacheTtl = Duration(minutes: 2);
 
   bool _loading = true;
+  bool _isNavigating = false;
   String? _error;
   List<AppNotification> _items = [];
 
@@ -173,6 +174,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           _loading = false;
         });
 
+        _markAllAsRead();
         NotificationManager.instance.refresh();
         return;
       }
@@ -193,23 +195,46 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
+  Future<void> _markAllAsRead() async {
+    final hasUnread = _items.any((n) => !n.read);
+    if (!hasUnread) return;
+
+    try {
+      final token = UserSession.instance.token;
+      if (token == null || token.trim().isEmpty) return;
+
+      if (mounted) {
+        setState(() {
+          _items = _items.map((x) => x.copyWith(read: true)).toList();
+        });
+      }
+      NotificationManager.instance.unreadCount.value = 0;
+
+      await http.put(
+        Uri.parse('${ApiConfig.baseUrl}/api/user/notifications/read-all'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+    } catch (_) {}
+  }
+
   Future<void> _markRead(AppNotification n) async {
     if (n.read) return;
     try {
       final token = UserSession.instance.token;
       if (token == null || token.trim().isEmpty) return;
 
+      if (mounted) {
+        setState(() {
+          _items = _items
+              .map((x) => x.id == n.id ? x.copyWith(read: true) : x)
+              .toList();
+        });
+      }
+
       await http.put(
         Uri.parse('${ApiConfig.baseUrl}/api/user/notifications/${n.id}/read'),
         headers: {'Authorization': 'Bearer $token'},
       );
-
-      if (!mounted) return;
-      setState(() {
-        _items = _items
-            .map((x) => x.id == n.id ? x.copyWith(read: true) : x)
-            .toList();
-      });
 
       NotificationManager.instance.refresh();
     } catch (_) {
@@ -218,14 +243,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Future<void> _handleTap(AppNotification n) async {
-    await _markRead(n);
+    _markRead(n); // fire and forget
     try {
+      if (mounted) setState(() => _isNavigating = true);
       await NotificationDeepLink.openFromData(context, n.data);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Unable to open: $e')),
       );
+    } finally {
+      if (mounted) setState(() => _isNavigating = false);
     }
   }
 
@@ -271,52 +299,63 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
       ),
 
-      body: RefreshIndicator(
-        color: primaryGreen,
-        onRefresh: _load,
-        child: _loading
-            ? const Center(
-                child: CircularProgressIndicator(color: primaryGreen),
-              )
-            : (_error != null)
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      Text(
-                        _error!,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                    ],
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            color: primaryGreen,
+            onRefresh: _load,
+            child: _loading
+                ? const Center(
+                    child: CircularProgressIndicator(color: primaryGreen),
                   )
-                : (_items.isEmpty)
+                : (_error != null)
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(16),
-                        children: const [
+                        children: [
                           Text(
-                            'No notifications yet',
-                            style: TextStyle(color: Colors.grey),
+                            _error!,
+                            style: const TextStyle(color: Colors.grey),
                           ),
                         ],
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _items.length,
-                        itemBuilder: (context, index) {
-                          final n = _items[index];
-                          return GestureDetector(
-                            onTap: () => _handleTap(n),
-                            child: _NotificationTile(
-                              title: n.title,
-                              message: n.message,
-                              time: _relativeTime(n.createdAt),
-                              unread: !n.read,
-                              avatar: _senderAvatar(n.senderPhoto),
-                            ),
-                          );
-                        },
-                      ),
+                    : (_items.isEmpty)
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(16),
+                            children: const [
+                              Text(
+                                'No notifications yet',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _items.length,
+                            itemBuilder: (context, index) {
+                              final n = _items[index];
+                              return GestureDetector(
+                                onTap: () => _handleTap(n),
+                                child: _NotificationTile(
+                                  title: n.title,
+                                  message: n.message,
+                                  time: _relativeTime(n.createdAt),
+                                  unread: !n.read,
+                                  avatar: _senderAvatar(n.senderPhoto),
+                                ),
+                              );
+                            },
+                          ),
+          ),
+          if (_isNavigating)
+            Container(
+              color: Colors.black.withOpacity(0.2),
+              child: const Center(
+                child: CircularProgressIndicator(color: primaryGreen),
+              ),
+            ),
+        ],
       ),
     );
   }
