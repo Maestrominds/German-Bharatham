@@ -10,7 +10,7 @@ const CONTENT_KEYS = [
 ];
 
 const DEFAULT_VALUES = {
-  aboutUs:         'German Bharatham is a platform connecting the German-Indian community with local services, accommodations, food, and job opportunities.',
+  aboutUs:         'German Bharatham is a platform connecting the German-Indian community with local services, accommodations, and job opportunities.',
   contactInfo:     'Email: contact@germanbharatham.com\nPhone: +49 123 456 7890\nAddress: Berlin, Germany',
   privacyPolicy:   'We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we look after your personal data.',
   termsConditions: 'By accessing this platform, you agree to be bound by these terms and conditions. Please read them carefully before using our services.',

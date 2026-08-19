@@ -194,7 +194,7 @@ class _ServicesPageState extends State<ServicesPage> {
           onPressed: () => Navigator.pop(context),
           icon: Image.asset('assets/images/left-arrow.png', height: 22, width: 22, color: Colors.black),
         ),
-        title: const Text("Services", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+        title: const Text("Expat Services", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: Padding(

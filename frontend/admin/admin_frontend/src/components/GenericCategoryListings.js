@@ -190,20 +190,7 @@ const EditModal = ({ item, category, apiBase, onClose, onSuccess }) => {
       const token = localStorage.getItem('adminToken');
       const payload = { ...data };
 
-      if (category === 'Food') {
-        // Prefer explicit edited fields (name, restaurantName) over legacy title
-        const resolvedTitle = (payload.name || payload.restaurantName || payload.title || '').toString().trim();
-        payload.title = resolvedTitle;
-        payload.name = resolvedTitle;
-        payload.restaurantName = resolvedTitle;
-        payload.phone = (payload.contactPhone || payload.phone || '').toString().trim();
-        payload.contactPhone = payload.phone;
-        payload.zipCode = (payload.postalCode || payload.zipCode || '').toString().trim();
-        payload.postalCode = payload.zipCode;
-        if (!payload.location) {
-          payload.location = [payload.city, payload.address].filter(Boolean).join(', ');
-        }
-      }
+
 
       if (category === 'Jobs') {
         const resolvedTitle = (payload.title || payload.jobTitle || '').toString().trim();
@@ -287,15 +274,7 @@ const EditModal = ({ item, category, apiBase, onClose, onSuccess }) => {
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
         <form onSubmit={handleSubmit} className="add-listing-form">
-          {category === 'Food' && (<>
-            {field('Name', 'name')} {field('Restaurant Name', 'restaurantName')}
-            {field('City', 'city')} {field('Postal Code', 'postalCode')}
-            {field('Area', 'area')} {field('Address', 'address')}
-            {field('Contact Phone', 'contactPhone')} {field('Cuisine', 'cuisine')}
-            {field('Price Range', 'priceRange')} {field('Opening Hours', 'openingHours')}
-            {field('Description', 'description', 'textarea')}
-            <ImageEditor images={data._images} onChange={fn => setData(p => ({ ...p, _images: typeof fn === 'function' ? fn(p._images) : fn }))} />
-          </>)}
+
           {category === 'Jobs' && (<>
             {field('Job Title', 'jobTitle')} {field('Company', 'company')}
             {field('City', 'city')} {field('Area', 'area')}

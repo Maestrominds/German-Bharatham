@@ -19,7 +19,6 @@ import 'search.dart';
 import 'profile_pages/edit_profile.dart';
 import 'user_session.dart';
 import 'saved_manager.dart';
-import 'saved_food_manager.dart';
 import 'saved_job_manager.dart';
 import 'saved_guides_manager.dart';
 import 'saved_service_manager.dart';
@@ -287,10 +286,8 @@ class _ProfilePageState extends State<ProfilePage>
                 await UserSession.instance.clear();
                 // IMPORTANT: do NOT delete saved items on logout.
                 // Saved items are per-user and should persist for the same user
-                // when they log back in on this device.
                 SavedManager.instance.switchUser('guest');
                 await Future.wait([
-                  SavedFoodManager.instance.switchUser('guest'),
                   SavedJobManager.instance.switchUser('guest'),
                   SavedServiceManager.instance.switchUser('guest'),
                   SavedGuidesManager.instance.switchUser('guest'),

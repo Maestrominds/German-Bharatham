@@ -155,7 +155,6 @@ const SimpleAddListingModal = ({ onClose, onSuccess }) => {
               <label>Category</label>
               <select name="category" value={form.category} onChange={handleCategoryChange}>
                 <option>Accommodation</option>
-                <option>Food</option>
                 <option>Jobs</option>
                 <option>Services</option>
               </select>

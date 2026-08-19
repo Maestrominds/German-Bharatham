@@ -6,10 +6,8 @@ import 'package:http/http.dart' as http;
 
 import 'accommodation.dart';
 import 'accommodation_details.dart';
-import 'food_grocery.dart';
 import 'home.dart';
 import 'jobs.dart';
-import 'models/food_grocery_model.dart';
 import 'models/job_model.dart';
 import 'models/service_model.dart';
 import 'profile.dart';
@@ -19,7 +17,6 @@ import 'services.dart';
 import 'services/api_config.dart';
 import 'services/api_service.dart';
 import 'services/cache_service.dart';
-import 'saved_food_manager.dart';
 import 'saved_job_manager.dart';
 import 'saved_service_manager.dart';
 import 'user_profiles_page.dart';
@@ -43,7 +40,6 @@ class _SearchPageState extends State<SearchPage> {
 
   List<Accommodation> _allAccommodations = [];
   List<Job> _allJobs = [];
-  List<FoodGrocery> _allFood = [];
   List<Service> _allServices = [];
   bool _fullDataLoaded = false;
   bool _fullDataLoading = false;
@@ -51,7 +47,6 @@ class _SearchPageState extends State<SearchPage> {
   final tabs = [
     "All",
     "My Accommodations",
-    "My Food & Grocery",
     "My Jobs",
     "My Services",
   ];
@@ -61,10 +56,8 @@ class _SearchPageState extends State<SearchPage> {
       case 1:
         return "Search my accommodations...";
       case 2:
-        return "Search my food & grocery...";
-      case 3:
         return "Search my jobs...";
-      case 4:
+      case 3:
         return "Search my services...";
       default:
         return "Search anything...";
@@ -87,7 +80,6 @@ class _SearchPageState extends State<SearchPage> {
   Future<void> _initSaved() async {
     await Future.wait([
       SavedJobManager.instance.initialize(),
-      SavedFoodManager.instance.initialize(),
       SavedServiceManager.instance.initialize(),
     ]);
   }
@@ -104,7 +96,6 @@ class _SearchPageState extends State<SearchPage> {
 
     final hasData = _allAccommodations.isNotEmpty ||
         _allJobs.isNotEmpty ||
-        _allFood.isNotEmpty ||
         _allServices.isNotEmpty;
 
     if (hasData) {
@@ -129,24 +120,21 @@ class _SearchPageState extends State<SearchPage> {
       final cached = await Future.wait<String?>([
         CacheService.get('search_accommodations'),
         CacheService.get('search_jobs'),
-        CacheService.get('search_food'),
         CacheService.get('search_services'),
       ]);
 
       final acc = _parseAccommodations(cached[0], maxItems: limitPerModule);
       final jobs = _parseJobs(cached[1], maxItems: limitPerModule);
-      final food = _parseFood(cached[2], maxItems: limitPerModule);
-      final services = await _parseServicesFromCache(cached[3], maxItems: limitPerModule);
+      final services = await _parseServicesFromCache(cached[2], maxItems: limitPerModule);
 
       hasAnyData =
-          acc.isNotEmpty || jobs.isNotEmpty || food.isNotEmpty || services.isNotEmpty;
+          acc.isNotEmpty || jobs.isNotEmpty || services.isNotEmpty;
 
       if (!mounted) return;
       if (hasAnyData) {
         setState(() {
           _allAccommodations = acc;
           _allJobs = jobs;
-          _allFood = food;
           _allServices = services;
           isLoading = false;
           errorMessage = null;
@@ -184,7 +172,6 @@ class _SearchPageState extends State<SearchPage> {
     final results = await Future.wait<dynamic>([
       safeFetch<Accommodation>(_fetchAccommodations()),
       safeFetch<Job>(_fetchJobs()),
-      safeFetch<FoodGrocery>(_fetchFood()),
       safeFetch<Service>(_fetchServices()),
     ]);
 
@@ -195,21 +182,18 @@ class _SearchPageState extends State<SearchPage> {
 
     final accResult = results[0] as List<Accommodation>?;
     final jobsResult = results[1] as List<Job>?;
-    final foodResult = results[2] as List<FoodGrocery>?;
-    final servicesResult = results[3] as List<Service>?;
+    final servicesResult = results[2] as List<Service>?;
 
     final anySuccess =
-        accResult != null || jobsResult != null || foodResult != null || servicesResult != null;
+        accResult != null || jobsResult != null || servicesResult != null;
 
     setState(() {
       if (accResult != null) _allAccommodations = accResult;
       if (jobsResult != null) _allJobs = jobsResult;
-      if (foodResult != null) _allFood = foodResult;
       if (servicesResult != null) _allServices = servicesResult;
 
       final hasVisibleData = _allAccommodations.isNotEmpty ||
           _allJobs.isNotEmpty ||
-          _allFood.isNotEmpty ||
           _allServices.isNotEmpty;
 
       errorMessage = (!anySuccess && !hasVisibleData) ? 'Failed to load data' : null;
@@ -272,23 +256,7 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  List<FoodGrocery> _parseFood(String? raw, {int? maxItems}) {
-    if (raw == null || raw.isEmpty) return const [];
-    try {
-      final list = _parseListBody(raw);
-      final items = list
-          .whereType<Map<String, dynamic>>()
-          .map(FoodGrocery.fromJson)
-          .where((f) => f.status.toLowerCase() == 'active')
-          .toList();
-      if (maxItems != null && maxItems > 0 && items.length > maxItems) {
-        return items.take(maxItems).toList();
-      }
-      return items;
-    } catch (_) {
-      return const [];
-    }
-  }
+
 
   List<Service> _parseServices(String? raw, {int? maxItems}) {
     if (raw == null || raw.isEmpty) return const [];
@@ -347,14 +315,7 @@ class _SearchPageState extends State<SearchPage> {
     return _parseJobs(response.body);
   }
 
-  Future<List<FoodGrocery>> _fetchFood() async {
-    final response = await http
-        .get(Uri.parse(ApiConfig.foodEndpoint))
-        .timeout(const Duration(seconds: 8));
-    if (response.statusCode != 200) return const [];
-    await CacheService.set('search_food', response.body);
-    return _parseFood(response.body);
-  }
+
 
   Future<List<Service>> _fetchServices() async {
     final items = await ApiService.getServicesListings();
@@ -384,15 +345,7 @@ class _SearchPageState extends State<SearchPage> {
     }).toList();
   }
 
-  List<FoodGrocery> get _foodFiltered {
-    final q = searchQuery.trim().toLowerCase();
-    if (q.isEmpty) return List.from(_allFood);
-    return _allFood.where((f) {
-      return f.title.toLowerCase().contains(q) ||
-          f.city.toLowerCase().contains(q) ||
-          f.subCategory.toLowerCase().contains(q);
-    }).toList();
-  }
+
 
   List<Service> get _servicesFiltered {
     final q = searchQuery.trim().toLowerCase();
@@ -586,19 +539,9 @@ class _SearchPageState extends State<SearchPage> {
             );
     }
 
-    if (selectedTab == 2) {
-      final list = _foodFiltered;
-      return list.isEmpty
-          ? const Center(child: Text('No food & grocery found'))
-          : ListView.builder(
-              itemCount: list.length,
-              itemBuilder: (context, i) {
-                return FoodCard(item: list[i], onRefresh: () => _loadAll());
-              },
-            );
-    }
 
-    if (selectedTab == 3) {
+
+    if (selectedTab == 2) {
       final list = _jobsFiltered;
       return list.isEmpty
           ? const Center(child: Text('No jobs found'))
@@ -623,12 +566,11 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _allResults() {
     final accommodations = _accommodationsFiltered;
-    final food = _foodFiltered;
     final jobs = _jobsFiltered;
     final services = _servicesFiltered;
 
     final nothingFound =
-        accommodations.isEmpty && food.isEmpty && jobs.isEmpty && services.isEmpty;
+        accommodations.isEmpty && jobs.isEmpty && services.isEmpty;
     if (nothingFound) {
       return const Center(child: Text('No results found'));
     }
@@ -670,15 +612,7 @@ class _SearchPageState extends State<SearchPage> {
               .map((item) => JobCard(item: item, onRefresh: () => _loadAll())),
           const SizedBox(height: 18),
         ],
-        if (food.isNotEmpty) ...[
-          _sectionHeader('My Food & Grocery', () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const FoodGroceryPage()));
-          }),
-          ...food.take(2)
-              .map((item) => FoodCard(item: item, onRefresh: () => _loadAll())),
-          const SizedBox(height: 18),
-        ],
+
         if (services.isNotEmpty) ...[
           _sectionHeader('My Services', () {
             Navigator.push(context,

@@ -6,7 +6,6 @@ import API_URL from '../config';
 
 const APIS = {
   Accommodation: { get: `${API_URL}/api/accommodation/admin?limit=100`, patch: (id) => `${API_URL}/api/accommodation/admin/${id}/status`, del: (id) => `${API_URL}/api/accommodation/admin/${id}`, titleKey: 'title' },
-  Food:          { get: `${API_URL}/api/admin/foodgrocery?limit=100`,   patch: (id) => `${API_URL}/api/admin/foodgrocery/${id}/status`,  del: (id) => `${API_URL}/api/admin/foodgrocery/${id}`,  titleKey: 'title' },
   Jobs:          { get: `${API_URL}/api/jobs/admin?limit=100`,          patch: (id) => `${API_URL}/api/jobs/admin/${id}/status`,         del: (id) => `${API_URL}/api/jobs/admin/${id}`,         titleKey: 'title' },
   Services:      { get: `${API_URL}/api/services/admin?limit=100`,      patch: (id) => `${API_URL}/api/services/admin/${id}/status`,     del: (id) => `${API_URL}/api/services/admin/${id}`,     titleKey: 'serviceName' },
 };
@@ -64,7 +63,6 @@ const Listings = () => {
 
       const all = [
         ...mapItems(data.Accommodation, 'Accommodation', 'title'),
-        ...mapItems(data.Food,          'Food',          'title'),
         ...mapItems(data.Jobs,          'Jobs',          'title'),
         ...mapItems(data.Services,      'Services',      'serviceName'),
       ];
@@ -145,7 +143,6 @@ const Listings = () => {
           <select className="filter-select" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
             <option value="all">All Categories</option>
             <option value="Accommodation">Accommodation</option>
-            <option value="Food">Food</option>
             <option value="Jobs">Jobs</option>
             <option value="Services">Services</option>
           </select>

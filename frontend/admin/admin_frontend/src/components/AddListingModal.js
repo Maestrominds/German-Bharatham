@@ -175,216 +175,6 @@ const AccommodationForm = ({ data, set }) => {
   );
 };
 
-const FoodForm = ({ data, set }) => {
-  const [cuisineInput, setCuisineInput] = React.useState('');
-  const [specialtyInput, setSpecialtyInput] = React.useState('');
-  
-  const handleAddCuisine = (e) => {
-    e.preventDefault();
-    if (cuisineInput.trim() && !data.cuisine.includes(cuisineInput.trim())) {
-      set(p => ({ ...p, cuisine: [...p.cuisine, cuisineInput.trim()] }));
-      setCuisineInput('');
-    }
-  };
-
-  const handleRemoveCuisine = (cuisine) => {
-    set(p => ({ ...p, cuisine: p.cuisine.filter(c => c !== cuisine) }));
-  };
-
-  const handleAddSpecialty = (e) => {
-    e.preventDefault();
-    if (specialtyInput.trim() && !data.specialties.includes(specialtyInput.trim())) {
-      set(p => ({ ...p, specialties: [...p.specialties, specialtyInput.trim()] }));
-      setSpecialtyInput('');
-    }
-  };
-
-  const handleRemoveSpecialty = (specialty) => {
-    set(p => ({ ...p, specialties: p.specialties.filter(s => s !== specialty) }));
-  };
-
-  return (
-    <>
-      {/* Basic Information */}
-      <div style={{ marginBottom: 20 }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Basic Information</h4>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Name {REQ}</label>
-            <input value={data.title} onChange={e => set(p => ({...p, title: e.target.value}))} placeholder="Restaurant or Grocery Store name" />
-          </div>
-          <div className="form-group">
-            <label>Category {REQ}</label>
-            <select value={data.subCategory} onChange={e => set(p => ({...p, subCategory: e.target.value}))}>
-              <option value="Restaurant">Restaurant</option>
-              <option value="Grocery Store">Grocery Store</option>
-              <option value="Bakery">Bakery</option>
-              <option value="Cafe">Cafe</option>
-              <option value="Food Truck">Food Truck</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Type {REQ}</label>
-            <input value={data.type} onChange={e => set(p => ({...p, type: e.target.value}))} placeholder="e.g., Indian, Italian, Organic, Veg/Non-Veg" />
-          </div>
-          <div className="form-group">
-            <label>Price Range</label>
-            <select value={data.priceRange} onChange={e => set(p => ({...p, priceRange: e.target.value}))}>
-              <option value="€">€ - Budget Friendly</option>
-              <option value="€€">€€ - Moderate</option>
-              <option value="€€€">€€€ - Expensive</option>
-              <option value="€€€€">€€€€ - Very Expensive</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Location Details */}
-      <div style={{ marginBottom: 20 }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>📍 Location Details</h4>
-        <div className="form-group">
-          <label>Address {REQ}</label>
-          <input value={data.address} onChange={e => set(p => ({...p, address: e.target.value}))} placeholder="Street address" />
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>City {REQ}</label>
-            <input value={data.city} onChange={e => set(p => ({...p, city: e.target.value}))} placeholder="Munich" />
-          </div>
-          <div className="form-group">
-            <label>State/Region {REQ}</label>
-            <input value={data.state} onChange={e => set(p => ({...p, state: e.target.value}))} placeholder="Bavaria" />
-          </div>
-          <div className="form-group">
-            <label>Zip Code {REQ}</label>
-            <input value={data.zipCode} onChange={e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); set(p => ({...p, zipCode: e.target.value}))}} placeholder="80331" />
-          </div>
-        </div>
-      </div>
-
-      {/* Contact Information */}
-      <div style={{ marginBottom: 20 }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>📞 Contact Information</h4>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Phone {REQ}</label>
-            <input value={data.phone} onChange={e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); set(p => ({...p, phone: e.target.value}))}} placeholder="491234567890" />
-          </div>
-        </div>
-        <div className="form-group">
-          <label>Website {REQ}</label>
-          <input value={data.website} onChange={e => set(p => ({...p, website: e.target.value}))} placeholder="https://www.restaurant.com" />
-        </div>
-      </div>
-
-      {/* Details */}
-      <div style={{ marginBottom: 20 }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Details</h4>
-        <div className="form-group">
-          <label>Description {REQ}</label>
-          <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={4} placeholder="Enter a detailed description..." />
-        </div>
-        <div className="form-group">
-          <label>🕐 Opening Hours {REQ}</label>
-          <input value={data.openingHours} onChange={e => set(p => ({...p, openingHours: e.target.value}))} placeholder="e.g., Mon-Fri: 9:00 AM - 10:00 PM, Sat-Sun: 10:00 AM - 11:00 PM" />
-        </div>
-      </div>
-
-      {/* Cuisine & Specialties */}
-      <div style={{ marginBottom: 20 }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Cuisine & Specialties</h4>
-        <div className="form-group">
-          <label>Cuisine Types</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <input 
-              value={cuisineInput} 
-              onChange={e => setCuisineInput(e.target.value)}
-              onKeyPress={e => e.key === 'Enter' && handleAddCuisine(e)}
-              placeholder="Add cuisine type (e.g., Indian, Italian)" 
-              style={{ flex: 1 }}
-            />
-            <button type="button" onClick={handleAddCuisine} style={{ padding: '8px 20px', background: '#6b9976', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>Add</button>
-          </div>
-          {data.cuisine.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-              {data.cuisine.map((c, i) => (
-                <span key={i} style={{ padding: '4px 10px', background: '#e5e7eb', borderRadius: 16, fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  {c}
-                  <button type="button" onClick={() => handleRemoveCuisine(c)} style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="form-group">
-          <label>Specialties</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <input 
-              value={specialtyInput} 
-              onChange={e => setSpecialtyInput(e.target.value)}
-              onKeyPress={e => e.key === 'Enter' && handleAddSpecialty(e)}
-              placeholder="Add specialty item" 
-              style={{ flex: 1 }}
-            />
-            <button type="button" onClick={handleAddSpecialty} style={{ padding: '8px 20px', background: '#6b9976', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>Add</button>
-          </div>
-          {data.specialties.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-              {data.specialties.map((s, i) => (
-                <span key={i} style={{ padding: '4px 10px', background: '#e5e7eb', borderRadius: 16, fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  {s}
-                  <button type="button" onClick={() => handleRemoveSpecialty(s)} style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Services Available */}
-      <div style={{ marginBottom: 20 }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Services Available</h4>
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
-            <input type="checkbox" checked={data.dineInAvailable} onChange={e => set(p => ({...p, dineInAvailable: e.target.checked}))} />
-            <span>Dine-in</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
-            <input type="checkbox" checked={data.deliveryAvailable} onChange={e => set(p => ({...p, deliveryAvailable: e.target.checked}))} />
-            <span>Home Delivery</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
-            <input type="checkbox" checked={data.takeoutAvailable} onChange={e => set(p => ({...p, takeoutAvailable: e.target.checked}))} />
-            <span>Takeout</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
-            <input type="checkbox" checked={data.cateringAvailable} onChange={e => set(p => ({...p, cateringAvailable: e.target.checked}))} />
-            <span>Catering</span>
-          </label>
-        </div>
-      </div>
-
-      {/* Image */}
-      <div style={{ marginBottom: 20 }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>📤 Image</h4>
-        <div className="form-group">
-          <label>Image URL {REQ}</label>
-          <input value={data.image || ''} onChange={e => set(p => ({...p, image: e.target.value}))} placeholder="https://example.com/image.jpg" />
-          <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Enter the URL of the restaurant/store image</p>
-          {data.image && (
-            <div style={{ marginTop: 8 }}>
-              <img src={data.image} alt="Preview" style={{ maxWidth: 200, maxHeight: 150, objectFit: 'cover', borderRadius: 8 }} />
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
-};
-
 const JobsForm = ({ data, set }) => {
   return (
     <>
@@ -599,12 +389,11 @@ const ServicesForm = ({ data, set }) => {
 
 const DEFAULTS = {
   Accommodation: { title:'', propertyType:'apartment', city:'', area:'', postalCode:'', address:'', contactPhone:'', description:'', coldRent:'', warmRent:'', deposit:'', sizeSqm:'', bedrooms:'', bathrooms:'', amenities:[], images:[], status:'pending' },
-  Food: { title:'', subCategory:'Restaurant', type:'', city:'', state:'', zipCode:'', address:'', phone:'', email:'', website:'', description:'', priceRange:'$$', openingHours:'', cuisine:[], specialties:[], deliveryAvailable:false, takeoutAvailable:false, dineInAvailable:false, cateringAvailable:false, image:'', status:'pending', featured:false, verified:true },
   Jobs: { title:'', location:'', contact:'', description:'', salary:'', status:'Pending', companyName:'', companyLogo:'', type:'Full Time', requirements:'', benefits:'', applyUrl:'' },
   Services: { serviceName:'', providerName:'', serviceType:'', city:'', area:'', postalCode:'', address:'', contactPhone:'', whatsapp:'', email:'', website:'', latitude:'', longitude:'', description:'', priceRange:'', amenitiesText:'', images:[], status:'pending' },
 };
 
-const CATEGORY_LABELS = ['Accommodation', 'Food', 'Jobs', 'Services'];
+const CATEGORY_LABELS = ['Accommodation', 'Jobs', 'Services'];
 const normalizeStatus = (value, fallback = 'Pending') => {
   const raw = String(value || '').trim().toLowerCase();
   if (raw === 'active') return 'Active';
@@ -622,8 +411,7 @@ const validate = (category, data) => {
     if (!data.bedrooms) return 'Bedrooms is required';
     if (!data.bathrooms) return 'Bathrooms is required';
   }
-  if (category === 'Food') {
-  }
+
   if (category === 'Jobs') {
   }
   if (category === 'Services') {
@@ -659,34 +447,7 @@ const buildPayload = (category, data) => {
       adminControls: { isActive: data.status === 'active' },
     };
   }
-  if (category === 'Food') {
-    return {
-      name: data.title?.trim(),
-      title: data.title?.trim(),
-      subCategory: data.subCategory?.trim(),
-      type: data.type?.trim() || null,
-      location: `${data.city?.trim()}, ${data.address?.trim()}`,
-      address: data.address?.trim(),
-      city: data.city?.trim(),
-      state: data.state?.trim() || null,
-      zipCode: data.zipCode?.trim(),
-      phone: data.phone?.trim(),
-      description: data.description?.trim() || null,
-      priceRange: data.priceRange,
-      openingHours: data.openingHours?.trim() || null,
-      cuisine: data.cuisine || [],
-      specialties: data.specialties || [],
-      deliveryAvailable: data.deliveryAvailable,
-      takeoutAvailable: data.takeoutAvailable,
-      dineInAvailable: data.dineInAvailable,
-      cateringAvailable: data.cateringAvailable,
-      image: data.image?.trim() || '',
-      status: data.status === 'active' ? 'Active' : data.status === 'pending' ? 'Pending' : 'Inactive',
-      featured: data.featured,
-      verified: data.verified,
-      category: 'Food'
-    };
-  }
+
   if (category === 'Jobs') {
     const location = data.location?.trim() || '';
     const company = data.companyName?.trim() || '';
@@ -756,7 +517,6 @@ const buildPayload = (category, data) => {
 
 const API_MAP = {
   Accommodation: `${API_URL}/api/accommodation/admin`,
-  Food: `${API_URL}/api/admin/foodgrocery`,
   Jobs: `${API_URL}/api/jobs/admin`,
   Services: `${API_URL}/api/services/admin`,
 };
@@ -926,7 +686,7 @@ const AddListingModal = ({ onClose, onSuccess, defaultCategory, lockCategory, ed
             {CATEGORY_LABELS.map(c => (
               <button key={c} type="button" onClick={() => handleCategoryChange(c)}
                 style={{ padding: '6px 16px', borderRadius: 20, border: '2px solid #6b9976', background: category === c ? '#6b9976' : '#fff', color: category === c ? '#fff' : '#374151', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
-                {c === 'Accommodation' ? '🏠' : c === 'Food' ? '🍴' : c === 'Jobs' ? '💼' : '🔧'} {c}
+                {c === 'Accommodation' ? '🏠' : c === 'Jobs' ? '💼' : '🔧'} {c}
               </button>
             ))}
           </div>
@@ -934,7 +694,6 @@ const AddListingModal = ({ onClose, onSuccess, defaultCategory, lockCategory, ed
 
         <form onSubmit={handleSubmit} className="add-listing-form" key={category}>
           {category === 'Accommodation' && <AccommodationForm key="accommodation" data={formData} set={setFormData} />}
-          {category === 'Food' && <FoodForm key="food" data={formData} set={setFormData} />}
           {category === 'Jobs' && <JobsForm key="jobs" data={formData} set={setFormData} />}
           {category === 'Services' && <ServicesForm key="services" data={formData} set={setFormData} />}
 

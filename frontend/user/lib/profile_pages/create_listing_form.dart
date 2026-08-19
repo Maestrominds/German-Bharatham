@@ -57,9 +57,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     'Smoking Allowed', 'Anmeldung Possible', 'Student Friendly', 'Wheelchair Accessible'
   ];
 
-  // Lists for Food cuisine / specialties
-  final List<String> _foodCuisines = [];
-  final List<String> _foodSpecialties = [];
+
   final TextEditingController _cuisineInputCtrl = TextEditingController();
   final TextEditingController _specialtyInputCtrl = TextEditingController();
 
@@ -112,37 +110,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
           _accommodationAmenities.add(capitalized);
         }
       });
-    } 
-    else if (widget.category == 'Food') {
-      _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
-      _controllers['type'] = TextEditingController(text: data?['type']?.toString() ?? '');
-      _controllers['address'] = TextEditingController(text: data?['address']?.toString() ?? '');
-      _controllers['city'] = TextEditingController(text: data?['city']?.toString() ?? '');
-      _controllers['state'] = TextEditingController(text: data?['state']?.toString() ?? '');
-      _controllers['zipCode'] = TextEditingController(text: data?['zipCode']?.toString() ?? '');
-      _controllers['phone'] = TextEditingController(text: data?['phone']?.toString() ?? '');
-      _controllers['website'] = TextEditingController(text: data?['website']?.toString() ?? '');
-      _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
-      _controllers['openingHours'] = TextEditingController(text: data?['openingHours']?.toString() ?? '');
-      _controllers['image'] = TextEditingController(text: data?['image']?.toString() ?? '');
-
-      _subCategory = data?['subCategory'] ?? 'Restaurant';
-      // Normalize legacy $ symbols to € for backward compat
-      final rawPr = data?['priceRange'] ?? '€€';
-      _priceRange = rawPr.replaceAll(r'$', '€');
-
-      _dineInAvailable = data?['dineInAvailable'] ?? false;
-      _deliveryAvailable = data?['deliveryAvailable'] ?? false;
-      _takeoutAvailable = data?['takeoutAvailable'] ?? false;
-      _cateringAvailable = data?['cateringAvailable'] ?? false;
-
-      final List<dynamic> initCuisines = data?['cuisine'] ?? [];
-      _foodCuisines.addAll(List<String>.from(initCuisines));
-
-      final List<dynamic> initSpecs = data?['specialties'] ?? [];
-      _foodSpecialties.addAll(List<String>.from(initSpecs));
-    } 
-    else if (widget.category == 'Jobs') {
+    } else if (widget.category == 'Jobs') {
       _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
       _controllers['location'] = TextEditingController(text: data?['location']?.toString() ?? '');
       _controllers['contact'] = TextEditingController(text: (data?['contact'] ?? data?['phone'])?.toString() ?? '');
@@ -263,34 +231,6 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         }),
         // Images are sent as multipart files - no base64 here
         'media': {'images': _existingImageUrls},
-      };
-    } 
-    else if (widget.category == 'Food') {
-      return {
-        'title': _controllers['title']?.text.trim(),
-        'subCategory': _subCategory,
-        'type': _controllers['type']?.text.trim(),
-        'location': '${_controllers['city']?.text.trim()}, ${_controllers['address']?.text.trim()}',
-        'address': _controllers['address']?.text.trim(),
-        'city': _controllers['city']?.text.trim(),
-        'state': _controllers['state']?.text.trim().isEmpty == true ? null : _controllers['state']?.text.trim(),
-        'zipCode': _controllers['zipCode']?.text.trim(),
-        'phone': _controllers['phone']?.text.trim(),
-        'email': _controllers['email']?.text.trim().isEmpty == true ? null : _controllers['email']?.text.trim(),
-        'website': _controllers['website']?.text.trim().isEmpty == true ? null : _controllers['website']?.text.trim(),
-        'description': _controllers['description']?.text.trim().isEmpty == true ? null : _controllers['description']?.text.trim(),
-        'priceRange': _priceRange,
-        'openingHours': _controllers['openingHours']?.text.trim().isEmpty == true ? null : _controllers['openingHours']?.text.trim(),
-        'cuisine': _foodCuisines,
-        'specialties': _foodSpecialties,
-        'deliveryAvailable': _deliveryAvailable,
-        'takeoutAvailable': _takeoutAvailable,
-        'dineInAvailable': _dineInAvailable,
-        'cateringAvailable': _cateringAvailable,
-        'image': _controllers['image']?.text.trim().isNotEmpty == true 
-            ? _controllers['image']?.text.trim() 
-            : (_existingImageUrls.isNotEmpty ? _existingImageUrls[0] : ''),
-        'category': 'Food',
       };
     } 
     else if (widget.category == 'Jobs') {
@@ -761,142 +701,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     ];
   }
 
-  List<Widget> _buildFoodForm() {
-    return [
-      _buildField(key: 'title', label: 'Name', hint: 'Restaurant or Grocery name', maxLength: 100, minLength: 20),
-      _buildDropdown(
-        label: 'Category',
-        value: _subCategory,
-        items: ['Restaurant', 'Grocery Store', 'Bakery', 'Cafe', 'Supermarket', 'Food Truck', 'Deli'],
-        onChanged: (val) => setState(() => _subCategory = val ?? 'Restaurant'),
-      ),
-      _buildDropdown(
-        label: 'Price Range',
-        value: _priceRange,
-        items: ['€ - Budget Friendly', '€€ - Moderate', '€€€ - Expensive', '€€€€ - Very Expensive'],
-        itemValues: ['€', '€€', '€€€', '€€€€'],
-        onChanged: (val) => setState(() => _priceRange = val ?? '€€'),
-      ),
-      _buildField(key: 'type', label: 'Type', hint: 'e.g., Indian, Italian, Organic', maxLength: 100, minLength: 20),
-      _buildField(key: 'address', label: 'Address', hint: 'Street address', maxLength: 200, minLength: 20),
-      _buildField(key: 'city', label: 'City', hint: 'Munich', maxLength: 50, minLength: 20),
-      _buildField(key: 'state', label: 'State/Region', hint: 'Bavaria', maxLength: 50, minLength: 20),
-      _buildField(key: 'zipCode', label: 'Zip Code', hint: '80331', maxLength: 20, minLength: 4, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-      _buildField(
-        key: 'phone',
-        label: 'Phone',
-        hint: '491234567890',
-        maxLength: 20,
-        minLength: 10,
-        keyboardType: TextInputType.phone,
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+]'))],
-      ),
-      _buildField(key: 'website', label: 'Website', hint: 'https://www.store.com', maxLength: 200, minLength: 10, keyboardType: TextInputType.url),
-      _buildField(key: 'openingHours', label: 'Opening Hours', hint: 'Mon-Fri: 9am - 10pm', maxLength: 200, minLength: 10),
-      _buildField(key: 'description', label: 'Description', hint: 'Detailed description…', maxLines: 4, maxLength: 5000, minLength: 20),
 
-      const Padding(
-        padding: EdgeInsets.symmetric(vertical: 10),
-        child: Text("Cuisine & Specialties", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryGreen)),
-      ),
-      Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _cuisineInputCtrl,
-              decoration: const InputDecoration(hintText: 'Add cuisine type...'),
-              maxLength: 50,
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final text = _cuisineInputCtrl.text.trim();
-              if (text.isNotEmpty && !_foodCuisines.contains(text)) {
-                setState(() {
-                  _foodCuisines.add(text);
-                  _cuisineInputCtrl.clear();
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
-            child: const Text("Add", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-      Wrap(
-        spacing: 6,
-        children: _foodCuisines.map((c) => Chip(
-          label: Text(c),
-          onDeleted: () => setState(() => _foodCuisines.remove(c)),
-        )).toList(),
-      ),
-      const SizedBox(height: 10),
-      Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _specialtyInputCtrl,
-              decoration: const InputDecoration(hintText: 'Add specialty...'),
-              maxLength: 50,
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final text = _specialtyInputCtrl.text.trim();
-              if (text.isNotEmpty && !_foodSpecialties.contains(text)) {
-                setState(() {
-                  _foodSpecialties.add(text);
-                  _specialtyInputCtrl.clear();
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
-            child: const Text("Add", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-      Wrap(
-        spacing: 6,
-        children: _foodSpecialties.map((s) => Chip(
-          label: Text(s),
-          onDeleted: () => setState(() => _foodSpecialties.remove(s)),
-        )).toList(),
-      ),
-
-      const Padding(
-        padding: EdgeInsets.symmetric(vertical: 10),
-        child: Text("Services Available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryGreen)),
-      ),
-      CheckboxListTile(
-        title: const Text("Dine-in"),
-        value: _dineInAvailable,
-        onChanged: (val) => setState(() => _dineInAvailable = val ?? false),
-        controlAffinity: ListTileControlAffinity.leading,
-      ),
-      CheckboxListTile(
-        title: const Text("Home Delivery"),
-        value: _deliveryAvailable,
-        onChanged: (val) => setState(() => _deliveryAvailable = val ?? false),
-        controlAffinity: ListTileControlAffinity.leading,
-      ),
-      CheckboxListTile(
-        title: const Text("Takeout"),
-        value: _takeoutAvailable,
-        onChanged: (val) => setState(() => _takeoutAvailable = val ?? false),
-        controlAffinity: ListTileControlAffinity.leading,
-      ),
-      CheckboxListTile(
-        title: const Text("Catering"),
-        value: _cateringAvailable,
-        onChanged: (val) => setState(() => _cateringAvailable = val ?? false),
-        controlAffinity: ListTileControlAffinity.leading,
-      ),
-
-      const SizedBox(height: 20),
-      _buildImageSelector(),
-      _buildField(key: 'image', label: 'Or Image URL', hint: 'https://example.com/image.jpg', required: false, maxLength: 500),
-    ];
-  }
 
   List<Widget> _buildJobsForm() {
     return [
@@ -1010,8 +815,6 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     List<Widget> formFields = [];
     if (widget.category == 'Accommodation') {
       formFields = _buildAccommodationForm();
-    } else if (widget.category == 'Food') {
-      formFields = _buildFoodForm();
     } else if (widget.category == 'Jobs') {
       formFields = _buildJobsForm();
     } else {

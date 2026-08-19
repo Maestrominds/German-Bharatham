@@ -6,14 +6,11 @@ import 'search.dart';
 import 'user_profiles_page.dart';
 import 'accommodation.dart';
 import 'accommodation_details.dart';
-import 'food_details.dart';
 import 'guide_details.dart';
 import 'job_details.dart';
 import 'models/community_model.dart';
-import 'models/food_grocery_model.dart';
 import 'models/job_model.dart';
 import 'models/service_model.dart';
-import 'saved_food_manager.dart';
 import 'saved_job_manager.dart';
 import 'saved_manager.dart';
 import 'saved_guides_manager.dart';
@@ -38,7 +35,6 @@ class _SavedPageState extends State<SavedPage> {
     if (uid != null && uid.trim().isNotEmpty) {
       SavedManager.instance.switchUser(uid);
       await Future.wait([
-        SavedFoodManager.instance.switchUser(uid),
         SavedJobManager.instance.switchUser(uid),
         SavedServiceManager.instance.switchUser(uid),
         SavedGuidesManager.instance.switchUser(uid),
@@ -48,7 +44,6 @@ class _SavedPageState extends State<SavedPage> {
     await SavedManager.instance.initialize();
 
     await Future.wait([
-      SavedFoodManager.instance.initialize(),
       SavedJobManager.instance.initialize(),
       SavedServiceManager.instance.initialize(),
     ]);
@@ -57,7 +52,6 @@ class _SavedPageState extends State<SavedPage> {
 
     return _SavedLists(
       accommodations: List.from(SavedManager.instance.savedAccommodations),
-      foods: List.from(SavedFoodManager.instance.savedFoodItems),
       jobs: List.from(SavedJobManager.instance.getSavedItems()),
       services: List.from(SavedServiceManager.instance.getSavedItems()),
       guides: List.from(guides),
@@ -86,9 +80,8 @@ class _SavedPageState extends State<SavedPage> {
                 children: [
                   _buildCategory("All", 0),
                   _buildCategory("Accommodation", 1),
-                  _buildCategory("Food", 2),
-                  _buildCategory("Jobs", 3),
-                  _buildCategory("Services", 4),
+                  _buildCategory("Jobs", 2),
+                  _buildCategory("Expat Services", 3),
                 ],
               ),
             ),
@@ -108,18 +101,15 @@ class _SavedPageState extends State<SavedPage> {
                   ? (data?.accommodations ?? const <Accommodation>[])
                   : const <Accommodation>[];
 
-              final displayedFoods =
-                (_selectedCategory == 0 || _selectedCategory == 2)
-                  ? (data?.foods ?? const <FoodGrocery>[])
-                  : const <FoodGrocery>[];
+
 
               final displayedJobs =
-                (_selectedCategory == 0 || _selectedCategory == 3)
+                (_selectedCategory == 0 || _selectedCategory == 2)
                   ? (data?.jobs ?? const <Job>[])
                   : const <Job>[];
 
               final displayedServices =
-                (_selectedCategory == 0 || _selectedCategory == 4)
+                (_selectedCategory == 0 || _selectedCategory == 3)
                   ? (data?.services ?? const <Service>[])
                   : const <Service>[];
 
@@ -129,7 +119,6 @@ class _SavedPageState extends State<SavedPage> {
                 : const <CommunityPost>[];
 
               final isEmpty = displayedAccommodations.isEmpty &&
-                displayedFoods.isEmpty &&
                 displayedJobs.isEmpty &&
                 displayedServices.isEmpty &&
                 displayedGuides.isEmpty;
@@ -168,7 +157,6 @@ class _SavedPageState extends State<SavedPage> {
                 }
 
                 final totalCount = displayedAccommodations.length +
-                  displayedFoods.length +
                   displayedJobs.length +
                   displayedServices.length +
                   displayedGuides.length;
@@ -202,27 +190,6 @@ class _SavedPageState extends State<SavedPage> {
 
                     idx -= displayedAccommodations.length;
 
-                    if (idx < displayedFoods.length) {
-                      final item = displayedFoods[idx];
-                      return _SavedFoodCard(
-                        item: item,
-                        onRemove: () async {
-                          await SavedFoodManager.instance.toggle(item);
-                          if (!context.mounted) return;
-                          setState(() {});
-                        },
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => FoodDetailPage(item: item),
-                            ),
-                          );
-                        },
-                      );
-                    }
-
-                    idx -= displayedFoods.length;
 
                     if (idx < displayedJobs.length) {
                       final item = displayedJobs[idx];
@@ -574,14 +541,12 @@ class _SavedAccommodationCard extends StatelessWidget {
 
 class _SavedLists {
   final List<Accommodation> accommodations;
-  final List<FoodGrocery> foods;
   final List<Job> jobs;
   final List<Service> services;
   final List<CommunityPost> guides;
 
   const _SavedLists({
     required this.accommodations,
-    required this.foods,
     required this.jobs,
     required this.services,
     required this.guides,
@@ -674,116 +639,6 @@ class _SavedThumbnail extends StatelessWidget {
   }
 }
 
-class _SavedFoodCard extends StatelessWidget {
-  final FoodGrocery item;
-  final VoidCallback onTap;
-  final VoidCallback onRemove;
-
-  const _SavedFoodCard({
-    required this.item,
-    required this.onTap,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final rating = item.averageRating > 0
-        ? item.averageRating.toStringAsFixed(1)
-        : (item.rating > 0 ? item.rating.toStringAsFixed(1) : '4.5');
-    final location = item.city.trim().isNotEmpty
-        ? item.city
-        : (item.location.trim().isNotEmpty ? item.location : item.address);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SavedThumbnail(
-              image: item.image,
-              fallbackAsset: 'assets/images/restaurant.jpg',
-              width: 80,
-              height: 80,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: onRemove,
-                        child: Image.asset(
-                          'assets/images/bookmark.png',
-                          width: 18,
-                          height: 18,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Image.asset(
-                        'assets/images/location.png',
-                        width: 13,
-                        height: 13,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          location,
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Image.asset(
-                        'assets/images/star.png',
-                        width: 13,
-                        height: 13,
-                        color: Colors.orange,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(rating, style: const TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _SavedJobCard extends StatelessWidget {
   final Job item;

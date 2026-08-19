@@ -295,7 +295,7 @@ const HOST = process.env.HOST || "0.0.0.0";
       
       setInterval(() => {
         deleteOldNotifications(7);
-      }, 24 * 60 * 60 * 1000); // Once every 24 hours
+      }, 7 * 24 * 60 * 60 * 1000); // Once every 7 days
     } catch (err) {
       console.error("Failed to initialize notification cleanup scheduler:", err);
     }

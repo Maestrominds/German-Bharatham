@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../accommodation.dart';
 import '../accommodation_details.dart';
-import '../food_details.dart';
 import '../job_details.dart';
-import '../models/food_grocery_model.dart';
 import '../models/job_model.dart';
 import '../models/service_model.dart';
 import '../models/community_model.dart';
-import '../saved_food_manager.dart';
 import '../saved_guides_manager.dart';
 import '../saved_job_manager.dart';
 import '../saved_manager.dart';
@@ -35,15 +32,12 @@ class _SavedListingsPageState extends State<SavedListingsPage> {
 
   Future<_ProfileSavedLists> _loadAllSaved() async {
     await SavedManager.instance.initialize();
-    await SavedFoodManager.instance.initialize();
     await SavedJobManager.instance.initialize();
     await SavedServiceManager.instance.initialize();
 
     final guides = await SavedGuidesManager.instance.getSavedItems();
-
     return _ProfileSavedLists(
       accommodations: List.of(SavedManager.instance.savedAccommodations),
-      foods: List.of(SavedFoodManager.instance.savedFoodItems),
       jobs: List.of(SavedJobManager.instance.savedJobs),
       services: List.of(SavedServiceManager.instance.savedServices),
       guides: List.of(guides),
@@ -74,7 +68,6 @@ class _SavedListingsPageState extends State<SavedListingsPage> {
           }
 
           final isEmpty = data.accommodations.isEmpty &&
-              data.foods.isEmpty &&
               data.jobs.isEmpty &&
               data.services.isEmpty &&
               data.guides.isEmpty;
@@ -105,31 +98,7 @@ class _SavedListingsPageState extends State<SavedListingsPage> {
                   },
                 ),
               ),
-              ...data.foods.map(
-                (food) => _SavedListingCard(
-                  title: food.title,
-                  subtitle: food.city.trim().isNotEmpty
-                      ? food.city
-                      : (food.location.trim().isNotEmpty ? food.location : food.address),
-                  image: food.image,
-                  fallbackAsset: 'assets/images/restaurant.jpg',
-                  trailingLine: _ratingLine(
-                    food.averageRating > 0
-                        ? food.averageRating.toStringAsFixed(1)
-                        : (food.rating > 0 ? food.rating.toStringAsFixed(1) : '4.5'),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => FoodDetailPage(item: food)),
-                    );
-                  },
-                  onRemove: () async {
-                    await SavedFoodManager.instance.toggle(food);
-                    _refresh();
-                  },
-                ),
-              ),
+
               ...data.jobs.map(
                 (job) => _SavedListingCard(
                   title: job.title,
@@ -208,14 +177,12 @@ class _SavedListingsPageState extends State<SavedListingsPage> {
 
 class _ProfileSavedLists {
   final List<Accommodation> accommodations;
-  final List<FoodGrocery> foods;
   final List<Job> jobs;
   final List<Service> services;
   final List<CommunityPost> guides;
 
-  const _ProfileSavedLists({
+  _ProfileSavedLists({
     required this.accommodations,
-    required this.foods,
     required this.jobs,
     required this.services,
     required this.guides,

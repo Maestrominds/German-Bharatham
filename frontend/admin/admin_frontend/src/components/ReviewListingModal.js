@@ -58,19 +58,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       },
       amenities: raw.amenities && typeof raw.amenities === 'object' ? raw.amenities : {},
 
-      // Food
-      subCategory: raw.subCategory || 'Restaurant',
-      priceRange: raw.priceRange || '€€',
-      type: raw.type || '',
-      zipCode: raw.zipCode || '',
-      website: raw.website || '',
-      openingHours: raw.openingHours || '',
-      cuisine: Array.isArray(raw.cuisine) ? raw.cuisine.join(', ') : (raw.cuisine || ''),
-      specialties: Array.isArray(raw.specialties) ? raw.specialties.join(', ') : (raw.specialties || ''),
-      dineInAvailable: !!raw.dineInAvailable,
-      deliveryAvailable: !!raw.deliveryAvailable,
-      takeoutAvailable: !!raw.takeoutAvailable,
-      cateringAvailable: !!raw.cateringAvailable,
+
 
       // Jobs
       companyName: raw.companyName || raw.company || '',
@@ -201,27 +189,6 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         media: {
           images: resolvedImages
         },
-      };
-    }
-
-    if (listing.category === 'Food') {
-      return {
-        ...common,
-        name: formData.title?.trim() || '',
-        address: formData.address?.trim() || null,
-        zipCode: formData.zipCode?.trim() || null,
-        phone: formData.contactPhone?.trim() || null,
-        subCategory: formData.subCategory || null,
-        type: formData.type?.trim() || null,
-        priceRange: formData.priceRange || null,
-        openingHours: formData.openingHours?.trim() || null,
-        website: formData.website?.trim() || null,
-        cuisine: typeof formData.cuisine === 'string' ? formData.cuisine.split(',').map(s => s.trim()).filter(Boolean) : [],
-        specialties: typeof formData.specialties === 'string' ? formData.specialties.split(',').map(s => s.trim()).filter(Boolean) : [],
-        dineInAvailable: !!formData.dineInAvailable,
-        deliveryAvailable: !!formData.deliveryAvailable,
-        takeoutAvailable: !!formData.takeoutAvailable,
-        cateringAvailable: !!formData.cateringAvailable,
       };
     }
 
@@ -357,90 +324,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         </div>
       );
     }
-    if (listing.category === 'Food') {
-      return (
-        <div style={{ marginTop: '20px', borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>
-          <h4 style={{ margin: '0 0 12px 0', color: '#111827', fontSize: '15px', fontWeight: '600' }}>Food Listing Details</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Sub-Category</label>
-              <select name="subCategory" value={formData.subCategory} onChange={handleFieldChange} style={inputStyle}>
-                <option value="Restaurant">Restaurant</option>
-                <option value="Grocery Store">Grocery Store</option>
-                <option value="Bakery">Bakery</option>
-                <option value="Cafe">Cafe</option>
-                <option value="Food Truck">Food Truck</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Price Range</label>
-              <select name="priceRange" value={formData.priceRange} onChange={handleFieldChange} style={inputStyle}>
-                <option value="€">€ - Budget Friendly</option>
-                <option value="€€">€€ - Moderate</option>
-                <option value="€€€">€€€ - Expensive</option>
-                <option value="€€€€">€€€€ - Very Expensive</option>
-              </select>
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Address</label>
-              <input type="text" name="address" value={formData.address || ''} onChange={handleFieldChange} style={inputStyle} />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Postal Code</label>
-              <input type="text" name="zipCode" value={formData.zipCode || ''} onChange={handleFieldChange} style={inputStyle} />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>State/Region</label>
-              <input type="text" name="state" value={formData.state || ''} onChange={handleFieldChange} style={inputStyle} placeholder="Bavaria" />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Website</label>
-              <input type="url" name="website" value={formData.website || ''} onChange={handleFieldChange} placeholder="https://..." style={inputStyle} />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Type (e.g. Veg/Non-Veg)</label>
-              <input type="text" name="type" value={formData.type || ''} onChange={handleFieldChange} style={inputStyle} placeholder="Vegetarian" />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Opening Hours</label>
-              <input type="text" name="openingHours" value={formData.openingHours || ''} onChange={handleFieldChange} placeholder="e.g. 10:00 AM - 10:00 PM" style={inputStyle} />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px' }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Cuisines (comma separated)</label>
-              <input type="text" name="cuisine" value={formData.cuisine} onChange={handleFieldChange} placeholder="South Indian, Punjabi, etc." style={inputStyle} />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Specialties (comma separated)</label>
-              <input type="text" name="specialties" value={formData.specialties} onChange={handleFieldChange} placeholder="Biryani, Masala Dosa, etc." style={inputStyle} />
-            </div>
-          </div>
-          <h5 style={{ margin: '15px 0 8px 0', color: '#374151', fontSize: '13px', fontWeight: '600' }}>Options</h5>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
-              <input type="checkbox" name="dineInAvailable" checked={formData.dineInAvailable} onChange={handleFieldChange} style={{ width: '16px', height: '16px' }} /> Dine In
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
-              <input type="checkbox" name="deliveryAvailable" checked={formData.deliveryAvailable} onChange={handleFieldChange} style={{ width: '16px', height: '16px' }} /> Delivery
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
-              <input type="checkbox" name="takeoutAvailable" checked={formData.takeoutAvailable} onChange={handleFieldChange} style={{ width: '16px', height: '16px' }} /> Takeout
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
-              <input type="checkbox" name="cateringAvailable" checked={formData.cateringAvailable} onChange={handleFieldChange} style={{ width: '16px', height: '16px' }} /> Catering
-            </label>
-          </div>
-        </div>
-      );
-    }
+
     if (listing.category === 'Jobs') {
       return (
         <div style={{ marginTop: '20px', borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>

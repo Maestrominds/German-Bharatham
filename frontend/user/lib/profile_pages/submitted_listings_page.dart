@@ -20,14 +20,13 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
   String? _error;
 
   List<dynamic> _accommodations = [];
-  List<dynamic> _foods = [];
   List<dynamic> _jobs = [];
   List<dynamic> _services = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _fetchListings();
   }
 
@@ -60,7 +59,6 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
         final data = jsonDecode(response.body);
         setState(() {
           _accommodations = data['Accommodation'] ?? [];
-          _foods = data['Food'] ?? [];
           _jobs = data['Jobs'] ?? [];
           _services = data['Services'] ?? [];
           _loading = false;
@@ -325,9 +323,8 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
                           indicatorColor: primaryGreen,
                           tabs: const [
                             Tab(text: "Accommodation"),
-                            Tab(text: "Food"),
                             Tab(text: "Jobs"),
-                            Tab(text: "Services"),
+                            Tab(text: "Expat Services"),
                           ],
                         ),
                       ),
@@ -336,7 +333,6 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
                           controller: _tabController,
                           children: [
                             _listingsList("Accommodation", _accommodations),
-                            _listingsList("Food", _foods),
                             _listingsList("Jobs", _jobs),
                             _listingsList("Services", _services),
                           ],

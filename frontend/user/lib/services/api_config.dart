@@ -52,7 +52,7 @@ class ApiConfig {
   static String get registerEndpoint => '$baseUrl/api/user/register';
   static String get jobsEndpoint => '$baseUrl/api/jobs/user';
   static String get accommodationEndpoint => '$baseUrl/api/accommodation/user';
-  static String get foodEndpoint => '$baseUrl/api/user/foodgrocery';
+
   static String get settingsPublicEndpoint => '$baseUrl/api/admin/settings/public';
   static String get profileEndpoint => '$baseUrl/api/user/profile';
   static String get forgotPasswordOtpEndpoint => '$baseUrl/api/user/forgot-password-otp';

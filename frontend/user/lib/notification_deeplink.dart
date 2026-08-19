@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'accommodation.dart';
 import 'accommodation_details.dart';
-import 'food_details.dart';
+
 import 'job_details.dart';
 import 'service_details.dart';
 import 'services/api_config.dart';
@@ -27,12 +27,6 @@ class NotificationDeepLink {
       return;
     }
 
-    if (module == 'foodgrocery' && entityId.isNotEmpty) {
-      final item = await ApiService.getFoodGroceryById(entityId);
-      if (!context.mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) => FoodDetailPage(item: item)));
-      return;
-    }
 
     if (module == 'jobs' && entityId.isNotEmpty) {
       final item = await JobService.fetchJobById(entityId);

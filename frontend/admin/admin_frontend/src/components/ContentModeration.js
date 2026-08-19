@@ -6,14 +6,12 @@ import API_URL from '../config';
 
 const PATCH_URLS = {
   Accommodation: (id) => `${API_URL}/api/accommodation/admin/${id}/status`,
-  Food:          (id) => `${API_URL}/api/admin/foodgrocery/${id}/status`,
   Jobs:          (id) => `${API_URL}/api/jobs/admin/${id}/status`,
   Services:      (id) => `${API_URL}/api/services/admin/${id}/status`,
 };
 
 const DELETE_URLS = {
   Accommodation: (id) => `${API_URL}/api/accommodation/admin/${id}`,
-  Food:          (id) => `${API_URL}/api/admin/foodgrocery/${id}`,
   Jobs:          (id) => `${API_URL}/api/jobs/admin/${id}`,
   Services:      (id) => `${API_URL}/api/services/admin/${id}`,
 };
@@ -58,7 +56,6 @@ const ContentModeration = () => {
 
       const all = [
         ...(data.Accommodation || []).map(r => mapListing('Accommodation', r)),
-        ...(data.Food          || []).map(r => mapListing('Food', r)),
         ...(data.Jobs          || []).map(r => mapListing('Jobs', r)),
         ...(data.Services      || []).map(r => mapListing('Services', r)),
       ];

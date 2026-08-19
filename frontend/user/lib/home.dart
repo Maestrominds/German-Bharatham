@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'saved.dart';
 import 'profile.dart';
 import 'accommodation.dart';
-import 'food_grocery.dart';
 import 'jobs.dart';
 import 'services.dart';
 import 'community.dart';
@@ -272,7 +271,7 @@ class _HomePageState extends State<HomePage> {
 
             CategoryTile(
               imagePath: 'assets/images/shift.png',
-              title: "Services",
+              title: "Expat Services",
               subtitle: "Relocation & documentation help",
               onTap: () {
                 Navigator.push(

@@ -50,7 +50,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
   Widget _buildContent() {
     final text = _content?.isNotEmpty == true
         ? _content!
-        : 'German Bharatham helps students and professionals find jobs, accommodation, food & grocery, services, and community resources in Germany.';
+        : 'German Bharatham helps students and professionals find jobs, accommodation, services, and community resources in Germany.';
 
     // Split by double newlines into paragraphs
     final paragraphs = text

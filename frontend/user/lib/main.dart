@@ -14,7 +14,6 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_manager.dart';
 import 'user_session.dart';
-import 'saved_food_manager.dart';
 import 'saved_job_manager.dart';
 import 'saved_manager.dart';
 import 'saved_service_manager.dart';
@@ -74,7 +73,6 @@ Future<void> main() async {
   // Ensure saved/bookmarked items are loaded before the UI renders.
   await Future.wait([
     SavedManager.instance.initialize(),
-    SavedFoodManager.instance.initialize(),
     SavedJobManager.instance.initialize(),
     SavedServiceManager.instance.initialize(),
   ]);
@@ -467,7 +465,6 @@ class _AuthPageState extends State<AuthPage> {
         SavedManager.instance.switchUser(uid);
         unawaited(
           Future.wait([
-            SavedFoodManager.instance.switchUser(uid),
             SavedJobManager.instance.switchUser(uid),
             SavedServiceManager.instance.switchUser(uid),
             SavedGuidesManager.instance.switchUser(uid),
@@ -536,7 +533,6 @@ class _AuthPageState extends State<AuthPage> {
       SavedManager.instance.switchUser(uid);
       unawaited(
         Future.wait([
-          SavedFoodManager.instance.switchUser(uid),
           SavedJobManager.instance.switchUser(uid),
           SavedServiceManager.instance.switchUser(uid),
           SavedGuidesManager.instance.switchUser(uid),
@@ -1652,7 +1648,6 @@ class _SplashScreenState extends State<SplashScreen>
     if (UserSession.instance.isLoggedIn) {
       SavedManager.instance.switchUser(UserSession.instance.userId!);
       await Future.wait([
-        SavedFoodManager.instance.switchUser(UserSession.instance.userId!),
         SavedJobManager.instance.switchUser(UserSession.instance.userId!),
         SavedServiceManager.instance.switchUser(UserSession.instance.userId!),
         SavedGuidesManager.instance.switchUser(UserSession.instance.userId!),
@@ -1970,7 +1965,6 @@ class _EmailCodePageState extends State<EmailCodePage> {
             final uid = user['_id'].toString();
             SavedManager.instance.switchUser(uid);
             await Future.wait([
-              SavedFoodManager.instance.switchUser(uid),
               SavedJobManager.instance.switchUser(uid),
               SavedServiceManager.instance.switchUser(uid),
               SavedGuidesManager.instance.switchUser(uid),
@@ -1992,7 +1986,6 @@ class _EmailCodePageState extends State<EmailCodePage> {
               final uid = user['_id'].toString();
               SavedManager.instance.switchUser(uid);
               await Future.wait([
-                SavedFoodManager.instance.switchUser(uid),
                 SavedJobManager.instance.switchUser(uid),
                 SavedServiceManager.instance.switchUser(uid),
                 SavedGuidesManager.instance.switchUser(uid),

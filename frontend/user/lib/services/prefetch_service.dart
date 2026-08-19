@@ -19,7 +19,6 @@ class PrefetchService {
       // 2. Preload all module data in parallel (fire-and-forget)
       _prefetchAccommodations();
       _prefetchJobs();
-      _prefetchFoodGrocery();
       _prefetchServices();
     } catch (e) {
       print('PrefetchService error: $e');
@@ -72,20 +71,7 @@ class PrefetchService {
     }
   }
 
-  /// Preload food & grocery in background
-  static Future<void> _prefetchFoodGrocery() async {
-    try {
-      final response = await _client.get(
-        Uri.parse('${ApiConfig.foodEndpoint}?page=1&limit=15'),
-      ).timeout(_prefetchTimeout);
 
-      if (response.statusCode == 200) {
-        await CacheService.set('food_page_1', response.body);
-      }
-    } catch (e) {
-      // Ignore
-    }
-  }
 
   /// Preload services in background
   static Future<void> _prefetchServices() async {

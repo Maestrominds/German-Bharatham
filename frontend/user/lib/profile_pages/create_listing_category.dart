@@ -100,7 +100,7 @@ class CreateListingCategoryPage extends StatelessWidget {
           ),
           _categoryCard(
             context,
-            "Services",
+            "Expat Services",
             "assets/images/handshake.png",
             "Immigration, tax, coaching, IT or relocation services",
           ),

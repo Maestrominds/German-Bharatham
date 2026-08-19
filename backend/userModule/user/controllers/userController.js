@@ -25,12 +25,15 @@ exports.getPublicUsers = async (req, res) => {
           name: true,
           email: true,
           phone: true,
-          photo: true,
+          // Note: photo intentionally excluded - heavy base64 data not needed for user cards
           role: true,
           isActive: true,
           createdAt: true,
           location: true,
-          preferredCity: true
+          preferredCity: true,
+          motherTongue: true,
+          industry: true,
+          linkedinUrl: true
         },
         skip,
         take: limit
@@ -63,6 +66,19 @@ exports.getAllUsers = async (req, res) => {
       prisma.user.findMany({
         where,
         orderBy,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          isActive: true,
+          createdAt: true,
+          location: true,
+          preferredCity: true,
+          subscriptionStatus: true,
+          subscriptionPlan: true,
+          subscriptionExpiresAt: true,
+          // Note: photo & password intentionally excluded for fast API response
+        },
         skip,
         take: limit
       })
