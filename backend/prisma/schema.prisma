@@ -26,7 +26,12 @@ model User {
   education             String         @default("")
   profession            String         @default("")
   germanLevel           String         @default("")
-  passport              String         @default("")
+  passport              String         @default("")   // kept for legacy data, hidden from UI
+  careerLevel           String         @default("")
+  industry              String         @default("")
+  stateOfOrigin         String         @default("")
+  motherTongue          String         @default("")
+  linkedinUrl           String         @default("")
   resetPasswordToken    String?
   resetPasswordExpires  DateTime?
   fcmToken              String?

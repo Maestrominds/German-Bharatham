@@ -94,12 +94,6 @@ class CreateListingCategoryPage extends StatelessWidget {
           ),
           _categoryCard(
             context,
-            "Food",
-            "assets/images/grocery-store.png",
-            "Restaurants, grocery stores, cafes, and bakeries",
-          ),
-          _categoryCard(
-            context,
             "Jobs",
             "assets/images/job-search.png",
             "Full-time, part-time, internship or contract job openings",

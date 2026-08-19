@@ -259,18 +259,6 @@ class _HomePageState extends State<HomePage> {
             ),
 
             CategoryTile(
-              imagePath: 'assets/images/grocery-store.png',
-              title: "Food & Grocery",
-              subtitle: "Indian groceries & restaurants",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const FoodGroceryPage()),
-                );
-              },
-            ),
-
-            CategoryTile(
               imagePath: 'assets/images/job-search.png',
               title: "Jobs",
               subtitle: "Part-time & full-time jobs",
@@ -328,7 +316,7 @@ class _HomePageState extends State<HomePage> {
               context,
               MaterialPageRoute(builder: (_) => const SearchPage()),
             );
-          } else if (index == 2) {
+          } else if (index == 0) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const UserProfilesPage()),
@@ -346,7 +334,7 @@ class _HomePageState extends State<HomePage> {
         items: [
           BottomNavigationBarItem(
             icon: Image.asset(
-              'assets/images/home.png',
+              'assets/images/social.png',
               height: 24,
               color: _currentIndex == 0 ? HomePage.primaryGreen : Colors.grey,
               errorBuilder: (_, __, ___) => Image.asset(
@@ -355,7 +343,7 @@ class _HomePageState extends State<HomePage> {
                 color: _currentIndex == 0 ? HomePage.primaryGreen : Colors.grey,
               ),
             ),
-            label: "Home",
+            label: "Users",
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
@@ -372,7 +360,7 @@ class _HomePageState extends State<HomePage> {
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
-              'assets/images/social.png',
+              'assets/images/home.png',
               height: 24,
               color: _currentIndex == 2 ? HomePage.primaryGreen : Colors.grey,
               errorBuilder: (_, __, ___) => Image.asset(
@@ -381,7 +369,7 @@ class _HomePageState extends State<HomePage> {
                 color: _currentIndex == 2 ? HomePage.primaryGreen : Colors.grey,
               ),
             ),
-            label: "Profiles",
+            label: "Home",
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
@@ -542,7 +530,7 @@ class _HomePageState extends State<HomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const AccommodationPage(),
+                        builder: (_) => const CommunityPage(),
                       ),
                     );
                   },

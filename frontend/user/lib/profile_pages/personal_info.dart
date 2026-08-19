@@ -37,7 +37,32 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   final TextEditingController education = TextEditingController();
   final TextEditingController profession = TextEditingController();
   final TextEditingController germanLevel = TextEditingController();
-  final TextEditingController passport = TextEditingController();
+  final TextEditingController stateOfOrigin = TextEditingController();
+  final TextEditingController motherTongue = TextEditingController();
+  final TextEditingController linkedinUrl = TextEditingController();
+
+  // New dropdowns
+  String? _selectedCareerLevel;
+  String? _selectedIndustry;
+
+  static const List<String> _careerLevelOptions = [
+    'Student',
+    'Working Professional',
+    'Job Seeker',
+    'Self-employed',
+  ];
+
+  static const List<String> _industryOptions = [
+    'IT / Technology',
+    'Biotechnology / Life Sciences',
+    'Healthcare / Medicine',
+    'Finance / Banking',
+    'Engineering / Manufacturing',
+    'Marketing / Sales',
+    'Legal / Law',
+    'Education / Academia',
+    'Other',
+  ];
 
   String? _photoBase64 = UserSession.instance.photoBase64;
   final ImagePicker _picker = ImagePicker();
@@ -66,7 +91,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       education.text = prefs.getString(key('education')) ?? '';
       profession.text = prefs.getString(key('profession')) ?? '';
       germanLevel.text = prefs.getString(key('germanLevel')) ?? '';
-      passport.text = prefs.getString(key('passport')) ?? '';
+      stateOfOrigin.text = prefs.getString(key('stateOfOrigin')) ?? '';
+      motherTongue.text = prefs.getString(key('motherTongue')) ?? '';
+      linkedinUrl.text = prefs.getString(key('linkedinUrl')) ?? '';
+      _selectedCareerLevel = prefs.getString(key('careerLevel'));
+      _selectedIndustry = prefs.getString(key('industry'));
       _photoBase64 = prefs.getString(key('photo')) ?? UserSession.instance.photoBase64;
     });
 
@@ -91,7 +120,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
           education.text = data['education'] ?? education.text;
           profession.text = data['profession'] ?? profession.text;
           germanLevel.text = data['germanLevel'] ?? germanLevel.text;
-          passport.text = data['passport'] ?? passport.text;
+          stateOfOrigin.text = data['stateOfOrigin'] ?? stateOfOrigin.text;
+          motherTongue.text = data['motherTongue'] ?? motherTongue.text;
+          linkedinUrl.text = data['linkedinUrl'] ?? linkedinUrl.text;
+          _selectedCareerLevel = data['careerLevel'] as String? ?? _selectedCareerLevel;
+          _selectedIndustry = data['industry'] as String? ?? _selectedIndustry;
           _photoBase64 = data['photo'] ?? _photoBase64;
         });
         // Update local cache
@@ -105,7 +138,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
         await prefs.setString(key('education'), education.text);
         await prefs.setString(key('profession'), profession.text);
         await prefs.setString(key('germanLevel'), germanLevel.text);
-        await prefs.setString(key('passport'), passport.text);
+        await prefs.setString(key('stateOfOrigin'), stateOfOrigin.text);
+        await prefs.setString(key('motherTongue'), motherTongue.text);
+        await prefs.setString(key('linkedinUrl'), linkedinUrl.text);
+        await prefs.setString(key('careerLevel'), _selectedCareerLevel ?? '');
+        await prefs.setString(key('industry'), _selectedIndustry ?? '');
         await prefs.setString(key('photo'), _photoBase64 ?? '');
       }
     } catch (_) {}
@@ -134,7 +171,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
               'education': education.text,
               'profession': profession.text,
               'germanLevel': germanLevel.text,
-              'passport': passport.text,
+              'stateOfOrigin': stateOfOrigin.text,
+              'motherTongue': motherTongue.text,
+              'linkedinUrl': linkedinUrl.text,
+              'careerLevel': _selectedCareerLevel ?? '',
+              'industry': _selectedIndustry ?? '',
               'photo': _photoBase64 ?? '',
             }),
           ).timeout(const Duration(seconds: 15));
@@ -168,7 +209,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       await prefs.setString(key('education'), education.text);
       await prefs.setString(key('profession'), profession.text);
       await prefs.setString(key('germanLevel'), germanLevel.text);
-      await prefs.setString(key('passport'), passport.text);
+      await prefs.setString(key('stateOfOrigin'), stateOfOrigin.text);
+      await prefs.setString(key('motherTongue'), motherTongue.text);
+      await prefs.setString(key('linkedinUrl'), linkedinUrl.text);
+      await prefs.setString(key('careerLevel'), _selectedCareerLevel ?? '');
+      await prefs.setString(key('industry'), _selectedIndustry ?? '');
       await prefs.setString(key('photo'), _photoBase64 ?? '');
 
       // Update global session cache so the UI updates immediately
@@ -238,10 +283,14 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       _genderRadio(),
                       _input("Current Location", location),
                       _input("Preferred City in Germany", preferredCity),
-                      _input("Education", education),
+                      _careerLevelDropdown(),
+                      _input("Education (Last/Current Degree)", education),
+                      _industryDropdown(),
                       _input("Profession", profession),
                       _input("German Language Level (A1, A2, B1, B2)", germanLevel),
-                      _input("Passport Number", passport),
+                      _input("State of Origin (e.g. Maharashtra, India)", stateOfOrigin),
+                      _input("Mother Tongue", motherTongue),
+                      _linkedinInput(),
 
                       const SizedBox(height: 20),
 
@@ -261,6 +310,18 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                   if (dob.text.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text('Please select your date of birth')),
+                                    );
+                                    isValid = false;
+                                  }
+                                  if (_selectedCareerLevel == null || _selectedCareerLevel!.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Please select your career level')),
+                                    );
+                                    isValid = false;
+                                  }
+                                  if (_selectedIndustry == null || _selectedIndustry!.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Please select your industry')),
                                     );
                                     isValid = false;
                                   }
@@ -319,14 +380,12 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     );
   }
 
-  Widget _input(String label, TextEditingController controller) {
+  Widget _input(String label, TextEditingController controller, {bool required = true}) {
     bool isPhone = label.toLowerCase().contains("phone");
-    bool isPassport = label.toLowerCase().contains("passport");
     bool isGerman = label.toLowerCase().contains("german");
 
     int limit = 100;
     if (isPhone) limit = 15;
-    else if (isPassport) limit = 20;
     else if (isGerman) limit = 15;
 
     return Padding(
@@ -350,31 +409,185 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
             inputFormatters: isPhone ? [FilteringTextInputFormatter.digitsOnly] : null,
             decoration: InputDecoration(
               counterText: "", // Hides the character counter below input
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.grey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: primaryGreen, width: 1.5),
+              ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: primaryGreen, width: 1.5),
+            validator: required
+                ? (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Required field";
+                    }
+                    return null;
+                  }
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// LinkedIn URL field with URL validation
+  Widget _linkedinInput() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'LinkedIn URL',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
             ),
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return "Required field";
-            }
-            return null;
-          },
-        ),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: linkedinUrl,
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              hintText: 'https://linkedin.com/in/yourprofile',
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.grey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: primaryGreen, width: 1.5),
+              ),
+              prefixIcon: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                child: Icon(Icons.link, color: primaryGreen, size: 20),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'LinkedIn URL is required';
+              }
+              final uri = Uri.tryParse(value.trim());
+              if (uri == null || !uri.hasScheme || !uri.host.contains('linkedin')) {
+                return 'Please enter a valid LinkedIn URL';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Career Level dropdown
+  Widget _careerLevelDropdown() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Current Career Level',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<String>(
+            value: _careerLevelOptions.contains(_selectedCareerLevel)
+                ? _selectedCareerLevel
+                : null,
+            hint: const Text('Select career level'),
+            decoration: InputDecoration(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.grey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: primaryGreen, width: 1.5),
+              ),
+            ),
+            items: _careerLevelOptions.map((level) {
+              return DropdownMenuItem(value: level, child: Text(level));
+            }).toList(),
+            onChanged: (val) => setState(() => _selectedCareerLevel = val),
+            validator: (val) =>
+                (val == null || val.isEmpty) ? 'Please select your career level' : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Industry / Specialization dropdown
+  Widget _industryDropdown() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Industry / Specialization',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<String>(
+            value: _industryOptions.contains(_selectedIndustry)
+                ? _selectedIndustry
+                : null,
+            hint: const Text('Select industry'),
+            decoration: InputDecoration(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.grey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: primaryGreen, width: 1.5),
+              ),
+            ),
+            items: _industryOptions.map((industry) {
+              return DropdownMenuItem(value: industry, child: Text(industry));
+            }).toList(),
+            onChanged: (val) => setState(() => _selectedIndustry = val),
+            validator: (val) =>
+                (val == null || val.isEmpty) ? 'Please select your industry' : null,
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _pickDate() async {
     DateTime? initialDate;
     if (dob.text.isNotEmpty) {

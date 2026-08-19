@@ -403,6 +403,7 @@ exports.updateProfile = async (req, res) => {
       name, phone, photo,
       dob, gender, location, preferredCity,
       education, profession, germanLevel, passport,
+      careerLevel, industry, stateOfOrigin, motherTongue, linkedinUrl,
     } = req.body;
     
     const numericId = parseInt(req.user.id);
@@ -420,6 +421,12 @@ exports.updateProfile = async (req, res) => {
     if (profession    !== undefined) update.profession    = profession;
     if (germanLevel   !== undefined) update.germanLevel   = germanLevel;
     if (passport      !== undefined) update.passport      = passport;
+    // New fields
+    if (careerLevel   !== undefined) update.careerLevel   = careerLevel;
+    if (industry      !== undefined) update.industry      = industry;
+    if (stateOfOrigin !== undefined) update.stateOfOrigin = stateOfOrigin;
+    if (motherTongue  !== undefined) update.motherTongue  = motherTongue;
+    if (linkedinUrl   !== undefined) update.linkedinUrl   = linkedinUrl;
 
     console.log(`🔍 [DB QUERY] updating user with id: ${numericId}`);
     const updateStart = Date.now();
@@ -436,6 +443,7 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // LOGIN
 exports.login = async (req, res) => {

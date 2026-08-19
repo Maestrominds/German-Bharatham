@@ -67,7 +67,7 @@ class WelcomeScreen extends StatelessWidget {
                     const SizedBox(height: 14),
 
                     const Text(
-                      'Helping Indians settle in Germany',
+                      'Helping Indians settle in Germany- Your German dream starts with us',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
@@ -79,7 +79,7 @@ class WelcomeScreen extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      'Accommodation • Food • Jobs • Services',
+                      'Accommodation • Jobs • Expat services • Community',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 19,
@@ -214,13 +214,13 @@ class InfoPage extends StatelessWidget {
               ),
               _buildCard(
                 _leadingImage('assets/images/service.jpg'),
-                'Discover food & jobs',
-                'Groceries, restaurants, and job leads',
+                'Discover Jobs',
+                'Explore full-time, part-time & expat services',
               ),
               _buildCard(
-                _leadingImage('assets/images/communication.png'),
+                _leadingImage('assets/images/whatsapp.png'),
                 'Community support',
-                'Guides and resources from Indians',
+                'Guides, Communities and resources for Indians',
               ),
               const Spacer(),
               SizedBox(
