@@ -58,7 +58,7 @@ class WelcomeScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      'assets/images/logo.png',
+                      'assets/images/Logo_V2.png',
                       width: 72,
                       height: 72,
                       fit: BoxFit.contain,

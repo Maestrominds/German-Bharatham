@@ -131,12 +131,11 @@ class Accommodation {
             final img = json['media']['images'][0];
             if (img is String) return img;
             if (img is Map) {
-              return (img['url'] ?? img['uri'] ?? 'assets/images/room.jpg')
-                  .toString();
+              return (img['url'] ?? img['uri'] ?? '').toString();
             }
-            return 'assets/images/room.jpg';
+            return '';
           })()
-        : 'assets/images/room.jpg';
+        : '';
 
     final String resolvedImageUrl = ApiConfig.getImageUrl(rawImage);
     final String normalizedImage =
@@ -146,7 +145,7 @@ class Accommodation {
         ? rawImage
         : (resolvedImageUrl.isNotEmpty
               ? resolvedImageUrl
-              : 'assets/images/room.jpg');
+              : '');
 
     final List<String> extractedImages = [];
     if (json['media']?['images'] is List) {
@@ -154,7 +153,7 @@ class Accommodation {
     } else if (json['images'] is List) {
       extractedImages.addAll((json['images'] as List).map((e) => e.toString()).where((s) => s.isNotEmpty));
     }
-    if (extractedImages.isEmpty && normalizedImage.isNotEmpty && normalizedImage != 'assets/images/room.jpg') {
+    if (extractedImages.isEmpty && normalizedImage.isNotEmpty && normalizedImage != '') {
       extractedImages.add(normalizedImage);
     }
 
@@ -236,10 +235,10 @@ class Accommodation {
       title: (json['title'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
       location: (json['location'] ?? '').toString(),
-      image: (json['image'] ?? 'assets/images/room.jpg').toString(),
+      image: (json['image'] ?? '').toString(),
       images: (json['images'] is List)
           ? (json['images'] as List).map((e) => e.toString()).toList()
-          : <String>[(json['image'] ?? 'assets/images/room.jpg').toString()],
+          : <String>[(json['image'] ?? '').toString()],
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       price: (json['price'] as num?)?.toInt() ?? 0,
       amenities: (json['amenities'] is List)

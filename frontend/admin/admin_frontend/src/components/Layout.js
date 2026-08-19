@@ -32,7 +32,7 @@ const Layout = ({ children, onLogout }) => {
         <div className="sidebar-header">
           <div className="brand-row">
             <div className="brand-logo-wrap brand-logo-wrap--sm" aria-hidden="true">
-              <img className="brand-logo" src="/logo.png" alt="" />
+              <img className="brand-logo" src="/Logo_V2.png" alt="" />
             </div>
             <h1>German Bharatham</h1>
           </div>

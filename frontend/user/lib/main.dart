@@ -1858,7 +1858,7 @@ class _SplashScreenState extends State<SplashScreen>
           child: AnimatedBuilder(
             animation: _logoController,
             child: Image.asset(
-              'assets/images/logo.png',
+              'assets/images/Logo_V2.png',
               width: screen.width,
               height: screen.height,
               fit: BoxFit.contain,

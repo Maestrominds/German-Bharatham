@@ -777,7 +777,7 @@ class _SavedServiceCard extends StatelessWidget {
           children: [
             _SavedThumbnail(
               image: displayImage,
-              fallbackAsset: 'assets/images/service.jpg',
+              fallbackAsset: '',
               width: 80,
               height: 80,
               borderRadius: BorderRadius.circular(10),

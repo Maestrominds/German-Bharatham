@@ -398,7 +398,7 @@ class _ServiceCardState extends State<ServiceCard> {
                   _displayImage,
                   width: 60,
                   height: 60,
-                  placeholderAsset: 'assets/images/service.jpg',
+                  placeholderAsset: '',
                 ),
               ),
             ),
