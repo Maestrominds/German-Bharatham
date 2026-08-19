@@ -15,13 +15,13 @@ class WelcomeScreen extends StatelessWidget {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/images/german1.jpeg',
+              'assets/images/german12.jpeg',
               fit: BoxFit.cover,
               gaplessPlayback: true,
               filterQuality: FilterQuality.high,
               errorBuilder: (context, error, stack) {
                 return Image.asset(
-                  'assets/images/german1.jpeg',
+                  'assets/images/german12.jpeg',
                   fit: BoxFit.cover,
                   gaplessPlayback: true,
                 );

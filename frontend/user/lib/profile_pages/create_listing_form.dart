@@ -286,6 +286,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         'priceRange': _servicePriceRange,
       };
     }
+    return {};
   }
 
   Future<void> _submit() async {
