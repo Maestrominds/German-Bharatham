@@ -341,10 +341,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               return GestureDetector(
                                 onTap: () => _handleTap(n),
                                 child: _NotificationTile(
-                                  title: n.title,
-                                  message: n.message,
+                                  notification: n,
                                   time: _relativeTime(n.createdAt),
-                                  unread: !n.read,
                                   avatar: _senderAvatar(n.senderPhoto),
                                 ),
                               );
@@ -365,24 +363,37 @@ class _NotificationsPageState extends State<NotificationsPage> {
 }
 
 class _NotificationTile extends StatelessWidget {
-  final String title;
-  final String message;
+  final AppNotification notification;
   final String time;
-  final bool unread;
   final ImageProvider? avatar;
 
   const _NotificationTile({
-    required this.title,
-    required this.message,
+    required this.notification,
     required this.time,
-    required this.unread,
     this.avatar,
   });
 
   static const Color primaryGreen = Color(0xFF4E7F6D);
 
+  IconData _getFallbackIcon() {
+    final type = notification.type;
+    if (type == 'like_received' || type == 'like_sent') return Icons.favorite;
+    
+    final module = notification.data['module']?.toString() ?? '';
+    if (module == 'jobs') return Icons.work;
+    if (module == 'accommodation') return Icons.home;
+    if (module == 'services') return Icons.miscellaneous_services;
+    if (module == 'foodgrocery') return Icons.local_grocery_store;
+    
+    return Icons.notifications;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final title = notification.title;
+    final message = notification.message;
+    final unread = !notification.read;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -405,11 +416,10 @@ class _NotificationTile extends StatelessWidget {
             backgroundColor: const Color(0xFFEAF2EF),
             backgroundImage: avatar,
             child: avatar == null
-                ? Image.asset(
-                    'assets/images/msg.png',
-                    width: 20,
-                    height: 20,
+                ? Icon(
+                    _getFallbackIcon(),
                     color: primaryGreen,
+                    size: 20,
                   )
                 : null,
           ),
