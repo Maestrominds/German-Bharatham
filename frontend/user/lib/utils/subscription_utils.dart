@@ -126,11 +126,13 @@ Future<void> checkSubscriptionAndNotify(BuildContext context, {int forceRedirect
       bool acted = false;
       await showDialog<void>(
         context: context,
-        barrierDismissible: true,
+        barrierDismissible: false,
         builder: (ctx) {
-          return AlertDialog(
-            insetPadding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          return PopScope(
+            canPop: false,
+            child: AlertDialog(
+              insetPadding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             title: const Text('Trial expired'),
             content: const Text('Trial expired – subscribe now'),
             actions: [
@@ -162,6 +164,7 @@ Future<void> checkSubscriptionAndNotify(BuildContext context, {int forceRedirect
                 child: const Text('Subscribe', style: TextStyle(color: Colors.white)),
               ),
             ],
+            ),
           );
         },
       );

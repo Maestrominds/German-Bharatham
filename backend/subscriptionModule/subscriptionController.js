@@ -599,7 +599,7 @@ exports.listAllSubscriptions = async (_req, res) => {
     },
     include: { user: true },
     orderBy: { updatedAt: 'desc' },
-    take: 10
+    take: 20
   });
 
   const out = items.map((it) => {

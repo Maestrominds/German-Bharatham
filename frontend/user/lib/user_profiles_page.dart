@@ -51,8 +51,12 @@ class PublicUserProfile {
 
     if (photo != null && photo.trim().isNotEmpty) {
       try {
-        final raw = photo.contains(',') ? photo.split(',').last : photo;
-        cachedImage = MemoryImage(base64Decode(raw));
+        if (photo.startsWith('http')) {
+          cachedImage = NetworkImage(photo);
+        } else {
+          final raw = photo.contains(',') ? photo.split(',').last : photo;
+          cachedImage = MemoryImage(base64Decode(raw));
+        }
       } catch (_) {}
     }
 
@@ -113,8 +117,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   bool _swipeRight = false; // true = swipe right (like), false = swipe left
 
   // ── Undo state ──
-  PublicUserProfile? _lastDismissedUser;
-  bool _undoLiked = false;
+  final List<Map<String, dynamic>> _undoHistory = [];
 
   // ─────────── Lifecycle ───────────
 
@@ -278,13 +281,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     if (!mounted) return;
     if (nowLiked) _sendLikeNotification(user.id);
     setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(nowLiked ? '❤️ Liked ${user.name}' : 'Unliked ${user.name}'),
-        backgroundColor: primaryGreen,
-        duration: const Duration(seconds: 1),
-      ),
-    );
   }
 
   Future<void> _sendLikeNotification(String targetUserId) async {
@@ -329,8 +325,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   }
 
   void _onSwipeEnded(bool toRight, PublicUserProfile user) {
-    _lastDismissedUser = user;
-    _undoLiked = toRight;
+    _undoHistory.add({'user': user, 'liked': toRight});
 
     if (toRight) {
       // Swipe right = Like
@@ -359,11 +354,15 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   }
 
   void _undoLastSwipe() {
-    if (_lastDismissedUser == null) return;
+    if (_undoHistory.isEmpty) return;
+
+    final last = _undoHistory.removeLast();
+    final user = last['user'] as PublicUserProfile;
+    final wasLiked = last['liked'] as bool;
 
     // Undo the like if the previous swipe was a right swipe
-    if (_undoLiked && LikedUserManager.instance.isLiked(_lastDismissedUser!.id)) {
-      LikedUserManager.instance.toggle(_lastDismissedUser!.id).then((_) {
+    if (wasLiked && LikedUserManager.instance.isLiked(user.id)) {
+      LikedUserManager.instance.toggle(user.id).then((_) {
         if (!mounted) return;
         setState(() {});
       });
@@ -372,8 +371,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     setState(() {
       // Go back one card
       currentIndex = (currentIndex - 1 + users.length) % users.length;
-      _lastDismissedUser = null;
-      _undoLiked = false;
     });
   }
 
@@ -409,7 +406,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           centerTitle: true,
           automaticallyImplyLeading: false,
           actions: [
-            if (_lastDismissedUser != null)
+            if (_undoHistory.isNotEmpty)
               IconButton(
                 icon: const Icon(Icons.undo_rounded, color: Colors.white),
                 onPressed: _undoLastSwipe,

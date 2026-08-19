@@ -338,7 +338,7 @@ const Subscriptions = () => {
                 <td style={{ fontFamily: 'monospace', fontSize: 12 }}>
                   {s.userEmail || (s.userId && typeof s.userId === 'object' ? s.userId.email : s.userId) || '-'}
                 </td>
-                <td>{s.planId || '-'}</td>
+                <td>{plans.find(p => String(p.id) === String(s.planId))?.label || s.planId || '-'}</td>
                 <td>{s.status || '-'}</td>
                 <td>{s.periodStart ? new Date(s.periodStart).toLocaleString() : '-'}</td>
                 <td>{s.periodEnd ? new Date(s.periodEnd).toLocaleString() : '-'}</td>

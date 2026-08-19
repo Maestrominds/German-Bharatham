@@ -716,8 +716,12 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     ImageProvider? imageProvider;
     if (_photoBase64 != null && _photoBase64!.trim().isNotEmpty) {
       try {
-        final raw = _photoBase64!.contains(',') ? _photoBase64!.split(',').last : _photoBase64!;
-        imageProvider = MemoryImage(base64Decode(raw));
+        if (_photoBase64!.startsWith('http')) {
+          imageProvider = NetworkImage(_photoBase64!);
+        } else {
+          final raw = _photoBase64!.contains(',') ? _photoBase64!.split(',').last : _photoBase64!;
+          imageProvider = MemoryImage(base64Decode(raw));
+        }
       } catch (_) {}
     }
 

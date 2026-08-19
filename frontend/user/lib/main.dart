@@ -18,7 +18,7 @@ import 'saved_job_manager.dart';
 import 'saved_manager.dart';
 import 'saved_service_manager.dart';
 import 'home.dart';
-import 'location.dart';
+
 import 'notification_deeplink.dart';
 import 'saved_guides_manager.dart';
 import 'profile_pages/edit_profile.dart';
@@ -479,22 +479,10 @@ class _AuthPageState extends State<AuthPage> {
         PrefetchService.warmUpAndPrefetch(token: token);
 
         if (mounted) {
-          final isProfileIncomplete = 
-              (user['motherTongue'] == null || user['motherTongue'].toString().trim().isEmpty) ||
-              (user['industry'] == null || user['industry'].toString().trim().isEmpty) ||
-              (user['location'] == null || user['location'].toString().trim().isEmpty);
-
-          if (isProfileIncomplete) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const EditProfilePage()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
-            );
-          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
+          );
         }
       } else {
         String message;
@@ -556,22 +544,10 @@ class _AuthPageState extends State<AuthPage> {
       );
       PrefetchService.warmUpAndPrefetch(token: data['token']?.toString());
       if (mounted) {
-        final isProfileIncomplete = 
-            (user['motherTongue'] == null || user['motherTongue'].toString().trim().isEmpty) ||
-            (user['industry'] == null || user['industry'].toString().trim().isEmpty) ||
-            (user['location'] == null || user['location'].toString().trim().isEmpty);
-
-        if (isProfileIncomplete) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const EditProfilePage()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
-          );
-        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
+        );
       }
       return;
     }
@@ -1438,11 +1414,11 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
             }
           }
 
-          // Photo must be a real user-uploaded base64 image (data:image/...)
+          // Photo must be a real user-uploaded base64 image (data:image/...) or a Cloudinary URL (http...)
           // Google/social login URLs do NOT count as a valid profile photo.
           if (!hasMissingMandatory) {
             final photoVal = data['photo']?.toString().trim() ?? '';
-            if (!photoVal.startsWith('data:image')) {
+            if (!photoVal.startsWith('data:image') && !photoVal.startsWith('http')) {
               hasMissingMandatory = true;
             }
           }
@@ -1727,10 +1703,10 @@ class _SplashScreenState extends State<SplashScreen>
             (f) => data[f] == null || data[f].toString().trim().isEmpty,
           );
 
-          // Photo check: must be a real base64 upload (data:image/...)
+          // Photo check: must be a real base64 upload (data:image/...) or a Cloudinary URL (http...)
           // A Google/social profile picture URL does NOT count.
           final photoVal = data['photo']?.toString().trim() ?? '';
-          final hasRealPhoto = photoVal.startsWith('data:image');
+          final hasRealPhoto = photoVal.startsWith('data:image') || photoVal.startsWith('http');
           if (!hasRealPhoto) hasMissing = true;
           if (hasMissing && mounted) {
             await _logoController.forward();
@@ -1858,7 +1834,7 @@ class _SplashScreenState extends State<SplashScreen>
           child: AnimatedBuilder(
             animation: _logoController,
             child: Image.asset(
-              'assets/images/Logo_V2.png',
+              'assets/images/logo_v3.png',
               width: screen.width,
               height: screen.height,
               fit: BoxFit.contain,

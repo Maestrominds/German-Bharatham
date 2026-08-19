@@ -334,43 +334,73 @@ class AccommodationMongoDetailsPage extends StatelessWidget {
                       const SizedBox(height: 20),
                     ],
 
-                    /// GOOGLE MAPS BUTTON
-                    if (item.latitude != null && item.longitude != null) ...[
+                    /// ADDRESS / LOCATION DETAILS
+                    if (item.area != null || item.postalCode != null || (item.address != null && !item.address!.startsWith('http'))) ...[
+                      Text(
+                        'Location Details',
+                        style: GoogleFonts.roboto(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (item.area != null) Text('Area: ${item.area}', style: const TextStyle(fontSize: 16)),
+                      if (item.postalCode != null) Text('Postal Code: ${item.postalCode}', style: const TextStyle(fontSize: 16)),
+                      if (item.address != null && !item.address!.startsWith('http'))
+                        Text('Address: ${item.address}', style: const TextStyle(fontSize: 16)),
                       const SizedBox(height: 20),
+                    ],
+
+                    /// GOOGLE MAPS BUTTON
+                    if ((item.latitude != null && item.longitude != null) || (item.address != null && item.address!.startsWith('http'))) ...[
                       const Text(
-                        'Location',
+                        'Map',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 10),
                       GestureDetector(
                         onTap: () async {
-                          final url = Uri.parse(
-                            'https://www.google.com/maps/dir/?api=1'
-                            '&destination=${item.latitude},${item.longitude}',
-                          );
+                          final urlStr = (item.address != null && item.address!.startsWith('http')) 
+                              ? item.address! 
+                              : 'https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}';
+                          final url = Uri.parse(urlStr);
                           if (await canLaunchUrl(url)) {
                             await launchUrl(url, mode: LaunchMode.externalApplication);
                           }
                         },
                         child: Stack(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                'https://maps.googleapis.com/maps/api/staticmap'
-                                '?center=${item.latitude},${item.longitude}&zoom=14&size=600x200'
-                                '&markers=color:red%7C${item.latitude},${item.longitude}'
-                                '&maptype=roadmap',
-                                height: 160,
+                            if (item.latitude != null && item.longitude != null)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  'https://maps.googleapis.com/maps/api/staticmap'
+                                  '?center=${item.latitude},${item.longitude}&zoom=14&size=600x200'
+                                  '&markers=color:red%7C${item.latitude},${item.longitude}'
+                                  '&maptype=roadmap',
+                                  height: 160,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _FallbackMapTile(
+                                    lat: item.latitude!,
+                                    lon: item.longitude!,
+                                  ),
+                                ),
+                              )
+                            else
+                              Container(
+                                height: 80,
                                 width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _FallbackMapTile(
-                                  lat: item.latitude!,
-                                  lon: item.longitude!,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Center(
+                                  child: Text('Tap to view on Google Maps', style: TextStyle(fontWeight: FontWeight.bold)),
                                 ),
                               ),
-                            ),
-                            Positioned(
+                            if (item.latitude != null && item.longitude != null)
+                              Positioned(
                               bottom: 8,
                               right: 8,
                               child: Container(

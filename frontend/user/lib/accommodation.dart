@@ -45,8 +45,11 @@ class Accommodation {
   final bool? nearHospital;
   final bool? nearPublicTransport;
   final String? contactPhone;
-  final double? averageRating;
-  final int? totalRatings;
+  final double averageRating;
+  final int totalRatings;
+  final String? address;
+  final String? postalCode;
+  final String? area;
 
   Accommodation({
     required this.id,
@@ -78,8 +81,11 @@ class Accommodation {
     this.nearHospital,
     this.nearPublicTransport,
     this.contactPhone,
-    this.averageRating,
-    this.totalRatings,
+    this.averageRating = 0.0,
+    this.totalRatings = 0,
+    this.address,
+    this.postalCode,
+    this.area,
   });
 
   factory Accommodation.fromJson(Map<String, dynamic> json) {
@@ -190,6 +196,9 @@ class Accommodation {
       contactPhone: json['contactPhone']?.toString(),
       averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
       totalRatings: json['totalRatings'] as int? ?? 0,
+      address: json['address']?.toString(),
+      postalCode: json['zipCode']?.toString(),
+      area: json['state']?.toString(),
     );
   }
 
@@ -226,6 +235,9 @@ class Accommodation {
       'contactPhone': contactPhone,
       'averageRating': averageRating,
       'totalRatings': totalRatings,
+      'address': address,
+      'postalCode': postalCode,
+      'area': area,
     };
   }
 
@@ -264,8 +276,11 @@ class Accommodation {
       nearHospital: json['nearHospital'] as bool?,
       nearPublicTransport: json['nearPublicTransport'] as bool?,
       contactPhone: json['contactPhone']?.toString(),
-      averageRating: (json['averageRating'] as num?)?.toDouble(),
-      totalRatings: json['totalRatings'] as int?,
+      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
+      totalRatings: json['totalRatings'] as int? ?? 0,
+      address: json['address']?.toString(),
+      postalCode: json['postalCode']?.toString(),
+      area: json['area']?.toString(),
     );
   }
 }

@@ -180,10 +180,14 @@ class _HomePageState extends State<HomePage> {
   ImageProvider? _avatarProvider(String? photoBase64) {
     if (photoBase64 != null && photoBase64.trim().isNotEmpty) {
       try {
-        final raw = photoBase64.contains(',')
-            ? photoBase64.split(',').last
-            : photoBase64;
-        return MemoryImage(base64Decode(raw));
+        if (photoBase64.startsWith('http')) {
+          return NetworkImage(photoBase64);
+        } else {
+          final raw = photoBase64.contains(',')
+              ? photoBase64.split(',').last
+              : photoBase64;
+          return MemoryImage(base64Decode(raw));
+        }
       } catch (_) {}
     }
     return null;

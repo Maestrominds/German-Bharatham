@@ -37,7 +37,9 @@ exports.getDashboardStats = async (req, res) => {
       prisma.service.count(),
       prisma.user.count({ where: { role: "user" } }),
       prisma.subscription.findMany({
-        where: { status: "active" },
+        where: { 
+          status: { in: ["active", "expired"] }
+        },
         include: { plan: true }
       })
     ]);

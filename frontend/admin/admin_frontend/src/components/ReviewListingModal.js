@@ -261,11 +261,11 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Property Type</label>
               <select name="propertyType" value={formData.propertyType} onChange={handleFieldChange} style={inputStyle}>
-                <option value="Apartment">Apartment</option>
-                <option value="House">House</option>
-                <option value="Room">Room</option>
-                <option value="Studio">Studio</option>
-                <option value="Other">Other</option>
+                <option value="apartment">Apartment</option>
+                <option value="house">House</option>
+                <option value="room_shared">Room / Shared WG</option>
+                <option value="studio">Studio / 1-Zimmer</option>
+                <option value="other">Other</option>
               </select>
             </div>
             <div>
@@ -279,7 +279,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
               <input type="text" name="area" value={formData.area || ''} onChange={handleFieldChange} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Address</label>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Address (Paste Map Link Only)</label>
               <input type="text" name="address" value={formData.address} onChange={handleFieldChange} style={inputStyle} />
             </div>
           </div>
