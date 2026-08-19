@@ -342,8 +342,7 @@ class _ProfilePageState extends State<ProfilePage>
           if (index == 0) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                  builder: (_) => const HomePage()),
+              MaterialPageRoute(builder: (_) => const UserProfilesPage()),
             );
           } else if (index == 1) {
             Navigator.pushReplacement(
@@ -354,7 +353,8 @@ class _ProfilePageState extends State<ProfilePage>
           } else if (index == 2) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const UserProfilesPage()),
+              MaterialPageRoute(
+                  builder: (_) => const HomePage()),
             );
           } else if (index == 3) {
             Navigator.pushReplacement(
@@ -367,7 +367,7 @@ class _ProfilePageState extends State<ProfilePage>
         items: [
           BottomNavigationBarItem(
             icon: Image.asset(
-              'assets/images/home.png',
+              'assets/images/social.png',
               height: 24,
               color: _currentIndex == 0 ? primaryGreen : Colors.grey,
               errorBuilder: (_, __, ___) => Image.asset(
@@ -376,7 +376,7 @@ class _ProfilePageState extends State<ProfilePage>
                 color: _currentIndex == 0 ? primaryGreen : Colors.grey,
               ),
             ),
-            label: "Home",
+            label: "Users",
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
@@ -393,7 +393,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
-              'assets/images/social.png',
+              'assets/images/home.png',
               height: 24,
               color: _currentIndex == 2 ? primaryGreen : Colors.grey,
               errorBuilder: (_, __, ___) => Image.asset(
@@ -402,7 +402,7 @@ class _ProfilePageState extends State<ProfilePage>
                 color: _currentIndex == 2 ? primaryGreen : Colors.grey,
               ),
             ),
-            label: "Profiles",
+            label: "Home",
           ),
           BottomNavigationBarItem(
             icon: Image.asset(

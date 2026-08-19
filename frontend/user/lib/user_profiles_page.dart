@@ -115,8 +115,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   // ── Undo state ──
   PublicUserProfile? _lastDismissedUser;
   bool _undoLiked = false;
-  bool _showUndo = false;
-  Timer? _undoTimer;
 
   // ─────────── Lifecycle ───────────
 
@@ -141,7 +139,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   @override
   void dispose() {
     _bgController.dispose();
-    _undoTimer?.cancel();
     super.dispose();
   }
 
@@ -356,7 +353,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       _isAnimatingCard = false;
       _isDismissingCard = false;
       _pulseNewTopCard = true;
-      _showUndo = true;
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -365,18 +361,10 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     });
 
     _maybeFetchMore();
-
-    // Auto-hide undo after 3 seconds
-    _undoTimer?.cancel();
-    _undoTimer = Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      setState(() => _showUndo = false);
-    });
   }
 
   void _undoLastSwipe() {
     if (_lastDismissedUser == null) return;
-    _undoTimer?.cancel();
 
     // Undo the like if the previous swipe was a right swipe
     if (_undoLiked && LikedUserManager.instance.isLiked(_lastDismissedUser!.id)) {
@@ -390,7 +378,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       // Go back one card
       currentIndex = (currentIndex - 1 + users.length) % users.length;
       _lastDismissedUser = null;
-      _showUndo = false;
       _undoLiked = false;
     });
   }
@@ -426,6 +413,14 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           ),
           centerTitle: true,
           automaticallyImplyLeading: false,
+          actions: [
+            if (_lastDismissedUser != null)
+              IconButton(
+                icon: const Icon(Icons.undo_rounded, color: Colors.white),
+                onPressed: _undoLastSwipe,
+                tooltip: 'Undo last swipe',
+              ),
+          ],
         ),
         body: Stack(
           children: [
@@ -490,47 +485,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
               ),
             ),
 
-            // ── Undo overlay ──
-            if (_showUndo && _lastDismissedUser != null)
-              Positioned(
-                bottom: 90,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 300),
-                    opacity: _showUndo ? 1.0 : 0.0,
-                    child: Material(
-                      elevation: 8,
-                      borderRadius: BorderRadius.circular(30),
-                      color: Colors.black87,
-                      child: InkWell(
-                        onTap: _undoLastSwipe,
-                        borderRadius: BorderRadius.circular(30),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 14),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.undo_rounded,
-                                  color: Colors.white, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Undo · ${_lastDismissedUser!.name}',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -776,26 +730,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                     );
                   }),
 
-                  // ── Swipe hint row below card stack ──
-                  Positioned(
-                    bottom: -36,
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _swipeHint(
-                            icon: Icons.arrow_back_rounded,
-                            label: 'Skip',
-                            color: Colors.white54),
-                        const SizedBox(width: 40),
-                        _swipeHint(
-                            icon: Icons.favorite_rounded,
-                            label: 'Like',
-                            color: Colors.white54),
-                      ],
-                    ),
-                  ),
+                  // Removed swipe hint row
                 ],
               ),
             );
@@ -831,10 +766,11 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     final linkedinUrl = user.linkedinUrl;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Material(
-        elevation: 12,
-        borderRadius: BorderRadius.circular(24),
+        elevation: 16,
+        shadowColor: Colors.black54,
+        borderRadius: BorderRadius.circular(30),
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
@@ -845,7 +781,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                   image: DecorationImage(
                     image: _avatarProvider(user),
                     fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
+                    alignment: Alignment.center,
                   ),
                 ),
               ),
@@ -859,12 +795,12 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.06),
-                      Colors.black.withOpacity(0.00),
-                      Colors.black.withOpacity(0.65),
-                      Colors.black.withOpacity(0.85),
+                      Colors.black.withOpacity(0.1),
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.5),
+                      Colors.black.withOpacity(0.9),
                     ],
-                    stops: const [0.0, 0.45, 0.75, 1.0],
+                    stops: const [0.0, 0.4, 0.7, 1.0],
                   ),
                 ),
               ),

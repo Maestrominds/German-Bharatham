@@ -25,7 +25,7 @@ exports.getPublicUsers = async (req, res) => {
           name: true,
           email: true,
           phone: true,
-          // Note: photo intentionally excluded - heavy base64 data not needed for user cards
+          photo: true,
           role: true,
           isActive: true,
           createdAt: true,

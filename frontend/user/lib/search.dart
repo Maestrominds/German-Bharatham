@@ -640,22 +640,19 @@ class _SearchPageState extends State<SearchPage> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF4E7F6D),
         unselectedItemColor: Colors.grey,
-        onTap: (index) {
+        onTap: (index) async {
           if (index == 0) {
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => const HomePage()));
-          }
-          if (index == 2) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const UserProfilesPage()),
             );
-          }
-          if (index == 3) {
+          } else if (index == 2) {
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (_) => const HomePage()));
+          } else if (index == 3) {
             Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => const SavedPage()));
-          }
-          if (index == 4) {
+          } else if (index == 4) {
             Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => const ProfilePage()));
           }
@@ -663,16 +660,16 @@ class _SearchPageState extends State<SearchPage> {
         items: [
           BottomNavigationBarItem(
             icon: Image.asset(
-              'assets/images/home.png',
+              'assets/images/social.png',
               height: 24,
               color: bottomIndex == 0 ? const Color(0xFF4E7F6D) : Colors.grey,
               errorBuilder: (_, __, ___) => Icon(
-                Icons.home,
+                Icons.people,
                 size: 24,
                 color: bottomIndex == 0 ? const Color(0xFF4E7F6D) : Colors.grey,
               ),
             ),
-            label: 'Home',
+            label: 'Users',
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
@@ -689,16 +686,16 @@ class _SearchPageState extends State<SearchPage> {
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
-              'assets/images/social.png',
+              'assets/images/home.png',
               height: 24,
               color: bottomIndex == 2 ? const Color(0xFF4E7F6D) : Colors.grey,
               errorBuilder: (_, __, ___) => Icon(
-                Icons.people,
+                Icons.home,
                 size: 24,
                 color: bottomIndex == 2 ? const Color(0xFF4E7F6D) : Colors.grey,
               ),
             ),
-            label: 'Profiles',
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Image.asset(

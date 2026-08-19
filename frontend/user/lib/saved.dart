@@ -273,7 +273,7 @@ class _SavedPageState extends State<SavedPage> {
           if (index == 0) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const HomePage()),
+              MaterialPageRoute(builder: (_) => const UserProfilesPage()),
             );
           } else if (index == 1) {
             Navigator.pushReplacement(
@@ -283,7 +283,7 @@ class _SavedPageState extends State<SavedPage> {
           } else if (index == 2) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const UserProfilesPage()),
+              MaterialPageRoute(builder: (_) => const HomePage()),
             );
           } else if (index == 4) {
             Navigator.pushReplacement(
@@ -295,7 +295,7 @@ class _SavedPageState extends State<SavedPage> {
         items: [
           BottomNavigationBarItem(
             icon: Image.asset(
-              'assets/images/home.png',
+              'assets/images/social.png',
               height: 24,
               color: _currentIndex == 0 ? const Color(0xFF3A7D6B) : Colors.grey,
               errorBuilder: (_, _, _) => Image.asset(
@@ -304,7 +304,7 @@ class _SavedPageState extends State<SavedPage> {
                 color: _currentIndex == 0 ? const Color(0xFF3A7D6B) : Colors.grey,
               ),
             ),
-            label: "Home",
+            label: "Users",
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
@@ -321,7 +321,7 @@ class _SavedPageState extends State<SavedPage> {
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
-              'assets/images/social.png',
+              'assets/images/home.png',
               height: 24,
               color: _currentIndex == 2 ? const Color(0xFF3A7D6B) : Colors.grey,
               errorBuilder: (_, _, _) => Image.asset(
@@ -330,7 +330,7 @@ class _SavedPageState extends State<SavedPage> {
                 color: _currentIndex == 2 ? const Color(0xFF3A7D6B) : Colors.grey,
               ),
             ),
-            label: "Profiles",
+            label: "Home",
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
