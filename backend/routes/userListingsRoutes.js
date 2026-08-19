@@ -39,7 +39,7 @@ router.get("/", async (req, res) => {
 });
 
 // POST submit a new listing
-router.post("/", upload.array('images', 5), async (req, res) => {
+router.post("/", upload.any(), async (req, res) => {
   try {
     // Support both JSON body and multipart/form-data (Flutter sends multipart when images are attached)
     let category = req.body.category;
@@ -180,7 +180,7 @@ router.post("/", upload.array('images', 5), async (req, res) => {
 });
 
 // PUT update a pending listing
-router.put("/:category/:id", upload.array('images', 5), async (req, res) => {
+router.put("/:category/:id", upload.any(), async (req, res) => {
   try {
     const { category, id } = req.params;
     // Support both JSON body and multipart/form-data
