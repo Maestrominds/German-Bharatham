@@ -210,9 +210,12 @@ router.put('/:id', adminCheck, async (req, res) => {
     if (b.priceRange   != null) updateData.priceRange   = String(b.priceRange).trim() || null;
     if (b.website      != null) updateData.website      = String(b.website).trim() || null;
     if (b.whatsapp     != null) updateData.whatsapp     = String(b.whatsapp).trim() || null;
+    if (b.email        != null) updateData.email        = String(b.email).trim() || null;
     if (b.status       != null) updateData.status       = b.status;
     if (b.featured     != null) updateData.featured     = !!b.featured;
     if (b.verified     != null) updateData.verified     = !!b.verified;
+    if (b.latitude     !== undefined) updateData.latitude     = b.latitude !== null && b.latitude !== '' ? parseFloat(b.latitude) : null;
+    if (b.longitude    !== undefined) updateData.longitude    = b.longitude !== null && b.longitude !== '' ? parseFloat(b.longitude) : null;
     if (b.contactPhone || b.phone) {
       updateData.contactPhone = String(b.contactPhone || b.phone).trim() || null;
       updateData.phone        = String(b.contactPhone || b.phone).trim() || null;
