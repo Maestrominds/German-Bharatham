@@ -423,6 +423,8 @@ const validate = (category, data) => {
     if (amenities.length === 0) return 'Services Offered is required';
   }
   return null;
+};
+
 const buildPayload = (category, data) => {
   if (category === 'Accommodation') {
     return {
