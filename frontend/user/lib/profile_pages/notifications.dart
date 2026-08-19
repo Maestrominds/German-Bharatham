@@ -155,7 +155,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/api/user/notifications'),
         headers: {'Authorization': 'Bearer $token'},
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final decoded = jsonDecode(response.body);
@@ -269,6 +269,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   ImageProvider? _senderAvatar(String? photo) {
     if (photo == null || photo.trim().isEmpty) return null;
+    if (photo.startsWith('http')) {
+      return NetworkImage(photo);
+    }
     try {
       final raw = photo.contains(',') ? photo.split(',').last : photo;
       return MemoryImage(base64Decode(raw));

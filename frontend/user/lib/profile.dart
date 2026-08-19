@@ -61,6 +61,9 @@ class _ProfilePageState extends State<ProfilePage>
 
   ImageProvider? _avatarProvider(String? photoBase64) {
     if (photoBase64 != null && photoBase64.trim().isNotEmpty) {
+      if (photoBase64.startsWith('http')) {
+        return NetworkImage(photoBase64);
+      }
       try {
         final raw = photoBase64.contains(',')
             ? photoBase64.split(',').last

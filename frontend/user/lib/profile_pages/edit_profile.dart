@@ -38,6 +38,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   ImageProvider _avatarProvider() {
     if (_photoBase64 != null && _photoBase64!.isNotEmpty) {
+      if (_photoBase64!.startsWith('http')) {
+        return NetworkImage(_photoBase64!);
+      }
       try {
         final raw = _photoBase64!.contains(',')
             ? _photoBase64!.split(',').last

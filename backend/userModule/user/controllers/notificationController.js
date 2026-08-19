@@ -3,11 +3,19 @@ const prisma = require('../../../config/prisma');
 // Helper to format PostgreSQL notification to match frontend expectations
 const formatNotification = (n) => {
   if (!n) return null;
+
+  // Clean up massive base64 strings to save bandwidth
+  let photo = n.senderPhoto;
+  if (photo && !photo.startsWith('http')) {
+    photo = null; 
+  }
+
   return {
     ...n,
     _id: String(n.id),
     recipient: String(n.recipientId),
     sender: n.senderId ? String(n.senderId) : null,
+    senderPhoto: photo,
   };
 };
 

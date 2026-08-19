@@ -309,7 +309,7 @@ class _SearchPageState extends State<SearchPage> {
   Future<List<Job>> _fetchJobs() async {
     final response = await http
         .get(Uri.parse('${ApiConfig.baseUrl}/api/jobs/user'))
-        .timeout(const Duration(seconds: 8));
+        .timeout(const Duration(seconds: 15));
     if (response.statusCode != 200) return const [];
     await CacheService.set('search_jobs', response.body);
     return _parseJobs(response.body);
