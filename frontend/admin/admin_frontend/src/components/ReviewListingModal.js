@@ -264,10 +264,8 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Property Type</label>
               <select name="propertyType" value={formData.propertyType} onChange={handleFieldChange} style={inputStyle}>
                 <option value="apartment">Apartment</option>
-                <option value="house">House</option>
-                <option value="room_shared">Room / Shared WG</option>
-                <option value="studio">Studio / 1-Zimmer</option>
-                <option value="other">Other</option>
+                <option value="temporary_stays">Temporary Stays</option>
+                <option value="shared_rooms">Shared Rooms</option>
               </select>
             </div>
             <div>
@@ -339,11 +337,11 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Job Type</label>
               <select name="jobType" value={formData.jobType} onChange={handleFieldChange} style={inputStyle}>
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
+                <option value="Full Time">Full Time</option>
+                <option value="Part Time">Part Time</option>
                 <option value="Contract">Contract</option>
                 <option value="Internship">Internship</option>
-                <option value="Mini-Job">Mini-Job</option>
+                <option value="Freelance">Freelance</option>
               </select>
             </div>
           </div>
@@ -426,7 +424,12 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Price Range</label>
-              <input type="text" name="priceRange" value={formData.priceRange || ''} onChange={handleFieldChange} style={inputStyle} />
+              <select name="priceRange" value={formData.priceRange || '€€'} onChange={handleFieldChange} style={inputStyle}>
+                <option value="€">€ (Low)</option>
+                <option value="€€">€€ (Medium)</option>
+                <option value="€€€">€€€ (Premium)</option>
+                <option value="€€€€">€€€€ (Luxury)</option>
+              </select>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>

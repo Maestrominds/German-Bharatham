@@ -115,9 +115,9 @@ const AddAccommodationModal = ({ onClose, onSuccess }) => {
             <div className="form-group">
               <label>Property Type <span style={{ color: 'red' }}>*</span></label>
               <select name="propertyType" value={form.propertyType} onChange={handleChange}>
-                <option value="Apartment">Apartment</option>
-                <option value="Shared Room">Shared Room</option>
-                <option value="Temporary Stays">Temporary Stays</option>
+                <option value="apartment">Apartment</option>
+                <option value="temporary_stays">Temporary Stays</option>
+                <option value="shared_rooms">Shared Rooms</option>
               </select>
             </div>
           </div>

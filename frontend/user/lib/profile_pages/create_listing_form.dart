@@ -325,7 +325,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         request.fields['data'] = jsonEncode(_buildPayload());
 
         // Attach files (images) directly as binary streams
-        final fieldName = widget.category == 'Jobs' ? 'companyLogo' : 'images';
+        final fieldName = 'images';
         for (final file in _imageFiles) {
           final bytes = await file.readAsBytes();
           request.files.add(http.MultipartFile.fromBytes(
@@ -619,35 +619,35 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
 
   List<Widget> _buildAccommodationForm() {
     return [
-      _buildField(key: 'title', label: 'Title', hint: 'Cozy 2-Bedroom Apartment', maxLength: 100, minLength: 20),
+      _buildField(key: 'title', label: 'Title', hint: 'Cozy 2-Bedroom Apartment', maxLength: 100, minLength: 2),
       _buildDropdown(
         label: 'Property Type',
         value: _propertyType,
         items: ['apartment', 'temporary_stays', 'shared_rooms'],
         onChanged: (val) => setState(() => _propertyType = val ?? 'apartment'),
       ),
-      _buildField(key: 'city', label: 'City', hint: 'Munich', maxLength: 50, minLength: 20),
+      _buildField(key: 'city', label: 'City', hint: 'Munich', maxLength: 50, minLength: 2),
       _buildField(
         key: 'postalCode',
         label: 'Postal Code',
         hint: '80331',
         maxLength: 20,
-        minLength: 4,
+        minLength: 2,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       ),
-      _buildField(key: 'area', label: 'Area', hint: 'Schwabing', maxLength: 100, minLength: 20),
-      _buildField(key: 'address', label: 'Address', hint: 'Leopoldstraße 1', maxLength: 200, minLength: 20),
+      _buildField(key: 'area', label: 'Area', hint: 'Schwabing', maxLength: 100, minLength: 2),
+      _buildField(key: 'address', label: 'Address', hint: 'Leopoldstraße 1', maxLength: 200, minLength: 2),
       _buildField(
         key: 'contactPhone',
         label: 'Contact Phone',
         hint: '491701234567',
         maxLength: 20,
-        minLength: 10,
+        minLength: 2,
         keyboardType: TextInputType.phone,
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+]'))],
       ),
-      _buildField(key: 'description', label: 'Description', hint: 'Detailed description…', maxLines: 4, maxLength: 5000, minLength: 20),
+      _buildField(key: 'description', label: 'Description', hint: 'Detailed description…', maxLines: 4, maxLength: 5000, minLength: 2),
       
       const Padding(
         padding: EdgeInsets.symmetric(vertical: 10),
@@ -705,7 +705,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
 
   List<Widget> _buildJobsForm() {
     return [
-      _buildField(key: 'title', label: 'Job Title', hint: 'Software Engineer', maxLength: 100, minLength: 20),
+      _buildField(key: 'title', label: 'Job Title', hint: 'Software Engineer', maxLength: 100, minLength: 2),
       _buildField(key: 'companyName', label: 'Company Name', hint: 'Tech Solutions GmbH', maxLength: 100, minLength: 1),
       _buildField(key: 'location', label: 'Location (City)', hint: 'Munich', maxLength: 100, minLength: 1),
       _buildField(
@@ -718,16 +718,16 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         keyboardType: TextInputType.text,
       ),
       _buildField(key: 'salary', label: 'Salary', hint: '€3,000/month', required: false, maxLength: 50, minLength: 1),
-      _buildField(key: 'applyUrl', label: 'Apply URL', hint: 'https://company.com/apply', maxLength: 500, minLength: 10, keyboardType: TextInputType.url),
+      _buildField(key: 'applyUrl', label: 'Apply URL', hint: 'https://company.com/apply', maxLength: 500, minLength: 2, keyboardType: TextInputType.url),
       _buildDropdown(
         label: 'Job Type',
         value: _jobType,
         items: ['Full Time', 'Part Time', 'Contract', 'Internship', 'Freelance'],
         onChanged: (val) => setState(() => _jobType = val ?? 'Full Time'),
       ),
-      _buildField(key: 'description', label: 'Description', hint: 'Job description…', maxLines: 4, maxLength: 5000, minLength: 20),
-      _buildField(key: 'requirements', label: 'Requirements (comma-separated)', hint: 'Flutter, Dart, 2+ years experience', maxLines: 2, maxLength: 2000, minLength: 20),
-      _buildField(key: 'benefits', label: 'Benefits (comma-separated)', hint: 'Health insurance, flexible hours', maxLines: 2, maxLength: 2000, minLength: 20),
+      _buildField(key: 'description', label: 'Description', hint: 'Job description…', maxLines: 4, maxLength: 5000, minLength: 2),
+      _buildField(key: 'requirements', label: 'Requirements (comma-separated)', hint: 'Flutter, Dart, 2+ years experience', maxLines: 2, maxLength: 2000, minLength: 2),
+      _buildField(key: 'benefits', label: 'Benefits (comma-separated)', hint: 'Health insurance, flexible hours', maxLines: 2, maxLength: 2000, minLength: 2),
 
       const SizedBox(height: 20),
       _buildImageSelector(),
@@ -736,8 +736,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
 
   List<Widget> _buildServicesForm() {
     return [
-      _buildField(key: 'serviceName', label: 'Service Name', hint: 'Visa Consultation', maxLength: 100, minLength: 20),
-      _buildField(key: 'providerName', label: 'Provider Name', hint: 'Max Mustermann', maxLength: 100, minLength: 20),
+      _buildField(key: 'serviceName', label: 'Service Name', hint: 'Visa Consultation', maxLength: 100, minLength: 2),
+      _buildField(key: 'providerName', label: 'Provider Name', hint: 'Max Mustermann', maxLength: 100, minLength: 2),
       _buildDropdown(
         label: 'Service Type',
         value: _serviceType,
@@ -751,24 +751,24 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         itemValues: ['€', '€€', '€€€', '€€€€'],
         onChanged: (val) => setState(() => _servicePriceRange = val ?? '€€'),
       ),
-      _buildField(key: 'city', label: 'City', hint: 'Munich', maxLength: 50, minLength: 20),
+      _buildField(key: 'city', label: 'City', hint: 'Munich', maxLength: 50, minLength: 2),
       _buildField(
         key: 'postalCode',
         label: 'Postal Code',
         hint: '80331',
         maxLength: 20,
-        minLength: 4,
+        minLength: 2,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       ),
-      _buildField(key: 'area', label: 'Area', hint: 'Maxvorstadt', maxLength: 100, minLength: 20),
-      _buildField(key: 'address', label: 'Address', hint: 'Street, No.', maxLength: 200, minLength: 20),
+      _buildField(key: 'area', label: 'Area', hint: 'Maxvorstadt', maxLength: 100, minLength: 2),
+      _buildField(key: 'address', label: 'Address', hint: 'Street, No.', maxLength: 200, minLength: 2),
       _buildField(
         key: 'contactPhone',
         label: 'Contact Phone',
         hint: '491701234567',
         maxLength: 20,
-        minLength: 10,
+        minLength: 2,
         keyboardType: TextInputType.phone,
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+]'))],
       ),
@@ -778,12 +778,12 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         hint: '491701234567',
         required: false,
         maxLength: 20,
-        minLength: 10,
+        minLength: 2,
         keyboardType: TextInputType.phone,
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+]'))],
       ),
-      _buildField(key: 'email', label: 'Email', hint: 'name@example.com', maxLength: 100, minLength: 10, keyboardType: TextInputType.emailAddress),
-      _buildField(key: 'website', label: 'Website', hint: 'https://example.com', required: false, maxLength: 200, minLength: 10, keyboardType: TextInputType.url),
+      _buildField(key: 'email', label: 'Email', hint: 'name@example.com', maxLength: 100, minLength: 2, keyboardType: TextInputType.emailAddress),
+      _buildField(key: 'website', label: 'Website', hint: 'https://example.com', required: false, maxLength: 200, minLength: 2, keyboardType: TextInputType.url),
       _buildField(
         key: 'latitude',
         label: 'Latitude',

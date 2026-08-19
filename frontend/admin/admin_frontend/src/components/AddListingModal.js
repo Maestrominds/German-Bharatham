@@ -423,16 +423,14 @@ const validate = (category, data) => {
     if (amenities.length === 0) return 'Services Offered is required';
   }
   return null;
-};
-
 const buildPayload = (category, data) => {
   if (category === 'Accommodation') {
     return {
       title: data.title?.trim(),
       propertyType: data.propertyType,
       city: data.city?.trim(),
-      area: data.area?.trim() || null,
-      postalCode: data.postalCode?.trim(),
+      state: data.area?.trim() || null,
+      zipCode: data.postalCode?.trim() || null,
       address: data.address?.trim() || null,
       contactPhone: data.contactPhone?.trim(),
       description: data.description?.trim() || null,
@@ -444,6 +442,7 @@ const buildPayload = (category, data) => {
         a[key] = true; return a;
       }, {}),
       media: { images: data.images || [] },
+      images: data.images || [],
       adminControls: { isActive: data.status === 'active' },
     };
   }

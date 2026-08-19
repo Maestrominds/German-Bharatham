@@ -130,6 +130,18 @@ router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
         req.files.map(f => uploadImage(f.buffer, 'accommodations'))
       );
       imageUrls = uploads.map(r => r.secure_url);
+    } else if (req.body.images && Array.isArray(req.body.images)) {
+      const uploads = await Promise.all(
+        req.body.images.map(async (base64Img) => {
+          if (typeof base64Img === 'string' && base64Img.startsWith('http')) return { secure_url: base64Img };
+          if (typeof base64Img !== 'string' || !base64Img.includes('base64')) return { secure_url: null };
+          
+          const base64Data = base64Img.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          return uploadImage(buffer, 'accommodations');
+        })
+      );
+      imageUrls = uploads.map(r => r.secure_url).filter(url => url !== null);
     }
 
     // Extract flat helper fields for SQL search/sort performance safely

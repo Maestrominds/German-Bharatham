@@ -109,6 +109,21 @@ router.post('/', adminCheck, async (req, res) => {
       return res.status(400).json({ message: 'Services Offered is required' });
     }
 
+    let imageUrls = [];
+    if (req.body.images && Array.isArray(req.body.images)) {
+      const uploads = await Promise.all(
+        req.body.images.map(async (base64Img) => {
+          if (typeof base64Img === 'string' && base64Img.startsWith('http')) return { secure_url: base64Img };
+          if (typeof base64Img !== 'string' || !base64Img.includes('base64')) return { secure_url: null };
+          
+          const base64Data = base64Img.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          return uploadImage(buffer, 'services');
+        })
+      );
+      imageUrls = uploads.map(r => r.secure_url).filter(url => url !== null);
+    }
+
     console.log(`🔍 [DB QUERY] Creating and saving new Service`);
     const saveStart = Date.now();
     const doc = await prisma.service.create({
@@ -125,7 +140,7 @@ router.post('/', adminCheck, async (req, res) => {
         whatsapp: req.body.whatsapp || null,
         email: req.body.email || "services@germanbharatham.com",
         website: req.body.website || null,
-        images: Array.isArray(req.body.images) ? req.body.images : [],
+        images: imageUrls,
         amenities: amenities,
         rating: req.body.rating ? parseFloat(req.body.rating) : 0,
         ratingCount: req.body.ratingCount ? parseInt(req.body.ratingCount, 10) : 0,

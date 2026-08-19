@@ -105,6 +105,11 @@ router.post('/', adminCheck, upload.single('companyLogo'), async (req, res) => {
     if (req.file) {
       const uploadRes = await uploadImage(req.file.buffer, 'company-logos');
       req.body.companyLogo = uploadRes.secure_url;
+    } else if (req.body.companyLogo && typeof req.body.companyLogo === 'string' && req.body.companyLogo.includes('base64')) {
+      const base64Data = req.body.companyLogo.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      const uploadRes = await uploadImage(buffer, 'company-logos');
+      req.body.companyLogo = uploadRes.secure_url;
     }
 
     req.body.status = 'Pending';
