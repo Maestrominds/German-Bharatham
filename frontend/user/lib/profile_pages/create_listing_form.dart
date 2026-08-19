@@ -135,7 +135,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         _existingImageUrls = [data!['companyLogo']];
       }
     } 
-    else if (widget.category == 'Services') {
+    else if (widget.category == 'Services' || widget.category == 'Expat Services') {
       _controllers['serviceName'] = TextEditingController(text: (data?['serviceName'] ?? data?['title'])?.toString() ?? '');
       _controllers['providerName'] = TextEditingController(text: data?['providerName']?.toString() ?? '');
       _controllers['city'] = TextEditingController(text: data?['city']?.toString() ?? '');
@@ -253,7 +253,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         'applyUrl': _controllers['applyUrl']?.text.trim(),
       };
     } 
-    else {
+    else if (widget.category == 'Services' || widget.category == 'Expat Services') {
       // Services
       final lat = double.tryParse(_controllers['latitude']?.text ?? '');
       final lon = double.tryParse(_controllers['longitude']?.text ?? '');
@@ -817,7 +817,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       formFields = _buildAccommodationForm();
     } else if (widget.category == 'Jobs') {
       formFields = _buildJobsForm();
-    } else {
+    } else if (widget.category == 'Services' || widget.category == 'Expat Services') {
       formFields = _buildServicesForm();
     }
 
