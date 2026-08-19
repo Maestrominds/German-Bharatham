@@ -74,6 +74,8 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       providerName: raw.providerName || '',
       whatsapp: raw.whatsapp || '',
       email: raw.email || '',
+      website: raw.website || '',
+      priceRange: raw.priceRange || '',
       latitude: raw.latitude || '',
       longitude: raw.longitude || '',
       servicesOfferedText: Array.isArray(raw.amenities) ? raw.amenities.join(', ') : (raw.servicesOffered || '')
@@ -407,9 +409,39 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Address</label>
             <input type="text" name="address" value={formData.address || ''} onChange={handleFieldChange} style={inputStyle} />
           </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>WhatsApp</label>
+              <input type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Email</label>
+              <input type="text" name="email" value={formData.email || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Website</label>
+              <input type="text" name="website" value={formData.website || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Price Range</label>
+              <input type="text" name="priceRange" value={formData.priceRange || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Latitude</label>
+              <input type="number" step="any" name="latitude" value={formData.latitude || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Longitude</label>
+              <input type="number" step="any" name="longitude" value={formData.longitude || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+          </div>
           <div style={{ marginBottom: '12px' }}>
             <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Services Offered (comma separated)</label>
-            <input type="text" name="servicesOfferedText" value={formData.servicesOfferedText} onChange={handleFieldChange} style={inputStyle} />
+            <input type="text" name="servicesOfferedText" value={formData.servicesOfferedText || ''} onChange={handleFieldChange} style={inputStyle} />
           </div>
         </div>
       );

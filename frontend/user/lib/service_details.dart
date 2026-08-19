@@ -365,12 +365,13 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
           );
         }
 
+        final isMapUrl = address.startsWith('http');
+        
         return GestureDetector(
           onTap: () async {
-            final query = Uri.encodeComponent(address);
-            final url = Uri.parse(
-              'https://www.google.com/maps/search/?api=1&query=$query',
-            );
+            final url = isMapUrl 
+                ? Uri.parse(address)
+                : Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}');
             if (await canLaunchUrl(url)) {
               await launchUrl(url, mode: LaunchMode.externalApplication);
             }
@@ -766,6 +767,33 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                   ),
 
                 const SizedBox(height: 16),
+                if (widget.item.area != null || widget.item.zipCode != null || (widget.item.address != null && !widget.item.address!.startsWith('http'))) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Location Details',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (widget.item.area != null) Text('Area: ${widget.item.area}', style: const TextStyle(fontSize: 15)),
+                        if (widget.item.zipCode != null) Text('Postal Code: ${widget.item.zipCode}', style: const TextStyle(fontSize: 15)),
+                        if (widget.item.address != null && !widget.item.address!.startsWith('http'))
+                          Text('Address: ${widget.item.address}', style: const TextStyle(fontSize: 15)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -776,7 +804,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        "Location",
+                        "Map",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
