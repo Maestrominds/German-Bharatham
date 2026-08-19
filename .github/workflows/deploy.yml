@@ -21,5 +21,6 @@ jobs:
             cd /var/www/german-bharatham/backend
             git pull origin feature-maestromind-release
             npm install
+            npx prisma db push
             npx prisma generate
             pm2 restart gb-backend
