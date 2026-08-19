@@ -43,6 +43,7 @@ router.post("/", upload.any(), async (req, res) => {
   try {
     // Support both JSON body and multipart/form-data (Flutter sends multipart when images are attached)
     let category = req.body.category;
+    if (category === "Expat Services") category = "Services";
     let data = req.body.data;
     if (typeof data === 'string') {
       try { data = JSON.parse(data); } catch (_) { data = {}; }
@@ -182,7 +183,8 @@ router.post("/", upload.any(), async (req, res) => {
 // PUT update a pending listing
 router.put("/:category/:id", upload.any(), async (req, res) => {
   try {
-    const { category, id } = req.params;
+    let { category, id } = req.params;
+    if (category === "Expat Services") category = "Services";
     // Support both JSON body and multipart/form-data
     let data = req.body.data;
     if (typeof data === 'string') {
