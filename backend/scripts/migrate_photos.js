@@ -1,7 +1,7 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const prisma = require('../config/prisma');
-const { uploadBase64Image } = require('../services/cloudinaryService');
+const { uploadBase64 } = require('../services/cloudinaryService');
 
 async function migratePhotos() {
   console.log('🚀 Starting migration of Base64 user photos to Cloudinary...');
@@ -36,7 +36,7 @@ async function migratePhotos() {
       console.log(`\n☁️ Uploading photo for user: ${user.email} (ID: ${user.id})...`);
       
       try {
-        const result = await uploadBase64Image(user.photo, 'german_bharatham/users');
+        const result = await uploadBase64(user.photo, 'german_bharatham/users');
         
         // 3. Update the user record with the new Cloudinary URL
         await prisma.user.update({

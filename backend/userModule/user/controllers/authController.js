@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendEmail } = require("../../../services/mailer");
 const axios = require("axios");
-const { uploadBase64Image } = require("../../../services/cloudinaryService");
+const { uploadBase64 } = require("../../../services/cloudinaryService");
 
 let googleAuthLib;
 try {
@@ -431,7 +431,7 @@ exports.updateProfile = async (req, res) => {
     if (photo !== undefined) {
       if (photo && photo.startsWith('data:image')) {
         console.log(`☁️ [CLOUDINARY] Uploading user profile photo to cloudinary...`);
-        const result = await uploadBase64Image(photo, "german_bharatham/users");
+        const result = await uploadBase64(photo, "german_bharatham/users");
         update.photo = result.secure_url;
       } else {
         update.photo = photo;
