@@ -500,14 +500,17 @@ Widget _buildServiceImage(
   required double height,
   required String placeholderAsset,
 }) {
-  if (src.trim().isEmpty) {
-    return Image.asset(
-      placeholderAsset,
+  Widget buildFallback() {
+    return Container(
       width: width,
       height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+      color: Colors.grey.shade200,
+      child: const Icon(Icons.image, color: Colors.grey),
     );
+  }
+
+  if (src.trim().isEmpty) {
+    return buildFallback();
   }
 
   if (src.startsWith('data:image')) {
@@ -518,40 +521,21 @@ Widget _buildServiceImage(
         width: width,
         height: height,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Image.asset(
-          placeholderAsset,
-          width: width,
-          height: height,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-        ),
+        errorBuilder: (_, __, ___) => buildFallback(),
       );
     } catch (_) {
-      return Image.asset(
-        placeholderAsset,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-      );
+      return buildFallback();
     }
   }
 
   if (src.startsWith('http://') || src.startsWith('https://')) {
-    final Widget placeholder = Image.asset(
-      placeholderAsset,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-    );
     return OptimizedImage(
       imageUrl: src,
       width: width,
       height: height,
       fit: BoxFit.cover,
-      errorWidget: placeholder,
-      placeholder: placeholder,
+      errorWidget: buildFallback(),
+      placeholder: buildFallback(),
     );
   }
 
@@ -560,12 +544,6 @@ Widget _buildServiceImage(
     width: width,
     height: height,
     fit: BoxFit.cover,
-    errorBuilder: (_, __, ___) => Image.asset(
-      placeholderAsset,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-    ),
+    errorBuilder: (_, __, ___) => buildFallback(),
   );
 }

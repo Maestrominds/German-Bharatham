@@ -170,18 +170,15 @@ class InfoPage extends StatelessWidget {
     );
   }
 
-  Widget _leadingImage(String assetPath) {
+  Widget _leadingIcon(IconData icon) {
     return Container(
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.green.shade50,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.asset(assetPath, width: 48, height: 48, fit: BoxFit.cover),
-      ),
+      child: Icon(icon, color: primaryGreen, size: 28),
     );
   }
 
@@ -208,17 +205,17 @@ class InfoPage extends StatelessWidget {
           child: Column(
             children: [
               _buildCard(
-                _leadingImage('assets/images/rent.jpg'),
+                _leadingIcon(Icons.home),
                 'Find accommodation',
                 'Verified shared rooms & apartments',
               ),
               _buildCard(
-                _leadingImage('assets/images/service.jpg'),
+                _leadingIcon(Icons.work),
                 'Discover Jobs',
                 'Explore full-time, part-time & expat services',
               ),
               _buildCard(
-                _leadingImage('assets/images/whatsapp.png'),
+                _leadingIcon(Icons.people),
                 'Community support',
                 'Guides, Communities and resources for Indians',
               ),

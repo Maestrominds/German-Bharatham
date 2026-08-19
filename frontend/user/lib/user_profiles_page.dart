@@ -273,11 +273,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
 
   // ─────────── Interaction ───────────
 
-  ImageProvider _avatarProvider(PublicUserProfile user) {
-    if (user.avatarImage != null) return user.avatarImage!;
-    return const AssetImage('assets/images/person.jpeg');
-  }
-
   Future<void> _toggleLike(PublicUserProfile user) async {
     final nowLiked = await LikedUserManager.instance.toggle(user.id);
     if (!mounted) return;
@@ -776,15 +771,22 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           children: [
             // ── Avatar background ──
             Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: _avatarProvider(user),
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                  ),
-                ),
-              ),
+              child: user.avatarImage != null
+                  ? DecoratedBox(
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: user.avatarImage!,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey.shade300,
+                      child: const Center(
+                        child: Icon(Icons.person, size: 100, color: Colors.grey),
+                      ),
+                    ),
             ),
 
             // ── Gradient overlay ──

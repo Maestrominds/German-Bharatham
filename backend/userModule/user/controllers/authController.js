@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendEmail } = require("../../../services/mailer");
 const axios = require("axios");
+const { uploadBase64Image } = require("../../../services/cloudinaryService");
 
 let googleAuthLib;
 try {
@@ -412,7 +413,6 @@ exports.updateProfile = async (req, res) => {
     const update = {};
     if (name          !== undefined) update.name          = name.trim();
     if (phone         !== undefined) update.phone         = phone.trim();
-    if (photo         !== undefined) update.photo         = photo;
     if (dob           !== undefined) update.dob           = dob;
     if (gender        !== undefined) update.gender        = gender;
     if (location      !== undefined) update.location      = location;
@@ -427,6 +427,16 @@ exports.updateProfile = async (req, res) => {
     if (stateOfOrigin !== undefined) update.stateOfOrigin = stateOfOrigin;
     if (motherTongue  !== undefined) update.motherTongue  = motherTongue;
     if (linkedinUrl   !== undefined) update.linkedinUrl   = linkedinUrl;
+
+    if (photo !== undefined) {
+      if (photo && photo.startsWith('data:image')) {
+        console.log(`☁️ [CLOUDINARY] Uploading user profile photo to cloudinary...`);
+        const result = await uploadBase64Image(photo, "german_bharatham/users");
+        update.photo = result.secure_url;
+      } else {
+        update.photo = photo;
+      }
+    }
 
     console.log(`🔍 [DB QUERY] updating user with id: ${numericId}`);
     const updateStart = Date.now();

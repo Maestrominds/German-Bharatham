@@ -352,35 +352,38 @@ class _JobCardState extends State<JobCard> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: () {
+                  Widget buildFallback() {
+                    return Container(
+                      color: Colors.grey.shade200,
+                      child: const Center(
+                        child: Icon(Icons.work, color: Colors.grey),
+                      ),
+                    );
+                  }
+
                   final logo = widget.item.companyLogo;
                   if (logo != null && logo.isNotEmpty) {
                     if (logo.startsWith('data:')) {
                       try {
                         final bytes = base64Decode(logo.split(',').last);
-                        return Image.memory(bytes, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Image.asset('assets/images/google.png', fit: BoxFit.cover));
+                        return Image.memory(
+                          bytes,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => buildFallback(),
+                        );
                       } catch (_) {
-                        return Image.asset('assets/images/google.png', fit: BoxFit.cover);
+                        return buildFallback();
                       }
                     }
                     final url = ApiConfig.getImageUrl(logo);
                     return OptimizedImage(
                       imageUrl: url,
                       fit: BoxFit.cover,
-                      errorWidget: Image.asset(
-                        'assets/images/google.png',
-                        fit: BoxFit.cover,
-                      ),
-                      placeholder: Image.asset(
-                        'assets/images/google.png',
-                        fit: BoxFit.cover,
-                      ),
+                      errorWidget: buildFallback(),
+                      placeholder: buildFallback(),
                     );
                   }
-                  return Image.asset(
-                    'assets/images/google.png',
-                    fit: BoxFit.cover,
-                  );
+                  return buildFallback();
                 }(),
               ),
             ),

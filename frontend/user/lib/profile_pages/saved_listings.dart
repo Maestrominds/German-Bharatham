@@ -327,21 +327,25 @@ Widget _thumbnail({
 }) {
   final img = (image ?? '').trim();
 
+  Widget buildFallback() {
+    return Container(
+      width: width,
+      height: height,
+      color: Colors.grey.shade200,
+      child: const Icon(Icons.image, color: Colors.grey),
+    );
+  }
+
   Widget child;
   if (img.isEmpty) {
-    child = Image.asset(fallbackAsset, width: width, height: height, fit: BoxFit.cover);
+    child = buildFallback();
   } else if (img.startsWith('http')) {
     child = Image.network(
       img,
       width: width,
       height: height,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Image.asset(
-        fallbackAsset,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-      ),
+      errorBuilder: (_, __, ___) => buildFallback(),
     );
   } else if (img.startsWith('assets/')) {
     child = Image.asset(
@@ -349,15 +353,10 @@ Widget _thumbnail({
       width: width,
       height: height,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Image.asset(
-        fallbackAsset,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-      ),
+      errorBuilder: (_, __, ___) => buildFallback(),
     );
   } else {
-    child = Image.asset(fallbackAsset, width: width, height: height, fit: BoxFit.cover);
+    child = buildFallback();
   }
 
   return ClipRRect(borderRadius: borderRadius, child: child);

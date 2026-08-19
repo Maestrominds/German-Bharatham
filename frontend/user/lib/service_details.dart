@@ -1111,12 +1111,10 @@ class _ServiceMapWidgetState extends State<_ServiceMapWidget> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.asset(
-                        'assets/images/google.png',
-                        width: 14,
-                        height: 14,
-                        errorBuilder: (_, __, ___) =>
-                            const SizedBox(width: 14, height: 14),
+                      const Icon(
+                        Icons.map,
+                        size: 14,
+                        color: Color(0xFF1A56DB),
                       ),
                       const SizedBox(width: 6),
                       const Text(

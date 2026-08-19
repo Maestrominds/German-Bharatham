@@ -17,7 +17,11 @@ import 'user_session.dart';
 import 'saved_job_manager.dart';
 import 'saved_manager.dart';
 import 'saved_service_manager.dart';
+import 'home.dart';
+import 'location.dart';
+import 'notification_deeplink.dart';
 import 'saved_guides_manager.dart';
+import 'profile_pages/edit_profile.dart';
 import 'home.dart';
 import 'user_profiles_page.dart';
 import 'forgot_password.dart';
@@ -475,10 +479,22 @@ class _AuthPageState extends State<AuthPage> {
         PrefetchService.warmUpAndPrefetch(token: token);
 
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
-          );
+          final isProfileIncomplete = 
+              (user['motherTongue'] == null || user['motherTongue'].toString().trim().isEmpty) ||
+              (user['industry'] == null || user['industry'].toString().trim().isEmpty) ||
+              (user['location'] == null || user['location'].toString().trim().isEmpty);
+
+          if (isProfileIncomplete) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const EditProfilePage()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
+            );
+          }
         }
       } else {
         String message;
@@ -540,10 +556,22 @@ class _AuthPageState extends State<AuthPage> {
       );
       PrefetchService.warmUpAndPrefetch(token: data['token']?.toString());
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
-        );
+        final isProfileIncomplete = 
+            (user['motherTongue'] == null || user['motherTongue'].toString().trim().isEmpty) ||
+            (user['industry'] == null || user['industry'].toString().trim().isEmpty) ||
+            (user['location'] == null || user['location'].toString().trim().isEmpty);
+
+        if (isProfileIncomplete) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const EditProfilePage()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
+          );
+        }
       }
       return;
     }
