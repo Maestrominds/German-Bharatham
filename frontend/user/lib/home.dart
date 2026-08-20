@@ -12,6 +12,7 @@ import 'community.dart';
 import 'search.dart';
 import 'user_session.dart';
 import 'user_profiles_page.dart';
+import 'profile_pages/create_listing_category.dart';
 import 'profile_pages/notifications.dart';
 import 'profile_pages/subscriptions.dart';
 import 'notification_manager.dart';
@@ -293,6 +294,18 @@ class _HomePageState extends State<HomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const CommunityPage()),
+                );
+              },
+            ),
+
+            CategoryTile(
+              imagePath: 'assets/images/edit.png',
+              title: "Create Listing",
+              subtitle: "List accommodation, jobs or services",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateListingCategoryPage()),
                 );
               },
             ),
