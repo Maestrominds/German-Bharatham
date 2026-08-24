@@ -12,6 +12,7 @@ import 'services/api_config.dart';
 import 'services/api_service.dart';
 import 'services/job_service.dart';
 import 'user_profiles_page.dart';
+import 'second_hand_store_details.dart';
 
 class NotificationDeepLink {
   static Future<void> openFromData(BuildContext context, Map<String, dynamic> data) async {
@@ -53,6 +54,13 @@ class NotificationDeepLink {
     if (module == 'profiles') {
       if (!context.mounted) return;
       Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfilesPage()));
+      return;
+    }
+
+    if (module == 'secondhand' && entityId.isNotEmpty) {
+      final item = await ApiService.getSecondHandStoreById(entityId);
+      if (!context.mounted) return;
+      Navigator.push(context, MaterialPageRoute(builder: (_) => SecondHandStoreDetailsPage(item: item)));
       return;
     }
   }

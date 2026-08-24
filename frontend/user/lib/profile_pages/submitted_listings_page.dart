@@ -22,11 +22,12 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
   List<dynamic> _accommodations = [];
   List<dynamic> _jobs = [];
   List<dynamic> _services = [];
+  List<dynamic> _secondHand = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _fetchListings();
   }
 
@@ -61,6 +62,7 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
           _accommodations = data['Accommodation'] ?? [];
           _jobs = data['Jobs'] ?? [];
           _services = data['Services'] ?? [];
+          _secondHand = data['Second Hand Store'] ?? [];
           _loading = false;
         });
       } else {
@@ -325,6 +327,7 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
                             Tab(text: "Accommodation"),
                             Tab(text: "Jobs"),
                             Tab(text: "Expat Services"),
+                            Tab(text: "Second Hand Store"),
                           ],
                         ),
                       ),
@@ -335,6 +338,7 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
                             _listingsList("Accommodation", _accommodations),
                             _listingsList("Jobs", _jobs),
                             _listingsList("Services", _services),
+                            _listingsList("Second Hand Store", _secondHand),
                           ],
                         ),
                       ),

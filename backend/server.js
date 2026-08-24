@@ -64,7 +64,7 @@ app.use("/api/services/user", require("./servicesModule/user"));
 
 // ── Second Hand Store Module ────────────────────────────────────────────────
 app.use("/api/second-hand/admin", protect, adminOnly, require("./secondHandModule/admin"));
-app.use("/api/second-hand/user", protect, require("./secondHandModule/user"));
+app.use("/api/second-hand/user", require("./secondHandModule/user"));
 
 // ── Subscriptions / Payments Module ─────────────────────────────────────────
 // Razorpay webhook must NOT be protected; it uses signature verification.
