@@ -30,11 +30,12 @@ exports.getDashboardStats = async (req, res) => {
   console.log(`🚀 [START] getDashboardStats called at ${new Date().toISOString()}`);
   try {
     const countStart = Date.now();
-    const [accommodationCount, foodCount, jobCount, serviceCount, userCount, activeSubscriptions] = await Promise.all([
+    const [accommodationCount, foodCount, jobCount, serviceCount, secondHandStoreCount, userCount, activeSubscriptions] = await Promise.all([
       prisma.accommodation.count(),
       prisma.foodGrocery.count(),
       prisma.jobListing.count(),
       prisma.service.count(),
+      prisma.secondHandStore.count(),
       prisma.user.count({ where: { role: "user" } }),
       prisma.subscription.findMany({
         where: { 
@@ -55,8 +56,8 @@ exports.getDashboardStats = async (req, res) => {
       }
     }
 
-    const totalListings = accommodationCount + foodCount + jobCount + serviceCount;
-    const totalCategories = 4; // Accommodation, Food, Services, Jobs
+    const totalListings = accommodationCount + foodCount + jobCount + serviceCount + secondHandStoreCount;
+    const totalCategories = 5; // Accommodation, Food, Services, Jobs, Second Hand Store
 
     const pendingFilter = {
       status: { equals: 'pending', mode: 'insensitive' }
@@ -68,25 +69,28 @@ exports.getDashboardStats = async (req, res) => {
       pendingAccommodations,
       pendingFood,
       pendingJobs,
-      pendingServices
+      pendingServices,
+      pendingSecondHandStores
     ] = await Promise.all([
       prisma.accommodation.count({ where: pendingFilter }),
       prisma.foodGrocery.count({ where: pendingFilter }),
       prisma.jobListing.count({ where: pendingFilter }),
-      prisma.service.count({ where: pendingFilter })
+      prisma.service.count({ where: pendingFilter }),
+      prisma.secondHandStore.count({ where: pendingFilter })
     ]);
 
-    const totalPending = pendingAccommodations + pendingFood + pendingJobs + pendingServices;
+    const totalPending = pendingAccommodations + pendingFood + pendingJobs + pendingServices + pendingSecondHandStores;
     console.log(`✅ [DB RESULT] counted pending documents in ${Date.now() - pendingStart}ms, total pending: ${totalPending}`);
 
     // Get recent listings
     console.log(`🔍 [DB QUERY] fetching recent listings from all collections`);
     const recentStart = Date.now();
-    const [recentAccommodations, recentFood, recentJobs, recentServices] = await Promise.all([
+    const [recentAccommodations, recentFood, recentJobs, recentServices, recentSecondHandStores] = await Promise.all([
       prisma.accommodation.findMany({ orderBy: { createdAt: 'desc' }, take: 2 }),
       prisma.foodGrocery.findMany({ orderBy: { createdAt: 'desc' }, take: 2 }),
       prisma.jobListing.findMany({ orderBy: { createdAt: 'desc' }, take: 2 }),
-      prisma.service.findMany({ orderBy: { createdAt: 'desc' }, take: 2 })
+      prisma.service.findMany({ orderBy: { createdAt: 'desc' }, take: 2 }),
+      prisma.secondHandStore.findMany({ orderBy: { createdAt: 'desc' }, take: 2 })
     ]);
     console.log(`✅ [DB RESULT] fetched recent listings in ${Date.now() - recentStart}ms`);
 
@@ -119,6 +123,13 @@ exports.getDashboardStats = async (req, res) => {
         status: item.status || 'Active',
         createdAt: item.createdAt,
         added: formatTimeAgo(item.createdAt)
+      })),
+      ...recentSecondHandStores.map(item => ({
+        title: item.title || 'Untitled',
+        category: 'Second Hand Store',
+        status: item.status || 'Active',
+        createdAt: item.createdAt,
+        added: formatTimeAgo(item.createdAt)
       }))
     ];
 
@@ -138,7 +149,8 @@ exports.getDashboardStats = async (req, res) => {
         { name: 'Accommodation', count: accommodationCount, icon: '🏠' },
         { name: 'Food', count: foodCount, icon: '🍴' },
         { name: 'Services', count: serviceCount, icon: '🔧' },
-        { name: 'Jobs', count: jobCount, icon: '💼' }
+        { name: 'Jobs', count: jobCount, icon: '💼' },
+        { name: 'Second Hand Store', count: secondHandStoreCount, icon: '🛍️' }
       ],
       recentListings: topRecentListings
     });
@@ -302,11 +314,12 @@ exports.getAllListings = async (req, res) => {
 // Get category details with listing counts
 exports.getCategoryStats = async (req, res) => {
   try {
-    const [accommodationCount, foodCount, serviceCount, jobCount] = await Promise.all([
+    const [accommodationCount, foodCount, serviceCount, jobCount, secondHandStoreCount] = await Promise.all([
       prisma.accommodation.count(),
       prisma.foodGrocery.count(),
       prisma.service.count(),
-      prisma.jobListing.count()
+      prisma.jobListing.count(),
+      prisma.secondHandStore.count()
     ]);
 
     const categories = [
@@ -341,6 +354,14 @@ exports.getCategoryStats = async (req, res) => {
         status: 'Active',
         icon: '💼',
         count: jobCount
+      },
+      {
+        name: 'Second Hand Store',
+        listings: `${secondHandStoreCount} listings`,
+        description: 'Buy and sell pre-loved items',
+        status: 'Active',
+        icon: '🛍️',
+        count: secondHandStoreCount
       }
     ];
 
