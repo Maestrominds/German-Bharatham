@@ -172,7 +172,7 @@ class ApiService {
         queryParams['search'] = search;
       }
 
-      final uri = Uri.parse('${ApiConfig.baseUrl}/api/secondHand/user').replace(
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/second-hand/user').replace(
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
 
@@ -206,7 +206,7 @@ class ApiService {
   static Future<SecondHandStoreItem> getSecondHandStoreById(String id) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/api/secondHand/user/$id'),
+        Uri.parse('${ApiConfig.baseUrl}/api/second-hand/user/$id'),
         headers: {
           'Content-Type': 'application/json',
         },

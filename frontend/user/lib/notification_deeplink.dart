@@ -21,47 +21,54 @@ class NotificationDeepLink {
 
     if (module.isEmpty) return;
 
-    if (module == 'services' && entityId.isNotEmpty) {
-      final item = await ApiService.getServiceById(entityId);
-      if (!context.mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) => ServiceDetailsPage(item: item)));
-      return;
-    }
-
-
-    if (module == 'jobs' && entityId.isNotEmpty) {
-      final item = await JobService.fetchJobById(entityId);
-      if (!context.mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) => JobDetailsPage(item: item)));
-      return;
-    }
-
-    if (module == 'accommodation' && entityId.isNotEmpty) {
-      final resp = await http.get(Uri.parse('${ApiConfig.accommodationEndpoint}/$entityId'));
-      if (resp.statusCode < 200 || resp.statusCode >= 300) {
-        throw Exception('Failed to load accommodation');
+    try {
+      if (module == 'services' && entityId.isNotEmpty) {
+        final item = await ApiService.getServiceById(entityId);
+        if (!context.mounted) return;
+        Navigator.push(context, MaterialPageRoute(builder: (_) => ServiceDetailsPage(item: item)));
+        return;
       }
-      final decoded = jsonDecode(resp.body);
-      final map = decoded is Map<String, dynamic>
-          ? decoded
-          : (decoded as Map).map((k, v) => MapEntry(k.toString(), v));
-      final item = Accommodation.fromJson(map);
-      if (!context.mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) => AccommodationDetailPage(item: item)));
-      return;
-    }
 
-    if (module == 'profiles') {
-      if (!context.mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfilesPage()));
-      return;
-    }
 
-    if (module == 'secondhand' && entityId.isNotEmpty) {
-      final item = await ApiService.getSecondHandStoreById(entityId);
+      if (module == 'jobs' && entityId.isNotEmpty) {
+        final item = await JobService.fetchJobById(entityId);
+        if (!context.mounted) return;
+        Navigator.push(context, MaterialPageRoute(builder: (_) => JobDetailsPage(item: item)));
+        return;
+      }
+
+      if (module == 'accommodation' && entityId.isNotEmpty) {
+        final resp = await http.get(Uri.parse('${ApiConfig.accommodationEndpoint}/$entityId'));
+        if (resp.statusCode < 200 || resp.statusCode >= 300) {
+          throw Exception('Failed to load accommodation');
+        }
+        final decoded = jsonDecode(resp.body);
+        final map = decoded is Map<String, dynamic>
+            ? decoded
+            : (decoded as Map).map((k, v) => MapEntry(k.toString(), v));
+        final item = Accommodation.fromJson(map);
+        if (!context.mounted) return;
+        Navigator.push(context, MaterialPageRoute(builder: (_) => AccommodationDetailPage(item: item)));
+        return;
+      }
+
+      if (module == 'profiles') {
+        if (!context.mounted) return;
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfilesPage()));
+        return;
+      }
+
+      if (module == 'secondhand' && entityId.isNotEmpty) {
+        final item = await ApiService.getSecondHandStoreById(entityId);
+        if (!context.mounted) return;
+        Navigator.push(context, MaterialPageRoute(builder: (_) => SecondHandStoreDetailsPage(item: item)));
+        return;
+      }
+    } catch (e) {
       if (!context.mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) => SecondHandStoreDetailsPage(item: item)));
-      return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This listing is no longer available.')),
+      );
     }
   }
 

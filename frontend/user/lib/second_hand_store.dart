@@ -240,7 +240,6 @@ class _SecondHandStorePageState extends State<SecondHandStorePage> {
                     ? OptimizedImage(
                         imageUrl: imageUrl,
                         fit: BoxFit.cover,
-                        placeholderIcon: Icons.shopping_bag_outlined,
                       )
                     : Center(
                         child: Icon(Icons.shopping_bag_outlined,

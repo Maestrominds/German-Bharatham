@@ -295,11 +295,11 @@ const HOST = process.env.HOST || "0.0.0.0";
     // Clean up notifications older than 7 days on startup, and repeat every 24 hours
     try {
       const { deleteOldNotifications } = require("./userModule/user/services/notificationService");
-      deleteOldNotifications(7); // 7 days retention
+      deleteOldNotifications(1); // 1 day retention
       
       setInterval(() => {
-        deleteOldNotifications(7);
-      }, 7 * 24 * 60 * 60 * 1000); // Once every 7 days
+        deleteOldNotifications(1);
+      }, 1 * 24 * 60 * 60 * 1000); // Once every 1 day
     } catch (err) {
       console.error("Failed to initialize notification cleanup scheduler:", err);
     }
