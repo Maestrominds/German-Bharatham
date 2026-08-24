@@ -42,6 +42,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
   String _jobType = 'Full Time';
   String _serviceType = 'Immigration';
   String _servicePriceRange = '€€';
+  String _deliveryOption = 'Shipping Possible';
 
   // Checkboxes for Food category
   bool _dineInAvailable = false;
@@ -164,13 +165,24 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       final List<dynamic> initImgs = data?['images'] ?? data?['media']?['images'] ?? [];
       _existingImageUrls = List<String>.from(initImgs.whereType<String>().where((s) => s.startsWith('http')));
     }
+    else if (widget.category == 'Second Hand Store') {
+      _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
+      _controllers['price'] = TextEditingController(text: data?['price']?.toString() ?? '');
+      _controllers['contactPhone'] = TextEditingController(text: data?['contactPhone']?.toString() ?? '');
+      _controllers['contactEmail'] = TextEditingController(text: data?['contactEmail']?.toString() ?? '');
+      _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
+      _deliveryOption = data?['deliveryOption'] ?? 'Shipping Possible';
+      
+      final List<dynamic> initImgs = data?['images'] ?? data?['media']?['images'] ?? [];
+      _existingImageUrls = List<String>.from(initImgs.whereType<String>().where((s) => s.startsWith('http')));
+    }
   }
 
   // Total images count = existing URLs + newly picked files
   int get _totalImageCount => _existingImageUrls.length + _imageFiles.length;
 
   Future<void> _pickImage() async {
-    final maxImages = widget.category == 'Jobs' ? 1 : 3;
+    final maxImages = widget.category == 'Jobs' ? 1 : (widget.category == 'Second Hand Store' ? 5 : 3);
     if (_totalImageCount >= maxImages) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('You can upload a maximum of $maxImages image${maxImages > 1 ? 's' : ''}.')),
@@ -284,6 +296,18 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         'address': _controllers['address']?.text.trim().isEmpty == true ? null : _controllers['address']?.text.trim(),
         'description': _controllers['description']?.text.trim().isEmpty == true ? null : _controllers['description']?.text.trim(),
         'priceRange': _servicePriceRange,
+      };
+    }
+    else if (widget.category == 'Second Hand Store') {
+      return {
+        'title': _controllers['title']?.text.trim(),
+        'price': _controllers['price']?.text.trim(),
+        'description': _controllers['description']?.text.trim().isEmpty == true ? null : _controllers['description']?.text.trim(),
+        'contactPhone': _controllers['contactPhone']?.text.trim(),
+        'contactEmail': _controllers['contactEmail']?.text.trim(),
+        'deliveryOption': _deliveryOption,
+        'images': _existingImageUrls,
+        'media': {'images': _existingImageUrls},
       };
     }
     return {};
@@ -596,7 +620,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
                   },
                 );
               }),
-              if (_totalImageCount < (widget.category == 'Jobs' ? 1 : 3) ||
+              if (_totalImageCount < (widget.category == 'Jobs' ? 1 : (widget.category == 'Second Hand Store' ? 5 : 3)) ||
                   (widget.category == 'Jobs' && _totalImageCount == 0))
                 GestureDetector(
                   onTap: _pickImage,
@@ -811,6 +835,48 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     ];
   }
 
+  List<Widget> _buildSecondHandStoreForm() {
+    return [
+      _buildField(key: 'title', label: 'Item Title', hint: 'IKEA Sofa, iPhone 12, etc.', maxLength: 100, minLength: 2),
+      _buildField(
+        key: 'price', 
+        label: 'Price', 
+        hint: '€150 (Enter amount or text)', 
+        maxLength: 20, 
+        minLength: 1
+      ),
+      _buildDropdown(
+        label: 'Delivery Option',
+        value: _deliveryOption,
+        items: ['Shipping Possible', 'Pickup only'],
+        onChanged: (val) => setState(() => _deliveryOption = val ?? 'Shipping Possible'),
+      ),
+      _buildField(
+        key: 'contactPhone',
+        label: 'Contact Phone',
+        hint: '491701234567',
+        required: false,
+        maxLength: 20,
+        minLength: 2,
+        keyboardType: TextInputType.phone,
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+]'))],
+      ),
+      _buildField(
+        key: 'contactEmail',
+        label: 'Contact Email',
+        hint: 'name@example.com',
+        required: false,
+        maxLength: 100,
+        minLength: 2,
+        keyboardType: TextInputType.emailAddress
+      ),
+      _buildField(key: 'description', label: 'Description', hint: 'Item condition, details, reasons for selling...', maxLines: 4, maxLength: 5000),
+
+      const SizedBox(height: 20),
+      _buildImageSelector(),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Widget> formFields = [];
@@ -820,6 +886,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       formFields = _buildJobsForm();
     } else if (widget.category == 'Services' || widget.category == 'Expat Services') {
       formFields = _buildServicesForm();
+    } else if (widget.category == 'Second Hand Store') {
+      formFields = _buildSecondHandStoreForm();
     }
 
     final isEditing = widget.initialData != null;

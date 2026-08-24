@@ -385,15 +385,82 @@ const ServicesForm = ({ data, set }) => {
   );
 };
 
+const SecondHandStoreForm = ({ data, set }) => {
+  return (
+    <>
+      {/* Basic Information */}
+      <div style={{ marginBottom: 20 }}>
+        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Basic Information</h4>
+        <div className="form-group">
+          <label>Title {REQ}</label>
+          <input value={data.title} onChange={e => set(p => ({...p, title: e.target.value}))} placeholder="Product Title" />
+        </div>
+        <div className="form-group">
+          <label>Description {REQ}</label>
+          <textarea value={data.description} onChange={e => set(p => ({...p, description: e.target.value}))} rows={3} placeholder="Detailed description of the item…" />
+        </div>
+        <div className="form-group">
+          <label>Price</label>
+          <input value={data.price} onChange={e => set(p => ({...p, price: e.target.value}))} placeholder="€50" />
+        </div>
+      </div>
+
+      {/* Contact Details */}
+      <div style={{ marginBottom: 20 }}>
+        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Contact Details</h4>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Contact Phone</label>
+            <input value={data.contactPhone} onChange={e => set(p => ({...p, contactPhone: e.target.value}))} placeholder="Phone number" />
+          </div>
+          <div className="form-group">
+            <label>Contact Email</label>
+            <input value={data.contactEmail} onChange={e => set(p => ({...p, contactEmail: e.target.value}))} placeholder="Email address" />
+          </div>
+        </div>
+      </div>
+
+      {/* Delivery */}
+      <div style={{ marginBottom: 20 }}>
+        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>Delivery</h4>
+        <div className="form-group">
+          <label>Delivery Option</label>
+          <select value={data.deliveryOption} onChange={e => set(p => ({...p, deliveryOption: e.target.value}))}>
+            <option value="">— select —</option>
+            <option value="Shipping Possible">Shipping Possible</option>
+            <option value="Pickup only">Pickup only</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Images */}
+      <div style={{ marginBottom: 20 }}>
+        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d5a3d', marginBottom: 12 }}>📷 Images (Max 5)</h4>
+        <ImageUpload images={data.images} onChange={fn => {
+          set(p => {
+            const nextImages = fn(p.images);
+            if (nextImages.length > 5) {
+              alert("You can only upload a maximum of 5 images for Second Hand Store.");
+              return p;
+            }
+            return { ...p, images: nextImages };
+          });
+        }} />
+      </div>
+    </>
+  );
+};
+
 // ── Main modal ────────────────────────────────────────────────────────────────
 
 const DEFAULTS = {
   Accommodation: { title:'', propertyType:'apartment', city:'', area:'', postalCode:'', address:'', contactPhone:'', description:'', coldRent:'', warmRent:'', deposit:'', sizeSqm:'', bedrooms:'', bathrooms:'', amenities:[], images:[], status:'pending' },
   Jobs: { title:'', location:'', contact:'', description:'', salary:'', status:'Pending', companyName:'', companyLogo:'', type:'Full Time', requirements:'', benefits:'', applyUrl:'' },
   Services: { serviceName:'', providerName:'', serviceType:'', city:'', area:'', postalCode:'', address:'', contactPhone:'', whatsapp:'', email:'', website:'', latitude:'', longitude:'', description:'', priceRange:'', amenitiesText:'', images:[], status:'pending' },
+  'Second Hand Store': { title:'', description:'', price:'', contactPhone:'', contactEmail:'', deliveryOption:'', images:[], status:'Pending' },
 };
 
-const CATEGORY_LABELS = ['Accommodation', 'Jobs', 'Services'];
+const CATEGORY_LABELS = ['Accommodation', 'Jobs', 'Services', 'Second Hand Store'];
 const normalizeStatus = (value, fallback = 'Pending') => {
   const raw = String(value || '').trim().toLowerCase();
   if (raw === 'active') return 'Active';
@@ -421,6 +488,10 @@ const validate = (category, data) => {
       .map(s => s.trim())
       .filter(Boolean);
     if (amenities.length === 0) return 'Services Offered is required';
+  }
+  if (category === 'Second Hand Store') {
+    if (!data.title?.trim()) return 'Title is required';
+    if (!data.description?.trim()) return 'Description is required';
   }
   return null;
 };
@@ -514,12 +585,25 @@ const buildPayload = (category, data) => {
       status: data.status,
     };
   }
+  if (category === 'Second Hand Store') {
+    return {
+      title: data.title?.trim(),
+      description: data.description?.trim() || null,
+      price: data.price?.trim() || null,
+      contactPhone: data.contactPhone?.trim() || null,
+      contactEmail: data.contactEmail?.trim() || null,
+      deliveryOption: data.deliveryOption?.trim() || null,
+      images: data.images || [],
+      status: normalizeStatus(data.status, 'Pending'),
+    };
+  }
 };
 
 const API_MAP = {
   Accommodation: `${API_URL}/api/accommodation/admin`,
   Jobs: `${API_URL}/api/jobs/admin`,
   Services: `${API_URL}/api/services/admin`,
+  'Second Hand Store': `${API_URL}/api/second-hand/admin`,
 };
 
 const LOCAL_JOBS_API = `${API_URL}/api/jobs/admin`;
@@ -544,6 +628,19 @@ const mapItemToFormData = (category, item) => {
       requirements: Array.isArray(item.requirements) ? item.requirements.join(', ') : (item.requirements || ''),
       benefits: Array.isArray(item.benefits) ? item.benefits.join(', ') : (item.benefits || ''),
       applyUrl: item.applyUrl || '',
+    };
+  }
+  if (category === 'Second Hand Store') {
+    return {
+      ...DEFAULTS['Second Hand Store'],
+      title: item.title || '',
+      description: item.description || '',
+      price: item.price || '',
+      contactPhone: item.contactPhone || '',
+      contactEmail: item.contactEmail || '',
+      deliveryOption: item.deliveryOption || '',
+      images: item.images || [],
+      status: normalizeStatus(item.status, 'Pending'),
     };
   }
 
@@ -576,7 +673,7 @@ const AddListingModal = ({ onClose, onSuccess, defaultCategory, lockCategory, ed
       const token = localStorage.getItem('adminToken');
 
       const payload = buildPayload(category, formData);
-      if (category === 'Jobs') {
+      if (category === 'Jobs' || category === 'Second Hand Store') {
         payload.status = editItem
           ? normalizeStatus(payload.status || formData.status, 'Pending')
           : 'Pending';
@@ -687,7 +784,7 @@ const AddListingModal = ({ onClose, onSuccess, defaultCategory, lockCategory, ed
             {CATEGORY_LABELS.map(c => (
               <button key={c} type="button" onClick={() => handleCategoryChange(c)}
                 style={{ padding: '6px 16px', borderRadius: 20, border: '2px solid #6b9976', background: category === c ? '#6b9976' : '#fff', color: category === c ? '#fff' : '#374151', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
-                {c === 'Accommodation' ? '🏠' : c === 'Jobs' ? '💼' : '🔧'} {c}
+                {c === 'Accommodation' ? '🏠' : c === 'Jobs' ? '💼' : c === 'Second Hand Store' ? '🛍️' : '🔧'} {c}
               </button>
             ))}
           </div>
@@ -697,6 +794,7 @@ const AddListingModal = ({ onClose, onSuccess, defaultCategory, lockCategory, ed
           {category === 'Accommodation' && <AccommodationForm key="accommodation" data={formData} set={setFormData} />}
           {category === 'Jobs' && <JobsForm key="jobs" data={formData} set={setFormData} />}
           {category === 'Services' && <ServicesForm key="services" data={formData} set={setFormData} />}
+          {category === 'Second Hand Store' && <SecondHandStoreForm key="secondhand" data={formData} set={setFormData} />}
 
           {/* Status */}
           <div className="form-group" style={{ marginTop: 8 }}>
@@ -717,7 +815,7 @@ const AddListingModal = ({ onClose, onSuccess, defaultCategory, lockCategory, ed
               )
             ) : (
               <>
-                {category === 'Jobs' ? (
+                {category === 'Jobs' || category === 'Second Hand Store' ? (
                   <select value={'Pending'} disabled>
                     <option value="Pending">Pending</option>
                   </select>

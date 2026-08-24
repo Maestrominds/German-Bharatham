@@ -52,6 +52,7 @@ model User {
   problemReports        ProblemReport[]
   receivedNotifications Notification[] @relation("RecipientRelation")
   sentNotifications     Notification[] @relation("SenderRelation")
+  secondHandStores      SecondHandStore[]
 
   @@map("users")
 }
@@ -388,4 +389,23 @@ model GenericListing {
   updatedAt    DateTime @updatedAt
 
   @@map("generic_listings")
+}
+
+model SecondHandStore {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?
+  price           String?
+  contactPhone    String?
+  contactEmail    String?
+  deliveryOption  String?
+  images          String[]
+  status          String   @default("Pending") // Active, Pending, Inactive, Rejected
+  createdById     Int?
+  createdBy       User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  creatorType     String   @default("admin") // admin, user
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("second_hand_stores")
 }

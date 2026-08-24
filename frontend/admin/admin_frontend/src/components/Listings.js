@@ -8,6 +8,7 @@ const APIS = {
   Accommodation: { get: `${API_URL}/api/accommodation/admin?limit=100`, patch: (id) => `${API_URL}/api/accommodation/admin/${id}/status`, del: (id) => `${API_URL}/api/accommodation/admin/${id}`, titleKey: 'title' },
   Jobs:          { get: `${API_URL}/api/jobs/admin?limit=100`,          patch: (id) => `${API_URL}/api/jobs/admin/${id}/status`,         del: (id) => `${API_URL}/api/jobs/admin/${id}`,         titleKey: 'title' },
   Services:      { get: `${API_URL}/api/services/admin?limit=100`,      patch: (id) => `${API_URL}/api/services/admin/${id}/status`,     del: (id) => `${API_URL}/api/services/admin/${id}`,     titleKey: 'serviceName' },
+  'Second Hand Store': { get: `${API_URL}/api/second-hand/admin?limit=100`, patch: (id) => `${API_URL}/api/second-hand/admin/${id}/status`, del: (id) => `${API_URL}/api/second-hand/admin/${id}`, titleKey: 'title' },
 };
 
 const STATUS_COLORS = {
@@ -65,6 +66,7 @@ const Listings = () => {
         ...mapItems(data.Accommodation, 'Accommodation', 'title'),
         ...mapItems(data.Jobs,          'Jobs',          'title'),
         ...mapItems(data.Services,      'Services',      'serviceName'),
+        ...mapItems(data['Second Hand Store'], 'Second Hand Store', 'title'),
       ];
 
       all.sort((a, b) => b.created.localeCompare(a.created));
@@ -145,6 +147,7 @@ const Listings = () => {
             <option value="Accommodation">Accommodation</option>
             <option value="Jobs">Jobs</option>
             <option value="Services">Services</option>
+            <option value="Second Hand Store">Second Hand Store</option>
           </select>
           <select className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="all">All Status</option>

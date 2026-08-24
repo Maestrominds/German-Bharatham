@@ -77,8 +77,12 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       website: raw.website || '',
       priceRange: raw.priceRange || '',
       latitude: raw.latitude || '',
-      longitude: raw.longitude || '',
-      servicesOfferedText: Array.isArray(raw.amenities) ? raw.amenities.join(', ') : (raw.servicesOffered || '')
+      servicesOfferedText: Array.isArray(raw.amenities) ? raw.amenities.join(', ') : (raw.servicesOffered || ''),
+
+      // Second Hand Store
+      price: raw.price || '',
+      contactEmail: raw.contactEmail || '',
+      deliveryOption: raw.deliveryOption || ''
     };
   });
 
@@ -104,7 +108,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const maxLimit = listing.category === 'Jobs' ? 1 : 3;
+    const maxLimit = listing.category === 'Second Hand Store' ? 5 : (listing.category === 'Jobs' ? 1 : 3);
     if (images.length + files.length > maxLimit) {
       alert(`You can upload a maximum of ${maxLimit} image${maxLimit > 1 ? 's' : ''}.`);
       return;
@@ -227,6 +231,16 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         longitude: formData.longitude !== '' ? parseFloat(formData.longitude) : null,
         priceRange: formData.priceRange || null,
         amenities: (formData.servicesOfferedText || '').split(',').map(s => s.trim()).filter(Boolean),
+      };
+    }
+
+    if (listing.category === 'Second Hand Store') {
+      return {
+        ...common,
+        price: formData.price?.trim() || null,
+        contactPhone: formData.contactPhone?.trim() || null,
+        contactEmail: formData.contactEmail?.trim() || null,
+        deliveryOption: formData.deliveryOption?.trim() || null,
       };
     }
 
@@ -449,6 +463,31 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         </div>
       );
     }
+    if (listing.category === 'Second Hand Store') {
+      return (
+        <div style={{ marginTop: '20px', borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#111827', fontSize: '15px', fontWeight: '600' }}>Store Details</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Price</label>
+              <input type="text" name="price" value={formData.price} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Delivery Option</label>
+              <select name="deliveryOption" value={formData.deliveryOption} onChange={handleFieldChange} style={inputStyle}>
+                <option value="">— select —</option>
+                <option value="Shipping Possible">Shipping Possible</option>
+                <option value="Pickup only">Pickup only</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Contact Email</label>
+            <input type="text" name="contactEmail" value={formData.contactEmail} onChange={handleFieldChange} style={inputStyle} />
+          </div>
+        </div>
+      );
+    }
     return null;
   };
 
@@ -471,7 +510,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
                   <button onClick={() => removeImage(idx)} style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', padding: 2, cursor: 'pointer' }}><Trash2 size={12} /></button>
                 </div>
               ))}
-              {images.length < 3 && (
+              {images.length < (listing.category === 'Second Hand Store' ? 5 : (listing.category === 'Jobs' ? 1 : 3)) && (
                 <>
                   <input
                     type="file"

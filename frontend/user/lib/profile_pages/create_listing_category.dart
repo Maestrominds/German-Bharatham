@@ -104,6 +104,12 @@ class CreateListingCategoryPage extends StatelessWidget {
             "assets/images/handshake.png",
             "Immigration, tax, coaching, IT or relocation services",
           ),
+          _categoryCard(
+            context,
+            "Second Hand Store",
+            "assets/images/grocery-store.png",
+            "Buy and sell pre-loved items",
+          ),
         ],
       ),
     );

@@ -9,6 +9,7 @@ import 'accommodation.dart';
 import 'jobs.dart';
 import 'services.dart';
 import 'community.dart';
+import 'second_hand_store.dart';
 import 'search.dart';
 import 'user_session.dart';
 import 'user_profiles_page.dart';
@@ -282,6 +283,18 @@ class _HomePageState extends State<HomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const ServicesPage()),
+                );
+              },
+            ),
+
+            CategoryTile(
+              imagePath: 'assets/images/grocery-store.png',
+              title: "Second Hand Store",
+              subtitle: "Buy & sell pre-loved items",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SecondHandStorePage()),
                 );
               },
             ),
