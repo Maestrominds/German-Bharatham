@@ -184,11 +184,11 @@ const ContentModeration = () => {
               </div>
               <div className="listing-info">
                 <div className="info-row">
-                  <span className="info-label">Location</span>
+                  {listing.category !== 'Second Hand Store' && <span className="info-label">Location</span>}
                   <span className="info-label">Contact</span>
                 </div>
                 <div className="info-row">
-                  <span className="info-value">{listing.location}</span>
+                  {listing.category !== 'Second Hand Store' && <span className="info-value">{listing.location}</span>}
                   <span className="info-value">{listing.contact}</span>
                 </div>
               </div>

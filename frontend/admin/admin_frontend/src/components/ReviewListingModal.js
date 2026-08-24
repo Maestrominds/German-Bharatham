@@ -535,11 +535,13 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>Title / Name *</label>
               <input type="text" name="title" value={formData.title} onChange={handleFieldChange} style={inputStyle} />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>City *</label>
-                <input type="text" name="city" value={formData.city} onChange={handleFieldChange} style={inputStyle} />
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: listing.category === 'Second Hand Store' ? '1fr' : '1fr 1fr', gap: '12px' }}>
+              {listing.category !== 'Second Hand Store' && (
+                <div>
+                  <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>City *</label>
+                  <input type="text" name="city" value={formData.city} onChange={handleFieldChange} style={inputStyle} />
+                </div>
+              )}
               <div>
                 <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>
                   {listing.category === 'Jobs' ? 'Contact Details' : 'Contact Phone *'}

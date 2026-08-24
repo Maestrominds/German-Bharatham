@@ -172,7 +172,6 @@ const Listings = () => {
               <tr>
                 <th>TITLE</th>
                 <th>CATEGORY</th>
-                <th>LOCATION</th>
                 <th>STATUS</th>
                 <th>CREATED</th>
                 <th>ACTION</th>
@@ -185,7 +184,6 @@ const Listings = () => {
                   <tr key={`${listing.category}-${listing._id}`}>
                     <td className="listing-title">{listing.title}</td>
                     <td>{listing.category}</td>
-                    <td>{listing.location}</td>
                     <td>
                       <select
                         value={listing.status}

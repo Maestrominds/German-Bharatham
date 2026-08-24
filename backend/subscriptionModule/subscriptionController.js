@@ -475,7 +475,7 @@ exports.createRazorpayOrder = async (req, res) => {
     // Record a pending subscription row
     try {
       const lastSub = await prisma.subscription.findFirst({
-        where: { userId: numericUserId, provider: "razorpay", razorpayPaymentLinkId: null },
+        where: { userId: numericUserId, provider: "razorpay", razorpayPaymentLinkId: null, status: "pending" },
         orderBy: { createdAt: 'desc' }
       });
 
@@ -591,39 +591,35 @@ exports.verifyRazorpayPayment = async (req, res) => {
 };
 
 exports.listAllSubscriptions = async (_req, res) => {
-  const items = await prisma.subscription.findMany({
+  const users = await prisma.user.findMany({
     where: {
-      user: {
-        email: { not: "admin@german.com" }
-      }
+      email: { not: "admin@german.com" },
+      OR: [
+        { subscriptionStatus: { not: "none" } },
+        { subscriptionPlan: { not: null } }
+      ]
     },
-    include: { user: true },
-    orderBy: { updatedAt: 'desc' },
-    take: 20
+    orderBy: { id: 'desc' },
+    take: 50
   });
 
-  const out = items.map((it) => {
-    const user = it.user || null;
-    
-    // Check if the subscription is expired based on current time
-    let computedStatus = it.status || null;
-    if (computedStatus === 'active' && it.currentPeriodEnd && new Date(it.currentPeriodEnd) < new Date()) {
+  const out = users.map((user) => {
+    let computedStatus = user.subscriptionStatus || "none";
+    if ((computedStatus === 'active' || computedStatus === 'trial') && user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < new Date()) {
       computedStatus = 'expired';
     }
 
     return {
-      id: String(it.id),
-      userId: user ? String(user.id) : null,
-      userEmail: user ? String(user.email) : null,
-      provider: it.provider || null,
-      planId: it.planId || null,
+      id: String(user.id),
+      userId: String(user.id),
+      userEmail: user.email,
+      provider: null,
+      planId: user.subscriptionPlan || null,
       status: computedStatus,
-      periodStart: it.currentPeriodStart ? new Date(it.currentPeriodStart).toISOString() : null,
-      periodEnd: it.currentPeriodEnd ? new Date(it.currentPeriodEnd).toISOString() : null,
-      razorpayPaymentLinkId: it.razorpayPaymentLinkId || null,
-      razorpayPaymentId: it.razorpayPaymentId || null,
-      createdAt: it.createdAt ? new Date(it.createdAt).toISOString() : null,
-      updatedAt: it.updatedAt ? new Date(it.updatedAt).toISOString() : null,
+      periodStart: user.subscriptionStartedAt ? new Date(user.subscriptionStartedAt).toISOString() : null,
+      periodEnd: user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString() : null,
+      createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null,
+      updatedAt: user.createdAt ? new Date(user.createdAt).toISOString() : null,
     };
   });
 

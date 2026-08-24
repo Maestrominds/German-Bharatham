@@ -7,7 +7,7 @@ import API_URL from '../config';
 const Dashboard = () => {
   const [showAddModal, setShowAddModal]     = useState(false);
   const [totalCount, setTotalCount]         = useState(0);
-  const [categoryCounts, setCategoryCounts] = useState({ Accommodation: 0, Jobs: 0, Services: 0 });
+  const [categoryCounts, setCategoryCounts] = useState({ Accommodation: 0, Jobs: 0, Services: 0, Food: 0, 'Second Hand Store': 0 });
   const [userCount, setUserCount]           = useState(0);
   const [pendingReviews, setPendingReviews] = useState(0);
   const [totalRevenue, setTotalRevenue]     = useState(0);
@@ -93,7 +93,7 @@ const Dashboard = () => {
         setTotalRevenue(s.totalRevenue || 0);
 
         // map category stats
-        const catCounts = { Accommodation: 0, Jobs: 0, Services: 0 };
+        const catCounts = { Accommodation: 0, Jobs: 0, Services: 0, Food: 0, 'Second Hand Store': 0 };
         (d.categoryStats || []).forEach(c => { if (c && c.name) catCounts[c.name] = c.count || 0; });
         setCategoryCounts(catCounts);
         setRecentListings(d.recentListings || []);
@@ -132,6 +132,7 @@ const Dashboard = () => {
     { name: 'Accommodation', count: categoryCounts.Accommodation, icon: '🏠' },
     { name: 'Services',      count: categoryCounts.Services,      icon: '🔧' },
     { name: 'Jobs',          count: categoryCounts.Jobs,          icon: '💼' },
+    { name: 'Second Hand Store', count: categoryCounts['Second Hand Store'], icon: '🛍️' },
   ];
 
   return (

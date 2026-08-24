@@ -338,7 +338,18 @@ const Subscriptions = () => {
                 <td style={{ fontFamily: 'monospace', fontSize: 12 }}>
                   {s.userEmail || (s.userId && typeof s.userId === 'object' ? s.userId.email : s.userId) || '-'}
                 </td>
-                <td>{plans.find(p => String(p.id) === String(s.planId))?.label || s.planId || '-'}</td>
+                <td>
+                  {(() => {
+                    const p = plans.find(p => String(p.id) === String(s.planId));
+                    if (p && p.label) return p.label;
+                    if (s.planId) return s.planId;
+                    if (s.periodStart && s.periodEnd) {
+                      const diffDays = Math.round((new Date(s.periodEnd) - new Date(s.periodStart)) / (1000 * 60 * 60 * 24));
+                      return `${diffDays} days`;
+                    }
+                    return '-';
+                  })()}
+                </td>
                 <td>{s.status || '-'}</td>
                 <td>{s.periodStart ? new Date(s.periodStart).toLocaleString() : '-'}</td>
                 <td>{s.periodEnd ? new Date(s.periodEnd).toLocaleString() : '-'}</td>

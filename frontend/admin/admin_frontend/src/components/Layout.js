@@ -17,7 +17,6 @@ const Layout = ({ children, onLogout }) => {
   const menuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/listings', icon: FileText, label: 'Listings' },
-    { path: '/categories', icon: FolderOpen, label: 'Categories' },
     { path: '/users', icon: Users, label: 'Users' },
     { path: '/content-moderation', icon: Shield, label: 'Content Moderation' },
     { path: '/community', icon: MessageCircle, label: 'Community' },
