@@ -544,6 +544,8 @@ exports.verifyRazorpayPayment = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
+    const effectivePrice = Number(plan.priceInr) || getFallbackPriceForPlan(plan.id);
+
     const subPayload = {
       userId: numericUserId,
       provider: "razorpay",
@@ -552,7 +554,7 @@ exports.verifyRazorpayPayment = async (req, res) => {
       currentPeriodStart,
       currentPeriodEnd,
       razorpayPaymentId: String(razorpay_payment_id),
-      metadata: { verifiedAt: new Date().toISOString(), via: "manual_verify", amountPaid: Number(plan.priceInr) }
+      metadata: { verifiedAt: new Date().toISOString(), via: "manual_verify", amountPaid: effectivePrice }
     };
 
     if (existingSub) {

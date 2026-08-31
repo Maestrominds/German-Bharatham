@@ -53,7 +53,7 @@ const ensureDefaultPlans = async () => {
   }
 };
 
-const activate = async ({ userId, planId, providerIds, eventType }) => {
+const activate = async ({ userId, planId, providerIds, eventType, amountPaid }) => {
   await ensureDefaultPlans();
   const numericUserId = parseInt(userId);
   if (isNaN(numericUserId)) return { ok: false, reason: "Invalid userId" };
@@ -76,7 +76,10 @@ const activate = async ({ userId, planId, providerIds, eventType }) => {
     status: "active",
     currentPeriodStart,
     currentPeriodEnd,
-    metadata: { lastEvent: eventType, amountPaid: Number(plan.priceInr) },
+    metadata: { 
+      lastEvent: eventType, 
+      amountPaid: amountPaid !== undefined && amountPaid !== null ? amountPaid : Number(plan.priceInr) 
+    },
   };
 
   if (providerIds && providerIds.razorpayPaymentLinkId) {
@@ -161,7 +164,14 @@ module.exports = async function razorpayWebhook(req, res) {
         razorpayPaymentId: payment?.id || null,
       };
 
-      await activate({ userId: String(userId), planId: String(planId), providerIds, eventType });
+      let amountPaid = null;
+      if (payment && payment.amount) {
+        amountPaid = Number(payment.amount) / 100;
+      } else if (paymentLink && paymentLink.amount_paid) {
+        amountPaid = Number(paymentLink.amount_paid) / 100;
+      }
+
+      await activate({ userId: String(userId), planId: String(planId), providerIds, eventType, amountPaid });
 
     } else if (eventType === "payment.failed") {
       // Mark the pending subscription as failed.
