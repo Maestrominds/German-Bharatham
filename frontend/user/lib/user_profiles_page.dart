@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -13,9 +13,9 @@ import 'services/api_config.dart';
 import 'services/cache_service.dart';
 import 'user_session.dart';
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Model
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class PublicUserProfile {
   final String id;
   final String name;
@@ -80,9 +80,9 @@ class PublicUserProfile {
       (v != null && v.trim().isNotEmpty) ? v.trim() : null;
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Page
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class UserProfilesPage extends StatefulWidget {
   final bool showNextButton;
   const UserProfilesPage({Key? key, this.showNextButton = false})
@@ -95,12 +95,13 @@ class UserProfilesPage extends StatefulWidget {
 class _UserProfilesPageState extends State<UserProfilesPage>
     with SingleTickerProviderStateMixin {
   static const Color primaryGreen = Color(0xFF4E7F6D);
+  static const Color _bgColor = Color(0xFFF7F8FA);
   static const String _usersCacheKey = 'public_users_v2';
 
-  // ── Background animation ──
+  // â”€â”€ Background animation â”€â”€
   late final AnimationController _bgController;
 
-  // ── User data & pagination ──
+  // â”€â”€ User data & pagination â”€â”€
   bool isLoading = true;
   String? errorMessage;
   List<PublicUserProfile> users = [];
@@ -109,17 +110,17 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   int _totalPages = 1;
   bool _isFetchingMore = false;
 
-  // ── Card swipe state ──
+  // â”€â”€ Card swipe state â”€â”€
   Offset _cardOffset = Offset.zero;
   bool _isAnimatingCard = false;
   bool _isDismissingCard = false;
   bool _pulseNewTopCard = false;
   bool _swipeRight = false; // true = swipe right (like), false = swipe left
 
-  // ── Undo state ──
+  // â”€â”€ Undo state â”€â”€
   final List<Map<String, dynamic>> _undoHistory = [];
 
-  // ─────────── Lifecycle ───────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   void initState() {
@@ -145,7 +146,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     super.dispose();
   }
 
-  // ─────────── Data helpers ───────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Data helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   List<Map<String, dynamic>> _extractMapItems(dynamic decoded) {
     final list = decoded is List
@@ -194,6 +195,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           .toList();
 
       if (!mounted || loaded.isEmpty) return;
+      loaded.shuffle(); // Random order from cache too — consistent with API shuffle
       setState(() {
         users = loaded;
         currentIndex = 0;
@@ -246,6 +248,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       if (!mounted) return;
       setState(() {
         if (page == 1) {
+          fresh.shuffle(); // Random order every session — O(n), zero swipe impact
           users = fresh;
           currentIndex = 0;
         } else {
@@ -274,7 +277,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     }
   }
 
-  // ─────────── Interaction ───────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Interaction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _toggleLike(PublicUserProfile user) async {
     final nowLiked = await LikedUserManager.instance.toggle(user.id);
@@ -308,7 +311,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     }
   }
 
-  // ─────────── Swipe logic ───────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Swipe logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _dismissCard({required bool toRight}) {
     if (_isAnimatingCard) return;
@@ -383,7 +386,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
 
   bool get _hasActiveUser => users.isNotEmpty;
 
-  // ─────────── Build ───────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -394,21 +397,21 @@ class _UserProfilesPageState extends State<UserProfilesPage>
         _continueToHome();
       },
       child: Scaffold(
-        backgroundColor: primaryGreen,
+        backgroundColor: _bgColor,
         appBar: AppBar(
-          backgroundColor: primaryGreen,
+          backgroundColor: Colors.white,
           elevation: 0,
           title: const Text(
             'Connect',
             style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20),
+                color: Colors.black, fontWeight: FontWeight.w700, fontSize: 18),
           ),
           centerTitle: true,
           automaticallyImplyLeading: false,
           actions: [
             if (_undoHistory.isNotEmpty)
               IconButton(
-                icon: const Icon(Icons.undo_rounded, color: Colors.white),
+                icon: const Icon(Icons.undo_rounded, color: primaryGreen),
                 onPressed: _undoLastSwipe,
                 tooltip: 'Undo last swipe',
               ),
@@ -416,7 +419,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
         ),
         body: Stack(
           children: [
-            // ── Animated background ──
+            // â”€â”€ Animated background â”€â”€
             Positioned.fill(
               child: IgnorePointer(
                 child: RepaintBoundary(
@@ -433,42 +436,56 @@ class _UserProfilesPageState extends State<UserProfilesPage>
               ),
             ),
 
-            // ── Main content ──
+            // â”€â”€ Main content â”€â”€
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: Column(
                   children: [
                     Expanded(
                       child: isLoading
                           ? const Center(
                               child: CircularProgressIndicator(
-                                  color: Colors.white),
+                                  color: primaryGreen),
                             )
                           : (errorMessage != null)
                               ? Center(
                                   child: Text(errorMessage!,
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
-                                          color: Colors.white70)))
+                                          color: Colors.grey)))
                               : (users.isEmpty || !_hasActiveUser)
                                   ? const Center(
                                       child: Text('No users available',
                                           style: TextStyle(
-                                              color: Colors.white70)))
+                                              color: Colors.grey)))
                                   : Align(
                                       alignment: Alignment.topCenter,
                                       child: _carousel(),
                                     ),
                     ),
 
-                    // ── Bottom button ──
-                    const SizedBox(height: 8),
+                    // ——— Swipe hint ———
+                    if (!isLoading && errorMessage == null && users.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'swipe left to skip  ·  swipe right to like',
+                        style: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+
+                    // â”€â”€ Bottom button â”€â”€
+                    const SizedBox(height: 10),
                     if (widget.showNextButton)
                       _bottomButton(label: 'Next', onTap: _continueToHome)
                     else
                       _bottomButton(
-                        label: 'Back',
+                        label: 'Back to Home',
                         icon: 'assets/images/left-arrow.png',
                         onTap: _continueToHome,
                       ),
@@ -490,30 +507,30 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   }) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
+      height: 48,
+      child: OutlinedButton(
         onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white.withOpacity(0.18),
-          elevation: 0,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryGreen,
+          backgroundColor: Colors.white,
+          side: const BorderSide(color: primaryGreen, width: 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: Colors.white.withOpacity(0.3)),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Image.asset(icon, width: 18, height: 18, color: Colors.white),
+              Image.asset(icon, width: 16, height: 16, color: primaryGreen),
               const SizedBox(width: 8),
             ],
             Text(
               label,
               style: const TextStyle(
-                  color: Colors.white,
+                  color: primaryGreen,
                   fontWeight: FontWeight.w700,
-                  fontSize: 16),
+                  fontSize: 15),
             ),
           ],
         ),
@@ -521,7 +538,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     );
   }
 
-  // ─────────── Card Carousel ───────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Card Carousel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _carousel() {
     return Center(
@@ -533,17 +550,17 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 ? constraints.maxHeight
                 : MediaQuery.sizeOf(context).height * 0.7;
 
-            final deckHeight = availableHeight.clamp(500.0, 680.0);
+            final deckHeight = availableHeight.clamp(460.0, 640.0);
             final visibleCount = math.min(3, users.length);
 
             if (visibleCount <= 0) {
               return const Center(
                   child: Text('No users available',
-                      style: TextStyle(color: Colors.white70)));
+                      style: TextStyle(color: Colors.grey)));
             }
 
-            const stepX = 36.0;
-            const stepY = -22.0;
+            // Cards stack down — natural "deck on table" look
+            const stepY = 10.0;
 
             void animateBack() {
               if (_cardOffset == Offset.zero) {
@@ -574,7 +591,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // ── Background cards ──
+                  // â”€â”€ Background cards â”€â”€
                   for (int depth = visibleCount - 1; depth >= 1; depth--)
                     Builder(builder: (context) {
                       final itemIndex = (currentIndex + depth) % users.length;
@@ -583,22 +600,23 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                         duration: const Duration(milliseconds: 240),
                         curve: Curves.easeOutCubic,
                         top: stepY * depth,
-                        left: stepX * depth,
+                        left: 0,
                         width: constraints.maxWidth,
                         height: deckHeight,
                         child: Transform.scale(
-                          scale: (1 - depth * 0.03).clamp(0.92, 1.0),
+                          scale: (1 - depth * 0.04).clamp(0.90, 1.0),
+                          alignment: Alignment.topCenter,
                           child: _profileCard(
                             user: users[itemIndex],
-                            liked: LikedUserManager.instance
-                                .isLiked(users[itemIndex].id),
+                            liked: false,
                             onLikePressed: null,
+                            onSkipPressed: null,
                           ),
                         ),
                       );
                     }),
 
-                  // ── Top (interactive) card ──
+                  // â”€â”€ Top (interactive) card â”€â”€
                   Builder(builder: (context) {
                     final itemIndex = currentIndex % users.length;
                     return GestureDetector(
@@ -613,10 +631,10 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                         if (_isAnimatingCard) return;
                         final threshold = constraints.maxWidth * 0.22;
                         if (_cardOffset.dx > threshold) {
-                          // Swipe right → Like
+                          // Swipe right â†’ Like
                           _dismissCard(toRight: true);
                         } else if (_cardOffset.dx < -threshold) {
-                          // Swipe left → Skip
+                          // Swipe left â†’ Skip
                           _dismissCard(toRight: false);
                         } else {
                           animateBack();
@@ -657,7 +675,9 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                                   liked: LikedUserManager.instance
                                       .isLiked(users[itemIndex].id),
                                   onLikePressed: () =>
-                                      _toggleLike(users[itemIndex]),
+                                      _dismissCard(toRight: true),
+                                  onSkipPressed: () =>
+                                      _dismissCard(toRight: false),
                                 ),
                               ),
                             ),
@@ -678,7 +698,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                                             const Color(0xFF4E7F6D).withOpacity(0.6),
                                       ),
                                       child: const Center(
-                                        child: Text('❤️  LIKE',
+                                        child: Text('\u2764  LIKE',
                                             style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 36,
@@ -705,7 +725,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                                         color: Colors.grey.withOpacity(0.6),
                                       ),
                                       child: const Center(
-                                        child: Text('✕  SKIP',
+                                        child: Text('\u2715  SKIP',
                                             style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 36,
@@ -722,7 +742,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                     );
                   }),
 
-                  // Removed swipe hint row
                 ],
               ),
             );
@@ -732,204 +751,181 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     );
   }
 
-  Widget _swipeHint(
-      {required IconData icon,
-      required String label,
-      required Color color}) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(color: color, fontSize: 12)),
-      ],
-    );
-  }
-
-  // ─────────── Profile Card ───────────
+  // ___________ Profile Card ___________
 
   Widget _profileCard({
     required PublicUserProfile user,
     required bool liked,
     required VoidCallback? onLikePressed,
+    VoidCallback? onSkipPressed,
   }) {
     final city = (user.city ?? '').trim();
     final motherTongue = user.motherTongue;
     final industry = user.industry;
     final linkedinUrl = user.linkedinUrl;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      child: Material(
-        elevation: 16,
-        shadowColor: Colors.black54,
-        borderRadius: BorderRadius.circular(30),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            // ── Avatar background ──
-            Positioned.fill(
-              child: user.avatarImage != null
-                  ? DecoratedBox(
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: user.avatarImage!,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.center,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.09),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 58,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                user.avatarImage != null
+                    ? Image(image: user.avatarImage!, fit: BoxFit.cover)
+                    : Container(
+                        color: Colors.grey.shade200,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.person, size: 72, color: Colors.grey.shade400),
+                            const SizedBox(height: 8),
+                            Text(
+                              user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.grey.shade400),
+                            ),
+                          ],
                         ),
                       ),
-                    )
-                  : Container(
-                      color: Colors.grey.shade300,
-                      child: const Center(
-                        child: Icon(Icons.person, size: 100, color: Colors.grey),
-                      ),
-                    ),
-            ),
-
-            // ── Gradient overlay ──
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.1),
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.5),
-                      Colors.black.withOpacity(0.9),
-                    ],
-                    stops: const [0.0, 0.4, 0.7, 1.0],
-                  ),
-                ),
-              ),
-            ),
-
-            // ── LinkedIn button (top-right) ──
-            if (linkedinUrl != null)
-              Positioned(
-                top: 14,
-                right: 14,
-                child: Material(
-                  color: const Color(0xFF0A66C2),
-                  borderRadius: BorderRadius.circular(12),
-                  elevation: 6,
-                  child: InkWell(
-                    onTap: () => _openLinkedIn(linkedinUrl),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.work_rounded,
-                              color: Colors.white, size: 15),
-                          SizedBox(width: 6),
-                          Text('LinkedIn',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13)),
-                        ],
+                Positioned(
+                  left: 0, right: 0, bottom: 0, height: 36,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black.withOpacity(0.06)],
                       ),
                     ),
                   ),
                 ),
-              ),
 
-            // ── Info section ──
-            Positioned(
-              left: 14,
-              right: 14,
-              bottom: 14,
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 42,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Name
                   Text(
                     user.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
+                      color: Colors.black,
+                      fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 0.2,
+                      letterSpacing: 0.1,
                     ),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  // Info chips row
+                  if (industry != null) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      industry,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: primaryGreen, fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
                   Wrap(
-                    spacing: 8,
+                    spacing: 6,
                     runSpacing: 6,
                     children: [
                       if (city.isNotEmpty)
-                        _infoChip(
-                            icon: Icons.location_on_rounded,
-                            label: city,
-                            color: Colors.white.withOpacity(0.25)),
+                        _infoChip(icon: Icons.location_on_rounded, label: city),
                       if (motherTongue != null)
-                        _infoChip(
-                            icon: Icons.record_voice_over_rounded,
-                            label: motherTongue,
-                            color: Colors.orange.withOpacity(0.35)),
-                      if (industry != null)
-                        _infoChip(
-                            icon: Icons.business_center_rounded,
-                            label: industry,
-                            color: Colors.blue.withOpacity(0.35)),
+                        _infoChip(icon: Icons.record_voice_over_rounded, label: motherTongue),
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  // LinkedIn premium button — only on top interactive card
+                  if (linkedinUrl != null && onLikePressed != null) ...[
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 40,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openLinkedIn(linkedinUrl),
+                        icon: const Icon(Icons.work_rounded, size: 16, color: Colors.white),
+                        label: const Text(
+                          'View LinkedIn Profile',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0A66C2),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
 
-                  // Like button
+                  const Spacer(),
                   if (onLikePressed != null)
                     Row(
                       children: [
-                        // Like button
                         Expanded(
                           child: SizedBox(
-                            height: 48,
-                            child: ElevatedButton(
-                              onPressed: onLikePressed,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: liked
-                                    ? primaryGreen
-                                    : Colors.white,
-                                foregroundColor: liked
-                                    ? Colors.white
-                                    : primaryGreen,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
+                            height: 46,
+                            child: OutlinedButton.icon(
+                              onPressed: onSkipPressed,
+                              icon: Icon(Icons.close_rounded, size: 17, color: Colors.grey.shade500),
+                              label: Text('Skip', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.grey.shade600)),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                backgroundColor: Colors.white,
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    liked
-                                        ? Icons.favorite_rounded
-                                        : Icons.favorite_border_rounded,
-                                    size: 20,
-                                    color: liked ? Colors.white : primaryGreen,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    liked ? 'Liked' : 'Like',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 16,
-                                      color: liked
-                                          ? Colors.white
-                                          : primaryGreen,
-                                    ),
-                                  ),
-                                ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: SizedBox(
+                            height: 46,
+                            child: ElevatedButton.icon(
+                              onPressed: onLikePressed,
+                              icon: Icon(
+                                liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                size: 17, color: Colors.white,
+                              ),
+                              label: const Text('Like', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryGreen,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                             ),
                           ),
@@ -939,38 +935,30 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _infoChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
+  Widget _infoChip({required IconData icon, required String label}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color,
+        color: primaryGreen.withOpacity(0.10),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.15)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 13),
+          Icon(icon, color: primaryGreen, size: 13),
           const SizedBox(width: 5),
           Flexible(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12),
+              style: const TextStyle(color: primaryGreen, fontWeight: FontWeight.w600, fontSize: 12),
             ),
           ),
         ],
@@ -979,9 +967,10 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Background Painter
-// ─────────────────────────────────────────────────────────────
+// _____________________________________________________________
+// Background Painter -- light theme, subtle green blobs on #F7F8FA
+// Mirrors the _ProfileBackgroundPainter pattern from profile.dart
+// _____________________________________________________________
 class _UsersBackgroundPainter extends CustomPainter {
   final double t;
   final Color primary;
@@ -991,104 +980,48 @@ class _UsersBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    canvas.drawRect(rect, Paint()..color = primary);
 
-    final depth = Paint()
+    // Base: off-white background matching app theme
+    canvas.drawRect(rect, Paint()..color = const Color(0xFFF7F8FA));
+
+    // Subtle green tint gradient overlay
+    final gradPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.black.withOpacity(0.10),
+          primary.withOpacity(0.07),
           Colors.transparent,
-          Colors.white.withOpacity(0.06),
+          primary.withOpacity(0.04),
         ],
         stops: const [0.0, 0.55, 1.0],
       ).createShader(rect);
-    canvas.drawRect(rect, depth);
+    canvas.drawRect(rect, gradPaint);
 
-    final blur = ui.MaskFilter.blur(ui.BlurStyle.normal, 46);
-    final paint = Paint()
-      ..maskFilter = blur
-      ..blendMode = BlendMode.screen;
+    // Soft animated green blobs -- very low opacity on light bg
+    final blobBlur = ui.MaskFilter.blur(ui.BlurStyle.normal, 60);
+    final blobPaint = Paint()..maskFilter = blobBlur;
 
     final minSide = math.min(size.width, size.height);
     final a = t * 2 * math.pi;
 
-    void glow(Offset center, double r, double lerp, double opacity) {
-      paint.color = Color.lerp(primary, Colors.white, lerp)!.withOpacity(opacity);
-      canvas.drawCircle(center, r, paint);
+    void glow(Offset center, double r, double opacity) {
+      blobPaint.color = primary.withOpacity(opacity);
+      canvas.drawCircle(center, r, blobPaint);
     }
 
     glow(
-        Offset(size.width * (0.12 + 0.14 * math.sin(a * 0.9)),
-            size.height * (0.18 + 0.12 * math.cos(a * 1.1))),
-        minSide * 0.58,
-        0.12,
-        0.30);
+      Offset(size.width * (0.12 + 0.12 * math.sin(a * 0.9)), size.height * (0.18 + 0.10 * math.cos(a * 1.1))),
+      minSide * 0.45, 0.07,
+    );
     glow(
-        Offset(size.width * (0.92 - 0.16 * math.cos(a * 0.7)),
-            size.height * (0.54 + 0.16 * math.sin(a * 0.8))),
-        minSide * 0.44,
-        0.20,
-        0.24);
+      Offset(size.width * (0.88 - 0.12 * math.cos(a * 0.7)), size.height * (0.60 + 0.12 * math.sin(a * 0.8))),
+      minSide * 0.36, 0.06,
+    );
     glow(
-        Offset(size.width * (0.46 + 0.14 * math.sin(a * 1.3 + 1.2)),
-            size.height * (0.92 - 0.14 * math.cos(a * 0.9 + 0.6))),
-        minSide * 0.40,
-        0.26,
-        0.20);
-
-    final ribbonPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..blendMode = BlendMode.screen
-      ..color = Colors.white.withOpacity(0.18);
-
-    Path ribbon(double yBase, double amp, double freq, double phase) {
-      final p = Path();
-      const steps = 48;
-      for (int i = 0; i <= steps; i++) {
-        final x = size.width * (i / steps);
-        final y = yBase +
-            math.sin((x / size.width) * math.pi * 2 * freq + a + phase) * amp;
-        if (i == 0) {
-          p.moveTo(x, y);
-        } else {
-          p.lineTo(x, y);
-        }
-      }
-      return p;
-    }
-
-    canvas.drawPath(ribbon(size.height * 0.32, 14, 1.1, 0.0), ribbonPaint);
-    canvas.drawPath(
-        ribbon(size.height * 0.68, 12, 0.9, 1.4),
-        ribbonPaint..color = Colors.white.withOpacity(0.14));
-
-    final dotPaint = Paint()
-      ..blendMode = BlendMode.screen
-      ..color = Colors.white.withOpacity(0.18);
-    const dotCount = 18;
-    for (int i = 0; i < dotCount; i++) {
-      final fi = i / dotCount;
-      final phase = fi * math.pi * 2;
-      final x =
-          size.width * (0.08 + 0.84 * fi) + math.sin(a * 1.2 + phase) * 10;
-      final y = size.height *
-              (0.15 + 0.75 * (0.5 + 0.5 * math.sin(a * 0.6 + phase))) +
-          math.cos(a * 1.1 + phase) * 8;
-      final r = 1.2 + 1.2 * (0.5 + 0.5 * math.sin(a * 1.4 + phase));
-      canvas.drawCircle(Offset(x, y), r, dotPaint);
-    }
-
-    final vignette = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(0.0, -0.2),
-        radius: 1.1,
-        colors: [Colors.transparent, Colors.black.withOpacity(0.14)],
-        stops: const [0.55, 1.0],
-      ).createShader(rect);
-    canvas.drawRect(rect, vignette);
+      Offset(size.width * (0.50 + 0.10 * math.sin(a * 1.3 + 1.2)), size.height * (0.88 - 0.10 * math.cos(a * 0.9 + 0.6))),
+      minSide * 0.28, 0.05,
+    );
   }
 
   @override
