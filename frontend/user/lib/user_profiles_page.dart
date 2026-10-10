@@ -191,7 +191,13 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     });
   }
 
-  Future<void> _loadUsers() async {
+  Future<void> _loadUsers({bool resetSeen = false}) async {
+    if (resetSeen) {
+      // Only clear seen IDs when doing a full "seen everyone" reset
+      _seenUserIds.clear();
+      _persistSeenIds();
+    }
+
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -203,12 +209,10 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       _isDismissingCard = false;
       _pulseNewTopCard = false;
       _fetchedUserIds.clear();
-      _seenUserIds.clear();
+      // Seed fetchedUserIds with previously seen users so they are excluded from API
+      _fetchedUserIds.addAll(_seenUserIds);
       users = [];
     });
-
-    // Also wipe persisted seen IDs so the cycle truly resets
-    _persistSeenIds();
 
     await _loadUsersFromCache();
     await _fetchNextBatch();
@@ -232,6 +236,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           .map(PublicUserProfile.fromJson)
           .where((u) => u.id.isNotEmpty)
           .where((u) => currentUserId == null ? true : u.id != currentUserId)
+          .where((u) => !_seenUserIds.contains(u.id)) // Skip already-seen users
           .toList();
 
       if (!mounted || loaded.isEmpty) return;
@@ -402,7 +407,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       // Auto-refresh with re-shuffled order after 3 seconds
       Future.delayed(const Duration(seconds: 3), () {
         if (!mounted) return;
-        _loadUsers();
+        _loadUsers(resetSeen: true); // Clear seen IDs so all users come back fresh
       });
       return;
     }
