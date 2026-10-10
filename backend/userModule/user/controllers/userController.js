@@ -12,10 +12,22 @@ const mapUser = (u) => {
 exports.getPublicUsers = async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit) || 10));
     const skip = (page - 1) * limit;
 
-    const where = { role: "user", isActive: true };
+    const excludeIds = req.query.exclude ? req.query.exclude.split(',').map(id => id.trim()).filter(Boolean) : [];
+    
+    // We try to parse the excluded IDs as Ints since Prisma expects Ints for IDs
+    const parsedExcludeIds = excludeIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+
+    const where = { 
+      role: "user", 
+      isActive: true,
+      ...(parsedExcludeIds.length > 0 && {
+        id: { notIn: parsedExcludeIds }
+      })
+    };
+    
     const [total, users] = await Promise.all([
       prisma.user.count({ where }),
       prisma.user.findMany({
@@ -39,6 +51,7 @@ exports.getPublicUsers = async (req, res) => {
         take: limit
       })
     ]);
+    
     const totalPages = Math.ceil(total / limit);
     res.json({ data: users.map(mapUser), count: total, page, limit, totalPages });
   } catch (error) {

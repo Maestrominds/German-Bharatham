@@ -1,10 +1,11 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'home.dart';
@@ -120,7 +121,12 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   // â”€â”€ Undo state â”€â”€
   final List<Map<String, dynamic>> _undoHistory = [];
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Seen tracking ──
+  final Set<String> _seenUserIds = {};
+  final Set<String> _fetchedUserIds = {};
+  bool _allSeenOnce = false;
+
+  // ─────────── Lifecycle ───────────
 
   @override
   void initState() {
@@ -137,7 +143,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       LikedUserManager.instance.initialize();
     }
 
-    _loadUsers();
+    _loadSeenIds().then((_) => _loadUsers());
   }
 
   @override
@@ -146,7 +152,27 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     super.dispose();
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Data helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─────────── Data helpers ───────────
+
+  String get _seenPrefsKey {
+    final uid = UserSession.instance.userId ?? 'guest';
+    return 'seen_user_ids_$uid';
+  }
+
+  Future<void> _loadSeenIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getStringList(_seenPrefsKey);
+      if (raw != null) _seenUserIds.addAll(raw);
+    } catch (_) {}
+  }
+
+  Future<void> _persistSeenIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_seenPrefsKey, _seenUserIds.toList());
+    } catch (_) {}
+  }
 
   List<Map<String, dynamic>> _extractMapItems(dynamic decoded) {
     final list = decoded is List
@@ -157,21 +183,32 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     return list.whereType<Map<String, dynamic>>().toList();
   }
 
+  /// Sort users so unseen ones come first, already-seen go to the end
+  void _sortUnseenFirst() {
+    users.sort((a, b) {
+      final aSeen = _seenUserIds.contains(a.id) ? 1 : 0;
+      final bSeen = _seenUserIds.contains(b.id) ? 1 : 0;
+      return aSeen.compareTo(bSeen);
+    });
+  }
+
   Future<void> _loadUsers() async {
     setState(() {
       isLoading = true;
       errorMessage = null;
       currentIndex = 0;
+      _allSeenOnce = false;
       _cardOffset = Offset.zero;
       _isAnimatingCard = false;
       _isDismissingCard = false;
       _pulseNewTopCard = false;
       _currentPage = 1;
       _totalPages = 1;
+      _fetchedUserIds.clear(); // Reset fetched IDs for fresh load
     });
 
     await _loadUsersFromCache();
-    await _fetchPage(1);
+    await _fetchNextBatch();
   }
 
   Future<void> _loadUsersFromCache() async {
@@ -195,9 +232,11 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           .toList();
 
       if (!mounted || loaded.isEmpty) return;
-      loaded.shuffle(); // Random order from cache too — consistent with API shuffle
+      loaded.shuffle(); // Random order from cache too
+      
       setState(() {
         users = loaded;
+        _fetchedUserIds.addAll(loaded.map((u) => u.id));
         currentIndex = 0;
         isLoading = false;
         errorMessage = null;
@@ -205,15 +244,18 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     } catch (_) {}
   }
 
-  Future<void> _fetchPage(int page) async {
+  Future<void> _fetchNextBatch() async {
     if (_isFetchingMore) return;
     setState(() => _isFetchingMore = true);
 
     try {
       const int limit = 10;
+      // Exclude everything we've already fetched so the DB only returns completely new users
+      final excludeParam = _fetchedUserIds.isNotEmpty ? '&exclude=${_fetchedUserIds.join(',')}' : '';
+      
       final response = await http.get(
-        Uri.parse(
-            '${ApiConfig.baseUrl}/api/user/public-users?page=$page&limit=$limit'),
+        // ALWAYS use page=1 because we are dynamically shrinking the dataset via exclude
+        Uri.parse('${ApiConfig.baseUrl}/api/user/public-users?page=1&limit=$limit$excludeParam'),
       );
 
       if (response.statusCode != 200) {
@@ -240,21 +282,25 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           .where((u) => currentUserId == null ? true : u.id != currentUserId)
           .toList();
 
-      // Cache the first page
-      if (page == 1) {
+      if (users.isEmpty && fresh.isNotEmpty) {
         await CacheService.set(_usersCacheKey, jsonEncode(items));
+      }
+
+      if (fresh.isEmpty) {
+        _totalPages = 0; // Stop fetching since the database has no more unseen users
       }
 
       if (!mounted) return;
       setState(() {
-        if (page == 1) {
-          fresh.shuffle(); // Random order every session — O(n), zero swipe impact
+        if (users.isEmpty) {
+          fresh.shuffle();
           users = fresh;
+          _sortUnseenFirst();
           currentIndex = 0;
         } else {
           users = [...users, ...fresh];
         }
-        _currentPage = page;
+        _fetchedUserIds.addAll(fresh.map((u) => u.id));
         isLoading = false;
         _isFetchingMore = false;
         errorMessage = null;
@@ -272,8 +318,9 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   /// Called when we're getting close to the end of loaded users
   void _maybeFetchMore() {
     final remaining = users.length - currentIndex;
-    if (remaining <= 3 && _currentPage < _totalPages && !_isFetchingMore) {
-      _fetchPage(_currentPage + 1);
+    // We fetch more if we have < 3 users left and the server hasn't said we're at the end
+    if (remaining <= 3 && _totalPages > 0 && !_isFetchingMore) {
+      _fetchNextBatch();
     }
   }
 
@@ -330,6 +377,10 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   void _onSwipeEnded(bool toRight, PublicUserProfile user) {
     _undoHistory.add({'user': user, 'liked': toRight});
 
+    // Track this user as seen
+    _seenUserIds.add(user.id);
+    _persistSeenIds();
+
     if (toRight) {
       // Swipe right = Like
       LikedUserManager.instance.toggle(user.id).then((nowLiked) {
@@ -337,6 +388,25 @@ class _UserProfilesPageState extends State<UserProfilesPage>
         if (nowLiked) _sendLikeNotification(user.id);
         setState(() {});
       });
+    }
+
+    // Check if user has seen all loaded profiles
+    final allSeen = users.every((u) => _seenUserIds.contains(u.id));
+
+    if (allSeen) {
+      // Show "seen everyone" message, then auto-refresh after a short delay
+      setState(() {
+        _allSeenOnce = true;
+        _cardOffset = Offset.zero;
+        _isAnimatingCard = false;
+        _isDismissingCard = false;
+      });
+      // Auto-refresh with re-shuffled order after 3 seconds
+      Future.delayed(const Duration(seconds: 3), () {
+        if (!mounted) return;
+        _loadUsers();
+      });
+      return;
     }
 
     final nextIndex = (currentIndex + 1) % users.length;
@@ -385,6 +455,46 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   }
 
   bool get _hasActiveUser => users.isNotEmpty;
+
+  Widget _seenEveryoneWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle_outline_rounded,
+                size: 64, color: primaryGreen.withOpacity(0.6)),
+            const SizedBox(height: 16),
+            const Text(
+              "You've seen everyone!",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Refreshing with a new order...',
+              style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                  color: primaryGreen, strokeWidth: 2.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -459,14 +569,16 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                                       child: Text('No users available',
                                           style: TextStyle(
                                               color: Colors.grey)))
-                                  : Align(
-                                      alignment: Alignment.topCenter,
-                                      child: _carousel(),
-                                    ),
+                                  : _allSeenOnce
+                                      ? _seenEveryoneWidget()
+                                      : Align(
+                                          alignment: Alignment.topCenter,
+                                          child: _carousel(),
+                                        ),
                     ),
 
                     // ——— Swipe hint ———
-                    if (!isLoading && errorMessage == null && users.isNotEmpty) ...[
+                    if (!isLoading && errorMessage == null && users.isNotEmpty && !_allSeenOnce) ...[
                       const SizedBox(height: 8),
                       Text(
                         'swipe left to skip  ·  swipe right to like',

@@ -325,10 +325,13 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                     );
                                     isValid = false;
                                   }
-                                  // Photo must be a real user-uploaded base64 image.
-                                  // A Google/social profile URL does NOT count.
-                                  final photoOk = _photoBase64 != null &&
-                                      _photoBase64!.trim().startsWith('data:image');
+                                  // Photo must be a real user-uploaded base64 image
+                                  // or an already-uploaded Cloudinary URL (http...).
+                                  // A Google/social profile URL does NOT count — but
+                                  // Cloudinary URLs are from our own upload flow.
+                                  final _photo = _photoBase64?.trim() ?? '';
+                                  final photoOk = _photo.startsWith('data:image') ||
+                                      _photo.startsWith('http');
                                   if (!photoOk) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
