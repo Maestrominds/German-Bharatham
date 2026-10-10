@@ -107,8 +107,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   String? errorMessage;
   List<PublicUserProfile> users = [];
   int currentIndex = 0;
-  int _currentPage = 1;
-  int _totalPages = 1;
+  bool _hasMoreOnServer = true;
   bool _isFetchingMore = false;
 
   // â”€â”€ Card swipe state â”€â”€
@@ -198,14 +197,18 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       errorMessage = null;
       currentIndex = 0;
       _allSeenOnce = false;
+      _hasMoreOnServer = true;
       _cardOffset = Offset.zero;
       _isAnimatingCard = false;
       _isDismissingCard = false;
       _pulseNewTopCard = false;
-      _currentPage = 1;
-      _totalPages = 1;
-      _fetchedUserIds.clear(); // Reset fetched IDs for fresh load
+      _fetchedUserIds.clear();
+      _seenUserIds.clear();
+      users = [];
     });
+
+    // Also wipe persisted seen IDs so the cycle truly resets
+    _persistSeenIds();
 
     await _loadUsersFromCache();
     await _fetchNextBatch();
@@ -271,10 +274,6 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       final decoded = jsonDecode(response.body);
       final items = _extractMapItems(decoded);
 
-      if (decoded is Map<String, dynamic> && decoded['totalPages'] != null) {
-        _totalPages = (decoded['totalPages'] as num).toInt();
-      }
-
       final currentUserId = UserSession.instance.userId;
       final fresh = items
           .map(PublicUserProfile.fromJson)
@@ -287,7 +286,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       }
 
       if (fresh.isEmpty) {
-        _totalPages = 0; // Stop fetching since the database has no more unseen users
+        _hasMoreOnServer = false; // No more unseen users left in the database
       }
 
       if (!mounted) return;
@@ -318,8 +317,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   /// Called when we're getting close to the end of loaded users
   void _maybeFetchMore() {
     final remaining = users.length - currentIndex;
-    // We fetch more if we have < 3 users left and the server hasn't said we're at the end
-    if (remaining <= 3 && _totalPages > 0 && !_isFetchingMore) {
+    if (remaining <= 6 && _hasMoreOnServer && !_isFetchingMore) {
       _fetchNextBatch();
     }
   }
@@ -390,10 +388,10 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       });
     }
 
-    // Check if user has seen all loaded profiles
-    final allSeen = users.every((u) => _seenUserIds.contains(u.id));
+    // Check if user has swiped the very last loaded card AND the DB has no more users to give
+    final isLastCard = currentIndex >= users.length - 1;
 
-    if (allSeen) {
+    if (isLastCard && !_hasMoreOnServer) {
       // Show "seen everyone" message, then auto-refresh after a short delay
       setState(() {
         _allSeenOnce = true;

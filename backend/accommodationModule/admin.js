@@ -62,7 +62,7 @@ router.get("/", adminCheck, async (req, res) => {
 
     const mappedData = accommodations.map(mapAccommodation);
     console.log(`📤 [RESPONSE] Sending 200 response with ${mappedData.length} items after ${Date.now() - start}ms`);
-    
+
     res.status(200).json({
       data: mappedData,
       count: mappedData.length,
@@ -91,7 +91,7 @@ router.get("/:id", adminCheck, async (req, res) => {
       where: { id: numericId }
     });
     console.log(`✅ [DB RESULT] findUnique ${accommodation ? 'found' : 'not found'} in ${Date.now() - queryStart}ms`);
-    
+
     if (!accommodation) {
       console.log(`📤 [RESPONSE] Sending 404 response after ${Date.now() - start}ms`);
       return res.status(404).json({ message: "Not found" });
@@ -123,7 +123,7 @@ router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
 
     console.log(`📝 [VALIDATION] Creating accommodation with title="${title}", city="${city}"`);
 
-    // Upload any attached image files to Cloudinary
+    // Upload any attached image files to Cloudinary 
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
       const uploads = await Promise.all(
@@ -135,7 +135,7 @@ router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
         req.body.images.map(async (base64Img) => {
           if (typeof base64Img === 'string' && base64Img.startsWith('http')) return { secure_url: base64Img };
           if (typeof base64Img !== 'string' || !base64Img.includes('base64')) return { secure_url: null };
-          
+
           const base64Data = base64Img.replace(/^data:image\/\w+;base64,/, '');
           const buffer = Buffer.from(base64Data, 'base64');
           return uploadImage(buffer, 'accommodations');
@@ -195,7 +195,7 @@ router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
         status: 'pending',
         createdById: req.user ? parseInt(req.user.id, 10) : null,
         creatorType: req.body.creatorType || "admin",
-        
+
         // JSON configurations
         rentDetails: rentDetails,
         propertyDetails: propertyDetails,
@@ -227,7 +227,7 @@ router.patch('/:id/status', adminCheck, async (req, res) => {
     const { status } = req.body;
     const normalised = status === 'inactive' ? 'disabled' : status;
     console.log(`📝 [VALIDATION] Status change requested: ${status} -> ${normalised}`);
-    
+
     if (!['active', 'disabled', 'pending'].includes(normalised)) return res.status(400).json({ message: 'Invalid status' });
     const isActive = normalised === 'active';
 
@@ -237,7 +237,7 @@ router.patch('/:id/status', adminCheck, async (req, res) => {
       where: { id: numericId }
     });
     console.log(`✅ [DB RESULT] Before-state fetched in ${Date.now() - fetchStart}ms`);
-    
+
     if (!before) return res.status(404).json({ message: 'Not found' });
 
     // Update nested adminControls object safely
@@ -266,7 +266,7 @@ router.patch('/:id/status', adminCheck, async (req, res) => {
         module: 'accommodation',
         entityId: String(doc.id),
         listingTitle: doc.title,
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     console.log(`📤 [RESPONSE] Sending 200 response after ${Date.now() - start}ms`);
@@ -291,27 +291,27 @@ router.put("/:id", adminCheck, async (req, res) => {
 
     // Build update safely — only whitelist known Prisma schema fields
     const updateData = {};
-    if (b.title       != null) updateData.title       = String(b.title).trim();
-    if (b.city        != null) updateData.city         = String(b.city).trim();
-    if (b.address     != null) updateData.address      = String(b.address).trim() || null;
-    if (b.area        != null) updateData.area         = String(b.area).trim() || null;
-    if (b.state       != null) updateData.state        = String(b.state).trim() || null;
-    if (b.zipCode     != null) updateData.zipCode      = String(b.zipCode).trim() || null;
-    if (b.postalCode  != null) updateData.zipCode      = String(b.postalCode).trim() || null;
-    if (b.type        != null) updateData.type         = String(b.type).trim() || null;
-    if (b.description != null) updateData.description  = String(b.description).trim() || null;
-    if (b.status      != null) updateData.status       = b.status;
+    if (b.title != null) updateData.title = String(b.title).trim();
+    if (b.city != null) updateData.city = String(b.city).trim();
+    if (b.address != null) updateData.address = String(b.address).trim() || null;
+    if (b.area != null) updateData.area = String(b.area).trim() || null;
+    if (b.state != null) updateData.state = String(b.state).trim() || null;
+    if (b.zipCode != null) updateData.zipCode = String(b.zipCode).trim() || null;
+    if (b.postalCode != null) updateData.zipCode = String(b.postalCode).trim() || null;
+    if (b.type != null) updateData.type = String(b.type).trim() || null;
+    if (b.description != null) updateData.description = String(b.description).trim() || null;
+    if (b.status != null) updateData.status = b.status;
     if (b.contactPhone || b.phone) {
       updateData.contactPhone = String(b.contactPhone || b.phone).trim();
-      updateData.phone        = String(b.contactPhone || b.phone).trim();
+      updateData.phone = String(b.contactPhone || b.phone).trim();
     }
 
     // Nested JSON fields — store as-is (Prisma Json type)
-    if (b.rentDetails)      updateData.rentDetails      = b.rentDetails;
-    if (b.propertyDetails)  updateData.propertyDetails  = b.propertyDetails;
-    if (b.amenities)        updateData.amenities        = b.amenities;
-    if (b.media)            updateData.media            = b.media;
-    if (b.adminControls)    updateData.adminControls    = b.adminControls;
+    if (b.rentDetails) updateData.rentDetails = b.rentDetails;
+    if (b.propertyDetails) updateData.propertyDetails = b.propertyDetails;
+    if (b.amenities) updateData.amenities = b.amenities;
+    if (b.media) updateData.media = b.media;
+    if (b.adminControls) updateData.adminControls = b.adminControls;
 
     // Derived image
     if (b.media?.images && Array.isArray(b.media.images)) {
@@ -321,14 +321,14 @@ router.put("/:id", adminCheck, async (req, res) => {
     }
 
     // Flat derived fields from nested
-    if (b.rentDetails?.coldRent != null)      updateData.rent     = parseFloat(b.rentDetails.coldRent) || null;
-    if (b.rentDetails?.deposit  != null)      updateData.deposit  = parseFloat(b.rentDetails.deposit)  || null;
-    if (b.propertyDetails?.bedrooms != null)  updateData.bedrooms = parseInt(b.propertyDetails.bedrooms, 10)  || null;
-    if (b.propertyDetails?.bathrooms != null) updateData.bathrooms= parseInt(b.propertyDetails.bathrooms, 10) || null;
-    if (b.propertyDetails?.sizeSqm != null)   updateData.area     = parseFloat(b.propertyDetails.sizeSqm)     || null;
-    if (b.amenities?.furnished   != null)     updateData.furnished         = !!b.amenities.furnished;
-    if (b.amenities?.petsAllowed != null)     updateData.petsAllowed       = !!b.amenities.petsAllowed;
-    if (b.amenities?.parking     != null)     updateData.parkingAvailable  = !!b.amenities.parking;
+    if (b.rentDetails?.coldRent != null) updateData.rent = parseFloat(b.rentDetails.coldRent) || null;
+    if (b.rentDetails?.deposit != null) updateData.deposit = parseFloat(b.rentDetails.deposit) || null;
+    if (b.propertyDetails?.bedrooms != null) updateData.bedrooms = parseInt(b.propertyDetails.bedrooms, 10) || null;
+    if (b.propertyDetails?.bathrooms != null) updateData.bathrooms = parseInt(b.propertyDetails.bathrooms, 10) || null;
+    if (b.propertyDetails?.sizeSqm != null) updateData.area = parseFloat(b.propertyDetails.sizeSqm) || null;
+    if (b.amenities?.furnished != null) updateData.furnished = !!b.amenities.furnished;
+    if (b.amenities?.petsAllowed != null) updateData.petsAllowed = !!b.amenities.petsAllowed;
+    if (b.amenities?.parking != null) updateData.parkingAvailable = !!b.amenities.parking;
 
     const updateStart = Date.now();
     const updated = await prisma.accommodation.update({
