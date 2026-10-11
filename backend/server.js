@@ -292,11 +292,11 @@ const HOST = process.env.HOST || "0.0.0.0";
   app.listen(PORT, HOST, () => {
     console.log(`Server running on http://${HOST}:${PORT}`);
 
-    // Clean up notifications older than 7 days on startup, and repeat every 24 hours
+    // Clean  up notifications older than 7 days on startup, and repeat every 24 hours
     try {
       const { deleteOldNotifications } = require("./userModule/user/services/notificationService");
       deleteOldNotifications(1); // 1 day retention
-      
+
       setInterval(() => {
         deleteOldNotifications(1);
       }, 1 * 24 * 60 * 60 * 1000); // Once every 1 day
