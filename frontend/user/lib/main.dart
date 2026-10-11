@@ -22,7 +22,6 @@ import 'home.dart';
 import 'notification_deeplink.dart';
 import 'saved_guides_manager.dart';
 import 'profile_pages/edit_profile.dart';
-import 'home.dart';
 import 'user_profiles_page.dart';
 import 'forgot_password.dart';
 import 'services/api_config.dart';
@@ -33,6 +32,7 @@ import 'utils/subscription_utils.dart';
 import 'blocked_account_page.dart';
 import 'utils/account_status_utils.dart';
 import 'welcome_screen.dart';
+import 'services/version_check_service.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -1809,10 +1809,16 @@ class _SplashScreenState extends State<SplashScreen>
               : const WelcomeScreen(),
         ),
       );
-      // After navigating to main UI, show subscription banner/popup if needed.
-      Future.delayed(const Duration(milliseconds: 400), () {
+      // After navigating to main UI, check subscription and then app version sequentially.
+      Future.delayed(const Duration(milliseconds: 600), () async {
         final ctx = rootNavigatorKey.currentState?.context;
-        if (ctx != null) checkSubscriptionAndNotify(ctx);
+        if (ctx != null && ctx.mounted) {
+          await checkSubscriptionAndNotify(ctx);
+        }
+        final vCtx = rootNavigatorKey.currentState?.context;
+        if (vCtx != null && vCtx.mounted) {
+          await VersionCheckService.checkForUpdate(vCtx);
+        }
       });
     }
   }

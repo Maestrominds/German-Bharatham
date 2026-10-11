@@ -35,11 +35,11 @@ router.get("/category-stats", protect, adminOnly, getCategoryStats);
 router.get("/all-listings", protect, adminOnly, async (req, res) => {
   try {
     const [accommodations, foods, jobs, services, secondHandStores] = await Promise.all([
-      prisma.accommodation.findMany({ include: { createdBy: true }, take: 100 }),
-      prisma.foodGrocery.findMany({ include: { createdBy: true }, take: 100 }),
-      prisma.jobListing.findMany({ include: { createdBy: true }, take: 100 }),
-      prisma.service.findMany({ include: { createdBy: true }, take: 100 }),
-      prisma.secondHandStore.findMany({ include: { createdBy: true }, take: 100 }),
+      prisma.accommodation.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
+      prisma.foodGrocery.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
+      prisma.jobListing.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
+      prisma.service.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
+      prisma.secondHandStore.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
     ]);
     res.json({
       Accommodation: accommodations.map(mapItem),

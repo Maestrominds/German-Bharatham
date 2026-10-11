@@ -7,6 +7,7 @@ const CONTENT_KEYS = [
   { key: 'contactInfo',      label: 'Contact Information',  type: 'textarea' },
   { key: 'privacyPolicy',    label: 'Privacy Policy',       type: 'textarea' },
   { key: 'termsConditions',  label: 'Terms & Conditions',   type: 'textarea' },
+  { key: 'latestAppVersion', label: 'Latest App Version (e.g. 1.0.4)', type: 'text' },
 ];
 
 const DEFAULT_VALUES = {
@@ -14,6 +15,7 @@ const DEFAULT_VALUES = {
   contactInfo:     'Email: contact@germanbharatham.com\nPhone: +49 123 456 7890\nAddress: Berlin, Germany',
   privacyPolicy:   'We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we look after your personal data.',
   termsConditions: 'By accessing this platform, you agree to be bound by these terms and conditions. Please read them carefully before using our services.',
+  latestAppVersion: '1.0.4',
 };
 
 const fmt = (dateStr) => {
@@ -42,16 +44,29 @@ const EditModal = ({ item, onClose, onSave }) => {
           <button className="close-btn" onClick={onClose}><X size={20} /></button>
         </div>
         <div style={{ padding: '16px 0' }}>
-          <textarea
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            rows={8}
-            style={{
-              width: '100%', padding: 12, borderRadius: 8,
-              border: '1px solid #d1d5db', fontSize: 14, lineHeight: 1.6,
-              resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box'
-            }}
-          />
+          {item.type === 'text' ? (
+            <input
+              type="text"
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              style={{
+                width: '100%', padding: 12, borderRadius: 8,
+                border: '1px solid #d1d5db', fontSize: 14,
+                fontFamily: 'inherit', boxSizing: 'border-box'
+              }}
+            />
+          ) : (
+            <textarea
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              rows={8}
+              style={{
+                width: '100%', padding: 12, borderRadius: 8,
+                border: '1px solid #d1d5db', fontSize: 14, lineHeight: 1.6,
+                resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box'
+              }}
+            />
+          )}
         </div>
         <div className="form-actions">
           <button className="cancel-btn" onClick={onClose} disabled={saving}>Cancel</button>
@@ -186,7 +201,7 @@ const Settings = () => {
 
   const openEdit = (key) => {
     const meta = CONTENT_KEYS.find(k => k.key === key);
-    setEditingItem({ key, label: meta.label, value: contentData[key]?.value || '' });
+    setEditingItem({ key, label: meta.label, value: contentData[key]?.value || '', type: meta.type || 'textarea' });
   };
 
   return (

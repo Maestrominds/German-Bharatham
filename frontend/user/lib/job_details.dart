@@ -256,15 +256,20 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (widget.item.salary != null && widget.item.salary!.trim().isNotEmpty)
-                    Text(
-                      widget.item.salary!,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF4E7F6D),
-                        fontWeight: FontWeight.w700,
+                  if (widget.item.salary != null && widget.item.salary!.trim().isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        widget.item.salary!,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF4E7F6D),
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  ],
                 ],
               ),
                const SizedBox(height: 16),
@@ -306,13 +311,16 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                           children: [
                             Icon(icon, color: const Color(0xFF4E7F6D), size: 18),
                             const SizedBox(width: 8),
-                            Text(
-                              widget.item.phone!.trim(),
-                              style: const TextStyle(
-                                fontSize: 14, 
-                                color: Color(0xFF4E7F6D), 
-                                fontWeight: FontWeight.w600,
-                                decoration: TextDecoration.underline,
+                            Flexible(
+                              child: Text(
+                                widget.item.phone!.trim(),
+                                style: const TextStyle(
+                                  fontSize: 14, 
+                                  color: Color(0xFF4E7F6D), 
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
