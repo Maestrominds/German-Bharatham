@@ -20,7 +20,7 @@ const normalizeStatus = (value, fallback = 'Pending') => {
   return fallback;
 };
 
-// Helper to map Prisma Event to frontend expectations
+// Helper  to map Prisma Event to frontend expectations
 const mapEvent = (item) => {
   if (!item) return null;
   return {
