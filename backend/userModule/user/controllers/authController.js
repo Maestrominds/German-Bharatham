@@ -405,6 +405,7 @@ exports.updateProfile = async (req, res) => {
       dob, gender, location, preferredCity,
       education, profession, germanLevel, passport,
       careerLevel, industry, stateOfOrigin, motherTongue, linkedinUrl,
+      instagramUrl,
     } = req.body;
     
     const numericId = parseInt(req.user.id);
@@ -427,6 +428,7 @@ exports.updateProfile = async (req, res) => {
     if (stateOfOrigin !== undefined) update.stateOfOrigin = stateOfOrigin;
     if (motherTongue  !== undefined) update.motherTongue  = motherTongue;
     if (linkedinUrl   !== undefined) update.linkedinUrl   = linkedinUrl;
+    if (instagramUrl  !== undefined) update.instagramUrl  = instagramUrl;
 
     if (photo !== undefined) {
       if (photo && photo.startsWith('data:image')) {

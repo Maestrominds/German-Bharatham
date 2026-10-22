@@ -5,7 +5,7 @@ const prisma = require("../config/prisma");
 // GET ALL VISIBLE JOBS (No auth required for users)
 router.get("/", async (req, res) => {
   try {
-    const { city, jobType, company, companyName } = req.query;
+    const { city, jobType, company, companyName, country, domain, industry } = req.query;
 
     const where = {
       status: { equals: 'Active', mode: 'insensitive' }
@@ -16,6 +16,13 @@ router.get("/", async (req, res) => {
     }
     if (jobType) {
       where.jobType = { contains: jobType, mode: 'insensitive' };
+    }
+    if (country && country.trim()) {
+      where.country = { contains: country.trim(), mode: 'insensitive' };
+    }
+    const domainQuery = domain || industry;
+    if (domainQuery && domainQuery.trim()) {
+      where.domain = { contains: domainQuery.trim(), mode: 'insensitive' };
     }
     if (company || companyName) {
       const q = company || companyName;
@@ -35,6 +42,8 @@ router.get("/", async (req, res) => {
       _id: String(j.id), // Add _id for mobile/frontend compatibility
       company: j.companyName || '',
       city: j.location || '',
+      country: j.country || 'Germany',
+      domain: j.domain || '',
       requirements: Array.isArray(j.requirements)
         ? j.requirements
         : (j.requirements ? j.requirements.split(/[,;\n]/).map(s => s.trim()).filter(Boolean) : []),

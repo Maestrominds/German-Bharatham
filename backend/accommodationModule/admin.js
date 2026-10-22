@@ -11,6 +11,8 @@ const mapAccommodation = (item) => {
   return {
     ...item,
     _id: String(item.id),
+    website: item.website || item.externalUrl || null,
+    externalUrl: item.externalUrl || item.website || null,
   };
 };
 
@@ -112,13 +114,14 @@ router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
   try {
     const title = (req.body.title || '').trim();
     const city = (req.body.city || '').trim();
-    const contactPhone = (req.body.contactPhone || '').trim();
+    const contactPhone = (req.body.contactPhone || req.body.phone || '').trim();
+    const externalLink = (req.body.externalUrl || req.body.website || '').trim();
 
     if (!title || !city) {
       return res.status(400).json({ message: 'Title and City are required' });
     }
-    if (!contactPhone) {
-      return res.status(400).json({ message: 'Contact Phone is required so users can call or WhatsApp the owner' });
+    if (!contactPhone && !externalLink) {
+      return res.status(400).json({ message: 'Either Contact Phone or an External Source Link (URL) is required' });
     }
 
     console.log(`📝 [VALIDATION] Creating accommodation with title="${title}", city="${city}"`);
@@ -171,9 +174,10 @@ router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
         city,
         state: req.body.state ? String(req.body.state).trim() : null,
         zipCode: req.body.zipCode ? String(req.body.zipCode).trim() : null,
-        phone: contactPhone,
+        phone: contactPhone || null,
         email: req.body.email ? String(req.body.email).trim() : null,
-        website: req.body.website ? String(req.body.website).trim() : null,
+        website: externalLink || null,
+        externalUrl: externalLink || null,
         description: req.body.description ? String(req.body.description).trim() : null,
         rent: rentVal,
         deposit: depositVal,
@@ -301,6 +305,11 @@ router.put("/:id", adminCheck, async (req, res) => {
     if (b.type != null) updateData.type = String(b.type).trim() || null;
     if (b.description != null) updateData.description = String(b.description).trim() || null;
     if (b.status != null) updateData.status = b.status;
+    if (b.externalUrl !== undefined || b.website !== undefined) {
+      const urlVal = String((b.externalUrl !== undefined ? b.externalUrl : b.website) || '').trim() || null;
+      updateData.externalUrl = urlVal;
+      updateData.website = urlVal;
+    }
     if (b.contactPhone || b.phone) {
       updateData.contactPhone = String(b.contactPhone || b.phone).trim();
       updateData.phone = String(b.contactPhone || b.phone).trim();

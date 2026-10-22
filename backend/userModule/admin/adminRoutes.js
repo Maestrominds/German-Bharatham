@@ -34,12 +34,13 @@ router.get("/category-stats", protect, adminOnly, getCategoryStats);
 // All listings (for Listings page)
 router.get("/all-listings", protect, adminOnly, async (req, res) => {
   try {
-    const [accommodations, foods, jobs, services, secondHandStores] = await Promise.all([
+    const [accommodations, foods, jobs, services, secondHandStores, events] = await Promise.all([
       prisma.accommodation.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
       prisma.foodGrocery.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
       prisma.jobListing.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
       prisma.service.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
       prisma.secondHandStore.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
+      prisma.event.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
     ]);
     res.json({
       Accommodation: accommodations.map(mapItem),
@@ -47,6 +48,7 @@ router.get("/all-listings", protect, adminOnly, async (req, res) => {
       Jobs: jobs.map(mapItem),
       Services: services.map(mapItem),
       'Second Hand Store': secondHandStores.map(mapItem),
+      Events: events.map(mapItem),
     });
   } catch (error) {
     console.error("❌ all-listings error:", error.message);
@@ -58,12 +60,13 @@ router.get("/all-listings", protect, adminOnly, async (req, res) => {
 router.get("/pending-listings", protect, adminOnly, async (req, res) => {
   try {
     const pendingFilter = { status: { equals: 'pending', mode: 'insensitive' } };
-    const [accommodations, foods, jobs, services, secondHandStores] = await Promise.all([
+    const [accommodations, foods, jobs, services, secondHandStores, events] = await Promise.all([
       prisma.accommodation.findMany({ where: pendingFilter, include: { createdBy: true }, take: 50 }),
       prisma.foodGrocery.findMany({ where: pendingFilter, include: { createdBy: true }, take: 50 }),
       prisma.jobListing.findMany({ where: pendingFilter, include: { createdBy: true }, take: 50 }),
       prisma.service.findMany({ where: pendingFilter, include: { createdBy: true }, take: 50 }),
       prisma.secondHandStore.findMany({ where: pendingFilter, include: { createdBy: true }, take: 50 }),
+      prisma.event.findMany({ where: pendingFilter, include: { createdBy: true }, take: 50 }),
     ]);
     res.json({
       Accommodation: accommodations.map(mapItem),
@@ -71,6 +74,7 @@ router.get("/pending-listings", protect, adminOnly, async (req, res) => {
       Jobs: jobs.map(mapItem),
       Services: services.map(mapItem),
       'Second Hand Store': secondHandStores.map(mapItem),
+      Events: events.map(mapItem),
     });
   } catch (error) {
     console.error("❌ pending-listings error:", error.message);

@@ -12,6 +12,8 @@ const mapListing = (item) => {
   return {
     ...item,
     _id: String(item.id),
+    website: item.externalUrl || null,
+    externalUrl: item.externalUrl || null,
   };
 };
 

@@ -19,12 +19,13 @@ router.get("/", async (req, res) => {
     const numericUserId = parseInt(req.user.id);
     if (isNaN(numericUserId)) return res.status(401).json({ message: "Invalid session" });
 
-    const [accommodations, foods, jobs, services, secondHandStores] = await Promise.all([
+    const [accommodations, foods, jobs, services, secondHandStores, events] = await Promise.all([
       prisma.accommodation.findMany({ where: { createdById: numericUserId } }),
       prisma.foodGrocery.findMany({ where: { createdById: numericUserId } }),
       prisma.jobListing.findMany({ where: { createdById: numericUserId } }),
       prisma.service.findMany({ where: { createdById: numericUserId } }),
       prisma.secondHandStore.findMany({ where: { createdById: numericUserId } }),
+      prisma.event.findMany({ where: { createdById: numericUserId } }),
     ]);
 
     res.json({
@@ -33,6 +34,7 @@ router.get("/", async (req, res) => {
       Jobs: jobs.map(mapItem),
       Services: services.map(mapItem),
       "Second Hand Store": secondHandStores.map(mapItem),
+      Events: events.map(mapItem),
     });
   } catch (error) {
     console.error("❌ GET user listings error:", error.message);
@@ -67,7 +69,7 @@ router.post("/", upload.any(), async (req, res) => {
     const numericUserId = parseInt(req.user.id);
     if (isNaN(numericUserId)) return res.status(401).json({ message: "Invalid session" });
 
-    const allowed = ["Accommodation", "Food", "Jobs", "Services", "Second Hand Store"];
+    const allowed = ["Accommodation", "Food", "Jobs", "Services", "Second Hand Store", "Events", "Event"];
     if (!category || !allowed.includes(category)) {
       return res.status(400).json({ message: "Invalid or missing category" });
     }
@@ -90,6 +92,8 @@ router.post("/", upload.any(), async (req, res) => {
         zipCode:          data.postalCode || data.zipCode || null,
         phone:            data.contactPhone || data.phone || null,
         contactPhone:     data.contactPhone || null,
+        website:          data.website || data.externalUrl || null,
+        externalUrl:      data.externalUrl || data.website || null,
         description:      data.description || null,
         rentDetails:      data.rentDetails || null,
         propertyDetails:  data.propertyDetails || null,
@@ -134,6 +138,8 @@ router.post("/", upload.any(), async (req, res) => {
         companyName: data.companyName || data.company || null,
         companyLogo: data.companyLogo || null,
         location:    data.location || data.city || null,
+        country:     data.country || "Germany",
+        domain:      data.domain || data.industry || null,
         description: data.description || null,
         contact:     data.contact || data.phone || null,
         salary:      data.salary || null,
@@ -178,10 +184,29 @@ router.post("/", upload.any(), async (req, res) => {
         contactPhone:   data.contactPhone || null,
         contactEmail:   data.contactEmail || null,
         deliveryOption: data.deliveryOption || null,
+        externalUrl:    data.externalUrl || data.website || null,
         images:         Array.isArray(data.images) ? data.images : [],
         ...meta,
       };
       doc = await prisma.secondHandStore.create({ data: shsPayload });
+    } else if (category === "Events" || category === "Event") {
+      const eventPayload = {
+        title:        data.title || "",
+        description:  data.description || null,
+        category:     data.category || "Event",
+        city:         data.city || null,
+        venue:        data.venue || data.location || null,
+        organizer:    data.organizer || null,
+        contact:      data.contact || data.phone || data.email || null,
+        startsAt:     data.startsAt ? new Date(data.startsAt) : null,
+        endsAt:       data.endsAt ? new Date(data.endsAt) : null,
+        price:        data.price || null,
+        ticketUrl:    data.ticketUrl || data.externalUrl || null,
+        externalUrl:  data.externalUrl || data.ticketUrl || null,
+        images:       Array.isArray(data.images) ? data.images : [],
+        ...meta,
+      };
+      doc = await prisma.event.create({ data: eventPayload });
     }
 
     res.status(201).json({ message: "Listing submitted successfully", data: mapItem(doc) });
@@ -225,7 +250,7 @@ router.put("/:category/:id", upload.any(), async (req, res) => {
       return res.status(400).json({ message: "Invalid ID format" });
     }
 
-    const allowed = ["Accommodation", "Food", "Jobs", "Services", "Second Hand Store"];
+    const allowed = ["Accommodation", "Food", "Jobs", "Services", "Second Hand Store", "Events", "Event"];
     if (!category || !allowed.includes(category)) {
       return res.status(400).json({ message: "Invalid category" });
     }
@@ -241,6 +266,8 @@ router.put("/:category/:id", upload.any(), async (req, res) => {
       existing = await prisma.service.findUnique({ where: { id: numericId } });
     } else if (category === "Second Hand Store") {
       existing = await prisma.secondHandStore.findUnique({ where: { id: numericId } });
+    } else if (category === "Events" || category === "Event") {
+      existing = await prisma.event.findUnique({ where: { id: numericId } });
     }
 
     if (!existing) {
@@ -274,6 +301,8 @@ router.put("/:category/:id", upload.any(), async (req, res) => {
         zipCode:          data.postalCode || data.zipCode || null,
         phone:            data.contactPhone || data.phone || null,
         contactPhone:     data.contactPhone || null,
+        website:          data.website || data.externalUrl || null,
+        externalUrl:      data.externalUrl || data.website || null,
         description:      data.description || null,
         rentDetails:      data.rentDetails || null,
         propertyDetails:  data.propertyDetails || null,
@@ -316,6 +345,8 @@ router.put("/:category/:id", upload.any(), async (req, res) => {
         companyName: data.companyName || data.company || null,
         companyLogo: data.companyLogo || null,
         location:    data.location || data.city || null,
+        country:     data.country || "Germany",
+        domain:      data.domain || data.industry || null,
         description: data.description || null,
         contact:     data.contact || data.phone || null,
         salary:      data.salary || null,
@@ -359,10 +390,29 @@ router.put("/:category/:id", upload.any(), async (req, res) => {
         contactPhone:   data.contactPhone || null,
         contactEmail:   data.contactEmail || null,
         deliveryOption: data.deliveryOption || null,
+        externalUrl:    data.externalUrl || data.website || null,
         images:         Array.isArray(data.images) ? data.images : [],
         ...meta,
       };
       updatedDoc = await prisma.secondHandStore.update({ where: { id: numericId }, data: shsPayload });
+    } else if (category === "Events" || category === "Event") {
+      const eventPayload = {
+        title:        data.title || "",
+        description:  data.description || null,
+        category:     data.category || "Event",
+        city:         data.city || null,
+        venue:        data.venue || data.location || null,
+        organizer:    data.organizer || null,
+        contact:      data.contact || data.phone || data.email || null,
+        startsAt:     data.startsAt ? new Date(data.startsAt) : null,
+        endsAt:       data.endsAt ? new Date(data.endsAt) : null,
+        price:        data.price || null,
+        ticketUrl:    data.ticketUrl || data.externalUrl || null,
+        externalUrl:  data.externalUrl || data.ticketUrl || null,
+        images:       Array.isArray(data.images) ? data.images : [],
+        ...meta,
+      };
+      updatedDoc = await prisma.event.update({ where: { id: numericId }, data: eventPayload });
     }
 
     res.json({ message: "Listing updated successfully", data: mapItem(updatedDoc) });
@@ -386,7 +436,7 @@ router.delete("/:category/:id", async (req, res) => {
       return res.status(400).json({ message: "Invalid ID format" });
     }
 
-    const allowed = ["Accommodation", "Food", "Jobs", "Services", "Second Hand Store"];
+    const allowed = ["Accommodation", "Food", "Jobs", "Services", "Second Hand Store", "Events", "Event"];
     if (!category || !allowed.includes(category)) {
       return res.status(400).json({ message: "Invalid category" });
     }
@@ -402,6 +452,8 @@ router.delete("/:category/:id", async (req, res) => {
       existing = await prisma.service.findUnique({ where: { id: numericId } });
     } else if (category === "Second Hand Store") {
       existing = await prisma.secondHandStore.findUnique({ where: { id: numericId } });
+    } else if (category === "Events" || category === "Event") {
+      existing = await prisma.event.findUnique({ where: { id: numericId } });
     }
 
     if (!existing) {
@@ -429,6 +481,8 @@ router.delete("/:category/:id", async (req, res) => {
       await prisma.service.delete({ where: { id: numericId } });
     } else if (category === "Second Hand Store") {
       await prisma.secondHandStore.delete({ where: { id: numericId } });
+    } else if (category === "Events" || category === "Event") {
+      await prisma.event.delete({ where: { id: numericId } });
     }
 
     res.json({ message: "Listing deleted successfully" });

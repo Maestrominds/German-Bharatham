@@ -66,6 +66,10 @@ app.use("/api/services/user", require("./servicesModule/user"));
 app.use("/api/second-hand/admin", protect, adminOnly, require("./secondHandModule/admin"));
 app.use("/api/second-hand/user", require("./secondHandModule/user"));
 
+// ── Events Module ───────────────────────────────────────────────────────────
+app.use("/api/events/admin", protect, adminOnly, require("./eventsModule/admin"));
+app.use("/api/events/user", require("./eventsModule/user"));
+
 // ── Subscriptions / Payments Module ─────────────────────────────────────────
 // Razorpay webhook must NOT be protected; it uses signature verification.
 app.post(
@@ -115,6 +119,10 @@ app.use("/api/custom-categories", protect, require("./categoryModule/admin"));
 
 // ── Settings Module ─────────────────────────────────────────────────────────
 app.use("/api/admin/settings", require("./userModule/admin/settingsRoutes"));
+
+// ── Smart Share & Deep-Link Redirect ─────────────────────────────────────────
+app.use("/share", require("./routes/shareRoutes"));
+app.use("/l", require("./routes/shareRoutes"));
 
 // ── Utility routes ──────────────────────────────────────────────────────────
 app.get("/", (req, res) => {

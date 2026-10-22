@@ -32,6 +32,7 @@ model User {
   stateOfOrigin         String         @default("")
   motherTongue          String         @default("")
   linkedinUrl           String         @default("")
+  instagramUrl          String         @default("")
   resetPasswordToken    String?
   resetPasswordExpires  DateTime?
   fcmToken              String?
@@ -53,6 +54,7 @@ model User {
   receivedNotifications Notification[] @relation("RecipientRelation")
   sentNotifications     Notification[] @relation("SenderRelation")
   secondHandStores      SecondHandStore[]
+  events                Event[]
 
   @@map("users")
 }
@@ -67,6 +69,8 @@ model JobListing {
   description String?
   contact     String?
   salary      String?
+  country     String?  @default("Germany")
+  domain      String?
   jobType     String   @default("Full Time") // Full Time, Part Time
   requirements String?
   benefits    String?
@@ -94,6 +98,7 @@ model Accommodation {
   phone              String?
   email              String?
   website            String?
+  externalUrl        String?
   description        String?
   rent               Float?
   deposit            Float?
@@ -399,6 +404,7 @@ model SecondHandStore {
   contactPhone    String?
   contactEmail    String?
   deliveryOption  String?
+  externalUrl     String?
   images          String[]
   status          String   @default("Pending") // Active, Pending, Inactive, Rejected
   createdById     Int?
@@ -408,4 +414,30 @@ model SecondHandStore {
   updatedAt       DateTime @updatedAt
 
   @@map("second_hand_stores")
+}
+
+model Event {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String?
+  category     String    @default("Event")
+  city         String?
+  venue        String?
+  organizer    String?
+  contact      String?
+  startsAt     DateTime?
+  endsAt       DateTime?
+  price        String?
+  ticketUrl    String?
+  externalUrl  String?
+  images       String[]
+  status       String    @default("Pending") // Active, Pending, Inactive, Rejected
+  featured     Boolean   @default(false)
+  createdById  Int?
+  createdBy    User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  creatorType  String    @default("admin") // admin, user
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("events")
 }

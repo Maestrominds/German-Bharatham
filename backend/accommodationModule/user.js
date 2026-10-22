@@ -8,6 +8,8 @@ const mapAccommodation = (item) => {
   return {
     ...item,
     _id: String(item.id),
+    website: item.website || item.externalUrl || null,
+    externalUrl: item.externalUrl || item.website || null,
   };
 };
 

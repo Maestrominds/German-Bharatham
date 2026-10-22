@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Download } from 'lucide-react';
 import API_URL from '../config';
 import SkeletonLoader from './SkeletonLoader';
 
@@ -11,6 +12,7 @@ const Users = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const BASE = API_URL;
 
   const getUserPhotoSrc = (user) => {
@@ -89,6 +91,39 @@ const fetchUsers = async () => {
   }
 };
 
+  const handleExportCsv = async () => {
+    try {
+      setExporting(true);
+      const token = localStorage.getItem("adminToken");
+      const response = await fetch(`${BASE}/api/user/export-csv`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        alert(err.message || "Failed to export users CSV");
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `users-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+      alert("An error occurred while downloading the users CSV file.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="users">
       <div className="users-header">
@@ -97,6 +132,30 @@ const fetchUsers = async () => {
           <p>View and manage platform users.</p>
         </div>
         <div className="header-filters">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={exporting}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.625rem 1rem",
+              backgroundColor: "#2E5B3E",
+              color: "#fff",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "0.9375rem",
+              fontWeight: 500,
+              cursor: exporting ? "not-allowed" : "pointer",
+              opacity: exporting ? 0.7 : 1,
+              transition: "opacity 0.2s, background-color 0.2s"
+            }}
+            title="Download CSV export of all platform users"
+          >
+            <Download size={16} />
+            <span>{exporting ? "Exporting..." : "Export CSV"}</span>
+          </button>
           <div className="filter-dropdown">
             <select
               value={sortBy}

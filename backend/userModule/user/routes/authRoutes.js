@@ -42,6 +42,7 @@ router.put(
 router.get("/public-users", userController.getPublicUsers);
 // 👑 Admin Routes
 router.get("/all-users", protect, adminOnly, userController.getAllUsers);
+router.get("/export-csv", protect, adminOnly, userController.exportUsersCsv);
 router.put("/activate/:id", protect, adminOnly, userController.activateUser);
 router.put("/deactivate/:id", protect, adminOnly, userController.deactivateUser);
 router.put("/grant-free-access/:id", protect, adminOnly, userController.grantFreeAccess);

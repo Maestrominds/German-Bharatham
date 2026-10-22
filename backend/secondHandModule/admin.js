@@ -23,6 +23,8 @@ const mapListing = (item) => {
   return {
     ...item,
     _id: String(item.id),
+    website: item.externalUrl || null,
+    externalUrl: item.externalUrl || null,
   };
 };
 
@@ -100,6 +102,7 @@ router.post('/', adminCheck, async (req, res) => {
         contactPhone: req.body.contactPhone,
         contactEmail: req.body.contactEmail,
         deliveryOption: req.body.deliveryOption,
+        externalUrl: req.body.externalUrl || req.body.website || null,
         images: imageUrls,
         status: req.body.status,
         createdById: req.user ? parseInt(req.user.id, 10) : null,
@@ -147,6 +150,7 @@ router.put('/:id', adminCheck, async (req, res) => {
         contactPhone: req.body.contactPhone,
         contactEmail: req.body.contactEmail,
         deliveryOption: req.body.deliveryOption,
+        externalUrl: (req.body.externalUrl !== undefined ? req.body.externalUrl : req.body.website) !== undefined ? (req.body.externalUrl || req.body.website) : undefined,
         images: req.body.images !== undefined ? imageUrls : undefined,
         status: req.body.status,
       }
