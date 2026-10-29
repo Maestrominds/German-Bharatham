@@ -31,16 +31,17 @@ router.post("/login", (req, res, next) => {
 router.get("/dashboard", protect, adminOnly, getDashboardStats);
 router.get("/category-stats", protect, adminOnly, getCategoryStats);
 
-// All listings (for Listings page)
+// All listings (for Listings page - safeguarded with limit for performance & scalability)
 router.get("/all-listings", protect, adminOnly, async (req, res) => {
   try {
+    const limit = Math.min(200, parseInt(req.query.limit) || 100);
     const [accommodations, foods, jobs, services, secondHandStores, events] = await Promise.all([
-      prisma.accommodation.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
-      prisma.foodGrocery.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
-      prisma.jobListing.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
-      prisma.service.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
-      prisma.secondHandStore.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
-      prisma.event.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' } }),
+      prisma.accommodation.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' }, take: limit }),
+      prisma.foodGrocery.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' }, take: limit }),
+      prisma.jobListing.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' }, take: limit }),
+      prisma.service.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' }, take: limit }),
+      prisma.secondHandStore.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' }, take: limit }),
+      prisma.event.findMany({ include: { createdBy: true }, orderBy: { createdAt: 'desc' }, take: limit }),
     ]);
     res.json({
       Accommodation: accommodations.map(mapItem),

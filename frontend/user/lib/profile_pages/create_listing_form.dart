@@ -820,7 +820,20 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     return [
       _buildField(key: 'title', label: 'Job Title', hint: 'Software Engineer', maxLength: 100, minLength: 2),
       _buildField(key: 'companyName', label: 'Company Name', hint: 'Tech Solutions GmbH', maxLength: 100, minLength: 1),
-      _buildField(key: 'country', label: 'Country', hint: 'Germany', required: false, maxLength: 60),
+      SearchableDropdownInput(
+        label: "Country",
+        controller: _controllers['country']!,
+        options: const [
+          'Germany',
+          'India',
+          'Europe',
+          'United Kingdom',
+          'United States',
+          'Other / Remote',
+        ],
+        hintText: "Select or type country",
+        isRequired: false,
+      ),
       _buildField(key: 'location', label: 'Location (City)', hint: 'Munich', maxLength: 100, minLength: 1),
       SearchableDropdownInput(
         label: "Field / Domain",

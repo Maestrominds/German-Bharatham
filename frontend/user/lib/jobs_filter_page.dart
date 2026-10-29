@@ -7,8 +7,14 @@ import 'services/api_config.dart';
 class JobsFilterPage extends StatefulWidget {
   final List<Job> allItems;
   final String? initialDomain;
+  final String? initialCountry;
 
-  const JobsFilterPage({super.key, required this.allItems, this.initialDomain});
+  const JobsFilterPage({
+    super.key,
+    required this.allItems,
+    this.initialDomain,
+    this.initialCountry,
+  });
 
   @override
   State<JobsFilterPage> createState() => _JobsFilterPageState();
@@ -16,7 +22,6 @@ class JobsFilterPage extends StatefulWidget {
 
 class _JobsFilterPageState extends State<JobsFilterPage> {
   final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _countryController = TextEditingController();
 
   // Field / Domain selection (matches profile setup)
   String _selectedDomain = 'All';
@@ -35,6 +40,18 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
     'Legal / Law',
     'Education / Academia',
     'Other',
+  ];
+
+  // Country selection (clean curated list)
+  String _selectedCountry = 'All Countries';
+  static const List<String> _countryOptions = [
+    'All Countries',
+    'Germany',
+    'India',
+    'Europe',
+    'United Kingdom',
+    'United States',
+    'Other / Remote',
   ];
 
   // Job Type: 0=All,1=Full-time,2=Part-time,3=Contract,4=Internship
@@ -66,6 +83,18 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
     if (widget.initialDomain != null && widget.initialDomain!.isNotEmpty) {
       _selectedDomain = widget.initialDomain!;
     }
+    if (widget.initialCountry != null && widget.initialCountry!.isNotEmpty) {
+      final initLower = widget.initialCountry!.trim().toLowerCase();
+      final match = _countryOptions.firstWhere(
+        (c) => c.toLowerCase() == initLower,
+        orElse: () {
+          const euOld = ['austria', 'switzerland', 'netherlands', 'poland', 'france'];
+          if (euOld.contains(initLower)) return 'Europe';
+          return 'All Countries';
+        },
+      );
+      _selectedCountry = match;
+    }
     _fetchDomainOptions();
   }
 
@@ -85,6 +114,10 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
           if (list.isNotEmpty) {
             setState(() {
               _domainOptions = ['All', ...list];
+              // Ensure selection is valid
+              if (!_domainOptions.contains(_selectedDomain)) {
+                _domainOptions.add(_selectedDomain);
+              }
             });
           }
         }
@@ -95,7 +128,6 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
   @override
   void dispose() {
     _locationController.dispose();
-    _countryController.dispose();
     super.dispose();
   }
 
@@ -119,7 +151,6 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
             if (jobDomain.contains(kw)) return true;
           }
         }
-        // Also match against job title, description, or category for seamless discovery
         for (final kw in keywords) {
           if (job.title.toLowerCase().contains(kw) ||
               (job.description ?? '').toLowerCase().contains(kw) ||
@@ -132,11 +163,38 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
     }
 
     // 2) Country filter
-    final countryQuery = _countryController.text.trim().toLowerCase();
-    if (countryQuery.isNotEmpty) {
+    if (_selectedCountry.isNotEmpty && _selectedCountry != 'All Countries') {
+      final cLower = _selectedCountry.toLowerCase();
       result = result.where((job) {
-        return job.country.toLowerCase().contains(countryQuery) ||
-            job.location.toLowerCase().contains(countryQuery);
+        final jobCountry = job.country.toLowerCase();
+        final jobLocation = job.location.toLowerCase();
+        if (cLower.contains('remote') || cLower.contains('other')) {
+          return jobCountry.contains('remote') ||
+              jobCountry.contains('other') ||
+              jobLocation.contains('remote');
+        }
+        if (cLower == 'europe') {
+          const euKeywords = [
+            'europe',
+            'eu',
+            'austria',
+            'switzerland',
+            'netherlands',
+            'poland',
+            'france',
+            'spain',
+            'italy',
+            'ireland',
+            'belgium',
+            'sweden',
+            'norway',
+            'denmark',
+            'finland',
+            'portugal',
+          ];
+          return euKeywords.any((kw) => jobCountry.contains(kw) || jobLocation.contains(kw));
+        }
+        return jobCountry.contains(cLower) || jobLocation.contains(cLower);
       }).toList();
     }
 
@@ -173,14 +231,15 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
     Navigator.pop(context, {
       'filtered': result,
       'selectedDomain': _selectedDomain,
+      'selectedCountry': _selectedCountry,
     });
   }
 
   void _resetFilters() {
     setState(() {
       _locationController.clear();
-      _countryController.clear();
       _selectedDomain = 'All';
+      _selectedCountry = 'All Countries';
       selectedJobType = 0;
       _salaryRange = const RangeValues(0, _maxSalary);
     });
@@ -228,7 +287,7 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Field / Domain filter (matching Profile setup)
+            // ── 1. Field / Domain Dropdown ──────────────────────────────
             Row(
               children: [
                 const Icon(Icons.category_rounded, size: 18, color: Color(0xFF4E7F6D)),
@@ -241,39 +300,56 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Tailored to domains from profile setup',
+              'Synchronized with profile setup domains',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _domainOptions.map((domain) {
-                final isSelected = _selectedDomain.toLowerCase() == domain.toLowerCase();
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedDomain = domain),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF4E7F6D) : const Color(0xFFE5E7EB),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: DropdownButtonFormField<String>(
+                value: _domainOptions.contains(_selectedDomain) ? _selectedDomain : 'All',
+                // Displays ~4 values at a time with scroll so it doesn't take over half the screen!
+                menuMaxHeight: 200,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  prefixIcon: const Icon(Icons.work_outline, color: Color(0xFF4E7F6D), size: 20),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                items: _domainOptions.map((domain) {
+                  return DropdownMenuItem<String>(
+                    value: domain,
                     child: Text(
                       domain,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _selectedDomain = val);
+                  }
+                },
+              ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 22),
 
-            // Country Filter
+            // ── 2. Country Dropdown ─────────────────────────────────────
             Row(
               children: [
                 const Icon(Icons.public, size: 18, color: Color(0xFF4E7F6D)),
@@ -284,24 +360,58 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                 ),
               ],
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Filter jobs by country',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
             const SizedBox(height: 8),
-            TextField(
-              controller: _countryController,
-              decoration: InputDecoration(
-                hintText: 'e.g. Germany, India, Austria',
-                prefixIcon: const Icon(Icons.flag_outlined, color: Color(0xFF4E7F6D), size: 20),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: DropdownButtonFormField<String>(
+                value: _selectedCountry,
+                // Displays ~4 values at a time with scroll so it doesn't take over half the screen!
+                menuMaxHeight: 200,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  prefixIcon: const Icon(Icons.flag_outlined, color: Color(0xFF4E7F6D), size: 20),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
+                items: _countryOptions.map((country) {
+                  return DropdownMenuItem<String>(
+                    value: country,
+                    child: Text(
+                      country,
+                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _selectedCountry = val);
+                  }
+                },
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 22),
 
-            // City / Location
+            // ── 3. City / Location ──────────────────────────────────────
             Row(
               children: [
                 Image.asset(
@@ -322,7 +432,7 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
             TextField(
               controller: _locationController,
               decoration: InputDecoration(
-                hintText: 'Enter city or area',
+                hintText: 'Enter city or area (e.g. Berlin, Munich)',
                 prefixIcon: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Image.asset(
@@ -330,7 +440,7 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                     height: 18,
                     width: 18,
                     color: const Color(0xFF4E7F6D),
-                    errorBuilder: (_, __, ___) => const SizedBox(width: 18, height: 18),
+                    errorBuilder: (_, __, ___) => const Icon(Icons.location_on, color: Color(0xFF4E7F6D)),
                   ),
                 ),
                 filled: true,
@@ -342,9 +452,9 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 26),
 
-            // Job Type
+            // ── 4. Job Type ─────────────────────────────────────────────
             Row(
               children: [
                 Image.asset(
@@ -387,9 +497,9 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
               }),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 26),
 
-            // Salary Range
+            // ── 5. Salary Range ─────────────────────────────────────────
             Row(
               children: [
                 const Icon(Icons.euro, size: 16, color: Color(0xFF4E7F6D)),
@@ -433,7 +543,7 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 36),
 
             Row(
               children: [

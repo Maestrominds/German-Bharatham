@@ -1,5 +1,31 @@
-import React, { useState } from 'react';
-import { X, Check, Save, Upload, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Upload, Trash2 } from 'lucide-react';
+import API_URL from '../config';
+
+const DEFAULT_DOMAINS = [
+  'IT / Technology',
+  'Computer Science / Software',
+  'Biotechnology / Life Sciences',
+  'Healthcare / Medicine',
+  'Finance / Banking',
+  'Mechanical / Automotive',
+  'Electrical / Electronics',
+  'Engineering / Manufacturing',
+  'Marketing / Sales',
+  'Business / Management',
+  'Legal / Law',
+  'Education / Academia',
+  'Other',
+];
+
+const COUNTRY_OPTIONS = [
+  'Germany',
+  'India',
+  'Europe',
+  'United Kingdom',
+  'United States',
+  'Other / Remote',
+];
 
 const ACCOMMODATION_AMENITIES = [
   { key: 'balcony', label: 'Balcony' },
@@ -28,6 +54,21 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
   );
   // Track object URLs created for new File objects so we can display them
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [availableDomains, setAvailableDomains] = useState(DEFAULT_DOMAINS);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/profile-options`)
+      .then(res => res.json())
+      .then(d => {
+        if (d && Array.isArray(d.domains)) {
+          const names = d.domains.map(item => (typeof item === 'object' ? item.name : item)).filter(Boolean);
+          if (names.length > 0) {
+            setAvailableDomains(Array.from(new Set([...DEFAULT_DOMAINS, ...names])));
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const [formData, setFormData] = useState(() => {
     const raw = listing.raw || {};
@@ -423,11 +464,36 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Country</label>
-              <input type="text" name="country" value={formData.country || 'Germany'} onChange={handleFieldChange} placeholder="Germany" style={inputStyle} />
+              <select
+                name="country"
+                value={formData.country || 'Germany'}
+                onChange={handleFieldChange}
+                style={inputStyle}
+              >
+                {formData.country && !COUNTRY_OPTIONS.includes(formData.country) && (
+                  <option value={formData.country}>{formData.country}</option>
+                )}
+                {COUNTRY_OPTIONS.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Field / Domain</label>
-              <input type="text" name="domain" value={formData.domain || ''} onChange={handleFieldChange} placeholder="e.g. IT / Technology" style={inputStyle} />
+              <select
+                name="domain"
+                value={formData.domain || ''}
+                onChange={handleFieldChange}
+                style={inputStyle}
+              >
+                <option value="">Select Domain / Industry</option>
+                {(availableDomains.length > 0 ? availableDomains : DEFAULT_DOMAINS).map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+                {formData.domain && !availableDomains.includes(formData.domain) && (
+                  <option value={formData.domain}>{formData.domain}</option>
+                )}
+              </select>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>

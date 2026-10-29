@@ -4,6 +4,31 @@ import API_URL from '../config';
 
 const REQ = <span style={{ color: 'red' }}>*</span>;
 
+const DEFAULT_DOMAINS = [
+  'IT / Technology',
+  'Computer Science / Software',
+  'Biotechnology / Life Sciences',
+  'Healthcare / Medicine',
+  'Finance / Banking',
+  'Mechanical / Automotive',
+  'Electrical / Electronics',
+  'Engineering / Manufacturing',
+  'Marketing / Sales',
+  'Business / Management',
+  'Legal / Law',
+  'Education / Academia',
+  'Other',
+];
+
+const COUNTRY_OPTIONS = [
+  'Germany',
+  'India',
+  'Europe',
+  'United Kingdom',
+  'United States',
+  'Other / Remote',
+];
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 const ImageUpload = ({ images, onChange }) => (
@@ -179,7 +204,7 @@ const AccommodationForm = ({ data, set }) => {
   );
 };
 
-const JobsForm = ({ data, set }) => {
+const JobsForm = ({ data, set, availableDomains = DEFAULT_DOMAINS }) => {
   return (
     <>
       {/* Basic Information */}
@@ -218,11 +243,32 @@ const JobsForm = ({ data, set }) => {
         <div className="form-row">
           <div className="form-group">
             <label>Country</label>
-            <input value={data.country || 'Germany'} onChange={e => set(p => ({...p, country: e.target.value}))} placeholder="Germany" />
+            <select
+              value={data.country || 'Germany'}
+              onChange={e => set(p => ({ ...p, country: e.target.value }))}
+            >
+              {data.country && !COUNTRY_OPTIONS.includes(data.country) && (
+                <option value={data.country}>{data.country}</option>
+              )}
+              {COUNTRY_OPTIONS.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
           <div className="form-group">
             <label>Field / Domain</label>
-            <input value={data.domain || ''} onChange={e => set(p => ({...p, domain: e.target.value}))} placeholder="e.g. IT / Technology, Healthcare, Engineering" />
+            <select
+              value={data.domain || ''}
+              onChange={e => set(p => ({ ...p, domain: e.target.value }))}
+            >
+              <option value="">Select Domain / Industry</option>
+              {(availableDomains.length > 0 ? availableDomains : DEFAULT_DOMAINS).map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+              {data.domain && !availableDomains.includes(data.domain) && (
+                <option value={data.domain}>{data.domain}</option>
+              )}
+            </select>
           </div>
         </div>
         <div className="form-row">
@@ -1352,6 +1398,21 @@ const AddListingModal = ({ onClose, onSuccess, defaultCategory, lockCategory, ed
   const [category, setCategory] = useState(initialCategory);
   const [formData, setFormData] = useState(editItem ? mapItemToFormData(initialCategory, editItem) : DEFAULTS[initialCategory]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableDomains, setAvailableDomains] = useState(DEFAULT_DOMAINS);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/profile-options`)
+      .then(res => res.json())
+      .then(d => {
+        if (d && Array.isArray(d.domains)) {
+          const names = d.domains.map(item => (typeof item === 'object' ? item.name : item)).filter(Boolean);
+          if (names.length > 0) {
+            setAvailableDomains(Array.from(new Set([...DEFAULT_DOMAINS, ...names])));
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const cat = defaultCategory || 'Accommodation';
@@ -1492,7 +1553,7 @@ const AddListingModal = ({ onClose, onSuccess, defaultCategory, lockCategory, ed
 
         <form onSubmit={handleSubmit} className="add-listing-form" key={category}>
           {category === 'Accommodation' && <AccommodationForm key="accommodation" data={formData} set={setFormData} />}
-          {category === 'Jobs' && <JobsForm key="jobs" data={formData} set={setFormData} />}
+          {category === 'Jobs' && <JobsForm key="jobs" data={formData} set={setFormData} availableDomains={availableDomains} />}
           {category === 'Services' && <ServicesForm key="services" data={formData} set={setFormData} />}
           {category === 'Second Hand Store' && <SecondHandStoreForm key="secondhand" data={formData} set={setFormData} />}
           {category === 'Events' && <EventsForm key="events" data={formData} set={setFormData} />}
