@@ -118,6 +118,9 @@ app.use(
 app.use("/api/custom-categories", protect, require("./categoryModule/admin"));
 
 // ── Settings Module ─────────────────────────────────────────────────────────
+// ── Profile Options Module (Dynamic Domains, Languages, Cities) ─────────────
+app.use("/api/profile-options", require("./routes/profileOptionRoutes"));
+
 app.use("/api/admin/settings", require("./userModule/admin/settingsRoutes"));
 
 // ── Smart Share & Deep-Link Redirect ─────────────────────────────────────────

@@ -441,3 +441,16 @@ model Event {
 
   @@map("events")
 }
+
+
+model ProfileOption {
+  id        Int      @id @default(autoincrement())
+  type      String   // domain, language, city
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, name])
+  @@index([type])
+  @@map("profile_options")
+}
