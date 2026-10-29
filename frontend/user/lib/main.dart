@@ -1405,7 +1405,7 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
           final textFields = [
             'name', 'phone', 'dob', 'gender', 'location',
             'preferredCity', 'education', 'profession',
-            'germanLevel',
+            'germanLevel', 'industry', 'motherTongue', 'linkedinUrl',
           ];
           for (var field in textFields) {
             if (data[field] == null || data[field].toString().trim().isEmpty) {
@@ -1697,7 +1697,7 @@ class _SplashScreenState extends State<SplashScreen>
           const textFields = [
             'name', 'phone', 'dob', 'gender', 'location',
             'preferredCity', 'education', 'profession',
-            'germanLevel',
+            'germanLevel', 'industry', 'motherTongue', 'linkedinUrl',
           ];
           bool hasMissing = textFields.any(
             (f) => data[f] == null || data[f].toString().trim().isEmpty,

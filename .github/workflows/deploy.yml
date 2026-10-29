@@ -6,6 +6,7 @@ on:
       - feature-maestromind-release # Or your default branch (e.g., master)
     paths:
       - 'backend/**' # Only trigger when files in the backend change
+      - '.github/workflows/deploy.yml'
 
 jobs:
   deploy:
@@ -19,7 +20,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /var/www/german-bharatham/backend
-            git pull origin feature-maestromind-release
+            git fetch origin feature-maestromind-release
+            git reset --hard origin/feature-maestromind-release
             npm install
             npx prisma db push
             npx prisma generate
