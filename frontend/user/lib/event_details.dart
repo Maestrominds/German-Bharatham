@@ -450,56 +450,61 @@ class EventDetailsPage extends StatelessWidget {
     final link = event.ticketUrl ?? event.onlineLink;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, -2))],
       ),
-      child: Row(
-        children: [
-          // Add to Calendar
-          IconButton(
-            icon: const Icon(Icons.event_available, color: primaryGreen),
-            tooltip: 'Add to Calendar',
-            onPressed: () => _addToCalendar(context),
-          ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Row(
+            children: [
+              // Add to Calendar
+              IconButton(
+                icon: const Icon(Icons.event_available, color: primaryGreen),
+                tooltip: 'Add to Calendar',
+                onPressed: () => _addToCalendar(context),
+              ),
 
-          // Directions (if in-person)
-          if (hasAddress && !event.isOnline)
-            IconButton(
-              icon: const Icon(Icons.directions, color: primaryGreen),
-              tooltip: 'Get Directions',
-              onPressed: () => _openDirections(context, event.address ?? event.venue ?? event.city!),
-            ),
-
-          const SizedBox(width: 8),
-
-          // Primary Action Button (Tickets / Register)
-          Expanded(
-            child: SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              // Directions (if in-person)
+              if (hasAddress && !event.isOnline)
+                IconButton(
+                  icon: const Icon(Icons.directions, color: primaryGreen),
+                  tooltip: 'Get Directions',
+                  onPressed: () => _openDirections(context, event.address ?? event.venue ?? event.city!),
                 ),
-                onPressed: () {
-                  if (link != null && link.isNotEmpty) {
-                    _openUrl(context, link);
-                  } else {
-                    _shareEvent(context);
-                  }
-                },
-                child: Text(
-                  link != null && link.isNotEmpty
-                      ? (event.priceType == 'free' ? 'Register / RSVP' : 'Book Tickets')
-                      : 'Share Event',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+
+              const SizedBox(width: 8),
+
+              // Primary Action Button (Tickets / Register)
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryGreen,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      if (link != null && link.isNotEmpty) {
+                        _openUrl(context, link);
+                      } else {
+                        _shareEvent(context);
+                      }
+                    },
+                    child: Text(
+                      link != null && link.isNotEmpty
+                          ? (event.priceType == 'free' ? 'Register / RSVP' : 'Book Tickets')
+                          : 'Share Event',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

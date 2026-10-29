@@ -291,9 +291,9 @@ class _UserProfilesPageState extends State<UserProfilesPage>
 
   Future<void> _loadUsers({bool resetSeen = false}) async {
     if (resetSeen) {
-      // Only clear seen IDs when doing a full "seen everyone" reset
+      // Only clear seen IDs when doing an explicit full reset
       _seenUserIds.clear();
-      _persistSeenIds();
+      await _persistSeenIds();
     }
 
     setState(() {
@@ -307,10 +307,8 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       _isDismissingCard = false;
       _pulseNewTopCard = false;
       _fetchedUserIds.clear();
-      // Seed fetchedUserIds with previously seen users so they are excluded from API (only if no filter active)
-      if (!_hasActiveFilters) {
-        _fetchedUserIds.addAll(_seenUserIds);
-      }
+      // Always seed fetchedUserIds with previously seen users so they are excluded from API
+      _fetchedUserIds.addAll(_seenUserIds);
       users = [];
     });
 
@@ -342,7 +340,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           .toList();
 
       if (!mounted || loaded.isEmpty) return;
-      loaded.shuffle(); // Random order from cache too
+      loaded.shuffle(); // Unique random order for each session
       
       setState(() {
         users = loaded;
@@ -360,7 +358,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
 
     try {
       const int limit = 10;
-      // Exclude everything we've already fetched so the DB only returns completely new users
+      // Exclude everything we've already fetched + seen so DB only returns completely unseen users
       final excludeParam = _fetchedUserIds.isNotEmpty ? '&exclude=${_fetchedUserIds.join(',')}' : '';
       final cityParam = (_filterCity != null && _filterCity!.trim().isNotEmpty) ? '&city=${Uri.encodeComponent(_filterCity!.trim())}' : '';
       final langParam = (_filterLanguage != null && _filterLanguage!.trim().isNotEmpty) ? '&language=${Uri.encodeComponent(_filterLanguage!.trim())}' : '';
@@ -389,23 +387,29 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           .map(PublicUserProfile.fromJson)
           .where((u) => u.id.isNotEmpty)
           .where((u) => currentUserId == null ? true : u.id != currentUserId)
+          .where((u) => !_seenUserIds.contains(u.id)) // STRICT: Never add seen users
+          .where((u) => !users.any((existing) => existing.id == u.id)) // Prevent duplicates
           .toList();
+
+      // Personalized randomized order for each user & batch
+      fresh.shuffle();
 
       if (users.isEmpty && fresh.isNotEmpty && !_hasActiveFilters) {
         await CacheService.set(_usersCacheKey, jsonEncode(items));
       }
 
-      if (fresh.isEmpty) {
+      if (items.length < limit || fresh.isEmpty) {
         _hasMoreOnServer = false; // No more unseen users left in the database
       }
 
       if (!mounted) return;
       setState(() {
         if (users.isEmpty) {
-          fresh.shuffle();
           users = fresh;
-          _sortUnseenFirst();
           currentIndex = 0;
+          if (users.isEmpty) {
+            _allSeenOnce = true;
+          }
         } else {
           users = [...users, ...fresh];
         }
@@ -499,7 +503,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   void _onSwipeEnded(bool toRight, PublicUserProfile user) {
     _undoHistory.add({'user': user, 'liked': toRight});
 
-    // Track this user as seen
+    // Track this user as seen permanently
     _seenUserIds.add(user.id);
     _persistSeenIds();
 
@@ -512,26 +516,24 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       });
     }
 
-    // Check if user has swiped the very last loaded card AND the DB has no more users to give
-    final isLastCard = currentIndex >= users.length - 1;
-
-    if (isLastCard && !_hasMoreOnServer) {
-      // Show "seen everyone" message, then auto-refresh after a short delay
-      setState(() {
-        _allSeenOnce = true;
-        _cardOffset = Offset.zero;
-        _isAnimatingCard = false;
-        _isDismissingCard = false;
-      });
-      // Auto-refresh with re-shuffled order after 3 seconds
-      Future.delayed(const Duration(seconds: 3), () {
-        if (!mounted) return;
-        _loadUsers(resetSeen: true); // Clear seen IDs so all users come back fresh
-      });
-      return;
+    final nextIndex = currentIndex + 1;
+    if (nextIndex >= users.length) {
+      // Reached the end of the currently loaded cards
+      if (_hasMoreOnServer) {
+        _fetchNextBatch();
+      } else {
+        // All users in database have been seen!
+        setState(() {
+          currentIndex = nextIndex;
+          _allSeenOnce = true;
+          _cardOffset = Offset.zero;
+          _isAnimatingCard = false;
+          _isDismissingCard = false;
+        });
+        return;
+      }
     }
 
-    final nextIndex = (currentIndex + 1) % users.length;
     setState(() {
       currentIndex = nextIndex;
       _cardOffset = Offset.zero;
@@ -555,6 +557,10 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     final user = last['user'] as PublicUserProfile;
     final wasLiked = last['liked'] as bool;
 
+    // Remove from seen IDs so the card is returned to the active deck
+    _seenUserIds.remove(user.id);
+    _persistSeenIds();
+
     // Undo the like if the previous swipe was a right swipe
     if (wasLiked && LikedUserManager.instance.isLiked(user.id)) {
       LikedUserManager.instance.toggle(user.id).then((_) {
@@ -564,8 +570,10 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     }
 
     setState(() {
-      // Go back one card
-      currentIndex = (currentIndex - 1 + users.length) % users.length;
+      if (currentIndex > 0) {
+        currentIndex--;
+      }
+      _allSeenOnce = false;
     });
   }
 
@@ -579,38 +587,91 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   bool get _hasActiveUser => users.isNotEmpty;
 
   Widget _seenEveryoneWidget() {
+    final filterText = _hasActiveFilters
+        ? 'matching your current filters'
+        : 'in the community';
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_outline_rounded,
-                size: 64, color: primaryGreen.withOpacity(0.6)),
-            const SizedBox(height: 16),
-            const Text(
-              "You've seen everyone!",
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Refreshing with a new order...',
-              style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
-                  fontWeight: FontWeight.w500),
-              textAlign: TextAlign.center,
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Color(0xFFE8F3EE),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle_outline_rounded,
+                size: 56,
+                color: primaryGreen,
+              ),
             ),
             const SizedBox(height: 20),
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                  color: primaryGreen, strokeWidth: 2.5),
+            const Text(
+              "You're all caught up!",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "You've viewed all profiles $filterText. New profiles will show up here automatically when members join.",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 10,
+              children: [
+                if (_hasActiveFilters) ...[
+                  OutlinedButton.icon(
+                    onPressed: _clearFilters,
+                    icon: const Icon(Icons.filter_alt_off_rounded, size: 16),
+                    label: const Text('Clear Filters'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey.shade700,
+                      side: BorderSide(color: Colors.grey.shade400),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+                ElevatedButton.icon(
+                  onPressed: () => _loadUsers(resetSeen: true),
+                  icon: const Icon(Icons.refresh_rounded, size: 18, color: Colors.white),
+                  label: const Text(
+                    'Review Seen Profiles',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryGreen,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -714,56 +775,16 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                           color: Colors.grey)))
-                              : (users.isEmpty || !_hasActiveUser)
-                                  ? Center(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            _hasActiveFilters
-                                                ? Icons.filter_alt_off_rounded
-                                                : Icons.people_outline_rounded,
-                                            size: 54,
-                                            color: Colors.grey.shade400,
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            _hasActiveFilters
-                                                ? 'No profiles match your filter criteria'
-                                                : 'No users available',
-                                            style: TextStyle(
-                                              color: Colors.grey.shade700,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 15,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          if (_hasActiveFilters) ...[
-                                            const SizedBox(height: 14),
-                                            OutlinedButton.icon(
-                                              onPressed: _clearFilters,
-                                              icon: const Icon(Icons.refresh_rounded, size: 16),
-                                              label: const Text('Clear Filters'),
-                                              style: OutlinedButton.styleFrom(
-                                                foregroundColor: primaryGreen,
-                                                side: const BorderSide(color: primaryGreen),
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    )
-                                  : _allSeenOnce
-                                      ? _seenEveryoneWidget()
-                                      : Align(
-                                          alignment: Alignment.topCenter,
-                                          child: _carousel(),
-                                        ),
+                              : (users.isEmpty || !_hasActiveUser || _allSeenOnce || currentIndex >= users.length)
+                                  ? _seenEveryoneWidget()
+                                  : Align(
+                                      alignment: Alignment.topCenter,
+                                      child: _carousel(),
+                                    ),
                     ),
 
                     // ——— Swipe hint ———
-                    if (!isLoading && errorMessage == null && users.isNotEmpty && !_allSeenOnce) ...[
+                    if (!isLoading && errorMessage == null && users.isNotEmpty && !_allSeenOnce && currentIndex < users.length) ...[
                       const SizedBox(height: 8),
                       Text(
                         'swipe left to skip  ·  swipe right to like',
@@ -848,12 +869,11 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 : MediaQuery.sizeOf(context).height * 0.7;
 
             final deckHeight = availableHeight.clamp(460.0, 640.0);
-            final visibleCount = math.min(3, users.length);
+            final remainingInDeck = users.length - currentIndex;
+            final visibleCount = math.min(3, remainingInDeck);
 
             if (visibleCount <= 0) {
-              return const Center(
-                  child: Text('No users available',
-                      style: TextStyle(color: Colors.grey)));
+              return _seenEveryoneWidget();
             }
 
             // Cards stack down — natural "deck on table" look
@@ -888,10 +908,11 @@ class _UserProfilesPageState extends State<UserProfilesPage>
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // â”€â”€ Background cards â”€â”€
+                  // ── Background cards ──
                   for (int depth = visibleCount - 1; depth >= 1; depth--)
                     Builder(builder: (context) {
-                      final itemIndex = (currentIndex + depth) % users.length;
+                      final itemIndex = currentIndex + depth;
+                      if (itemIndex >= users.length) return const SizedBox.shrink();
                       return AnimatedPositioned(
                         key: ValueKey('${users[itemIndex].id}_$depth'),
                         duration: const Duration(milliseconds: 240),
@@ -913,10 +934,12 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                       );
                     }),
 
-                  // â”€â”€ Top (interactive) card â”€â”€
+                  // ── Top (interactive) card ──
                   Builder(builder: (context) {
-                    final itemIndex = currentIndex % users.length;
+                    final itemIndex = currentIndex;
+                    if (itemIndex >= users.length) return const SizedBox.shrink();
                     return GestureDetector(
+                      key: ValueKey('top_${users[itemIndex].id}'),
                       onDoubleTap: () => _toggleLike(users[itemIndex]),
                       onPanUpdate: (details) {
                         if (_isAnimatingCard) return;
@@ -1318,7 +1341,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 label: 'Domain: $_filterDomain',
                 onDeleted: () {
                   setState(() => _filterDomain = null);
-                  _loadUsers(resetSeen: true);
+                  _loadUsers(resetSeen: false);
                 },
               ),
             if (_filterLanguage != null && _filterLanguage!.isNotEmpty)
@@ -1326,7 +1349,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 label: 'Language: $_filterLanguage',
                 onDeleted: () {
                   setState(() => _filterLanguage = null);
-                  _loadUsers(resetSeen: true);
+                  _loadUsers(resetSeen: false);
                 },
               ),
             if (_filterCity != null && _filterCity!.isNotEmpty)
@@ -1334,7 +1357,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 label: 'City: $_filterCity',
                 onDeleted: () {
                   setState(() => _filterCity = null);
-                  _loadUsers(resetSeen: true);
+                  _loadUsers(resetSeen: false);
                 },
               ),
             TextButton(
@@ -1389,7 +1412,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       _filterLanguage = null;
       _filterCity = null;
     });
-    _loadUsers(resetSeen: true);
+    _loadUsers(resetSeen: false);
   }
 
   void _showFilterBottomSheet() {
@@ -1502,7 +1525,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                             _filterLanguage = tempLanguage;
                             _filterCity = tempCity;
                           });
-                          _loadUsers(resetSeen: true);
+                          _loadUsers(resetSeen: false);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryGreen,

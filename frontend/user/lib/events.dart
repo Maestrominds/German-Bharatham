@@ -90,13 +90,22 @@ class _EventsPageState extends State<EventsPage> {
       final res = await http.get(Uri.parse('${ApiConfig.baseUrl}/api/profile-options'));
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body);
-        final citiesList = (decoded['cities'] as List? ?? [])
-            .map((c) => c?.toString() ?? '')
-            .where((c) => c.isNotEmpty)
-            .toList();
-        if (mounted && citiesList.isNotEmpty) {
+        final rawCities = decoded['cities'] as List? ?? [];
+        final Set<String> uniqueCities = {};
+        for (final c in rawCities) {
+          String name = '';
+          if (c is Map) {
+            name = c['name']?.toString().trim() ?? '';
+          } else if (c != null) {
+            name = c.toString().trim();
+          }
+          if (name.isNotEmpty && name.toLowerCase() != 'all' && name.toLowerCase() != 'online') {
+            uniqueCities.add(name);
+          }
+        }
+        if (mounted && uniqueCities.isNotEmpty) {
           setState(() {
-            dynamicCities = ['All', 'Online', ...citiesList];
+            dynamicCities = ['All', 'Online', ...uniqueCities];
           });
         }
       }
@@ -163,19 +172,19 @@ class _EventsPageState extends State<EventsPage> {
 
       // Movies
       if (cat == 'movies' || fmt == 'screening') {
-        movies.push(evt);
+        movies.add(evt);
       }
 
       // Classes & Courses
       if (cat == 'classes' || fmt == 'course' || fmt == 'workshop') {
-        courses.push(evt);
+        courses.add(evt);
       }
 
       // Happening now: start <= now <= end
       if (start != null && end != null && start.isBefore(now) && end.isAfter(now)) {
-        happening.push(evt);
+        happening.add(evt);
       } else if (fmt != 'course') {
-        upcoming.push(evt);
+        upcoming.add(evt);
       }
     }
 

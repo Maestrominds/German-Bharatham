@@ -188,8 +188,10 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   }
 
   void _shareService() {
-    final title = widget.item.serviceName.isNotEmpty ? widget.item.serviceName : widget.item.title;
-    final subtitle = widget.item.providerName.isNotEmpty ? widget.item.providerName : widget.item.city;
+    final title = widget.item.title.isNotEmpty ? widget.item.title : 'Service';
+    final subtitle = (widget.item.provider != null && widget.item.provider!.isNotEmpty)
+        ? widget.item.provider!
+        : widget.item.city;
     ListingShareModal.show(
       context: context,
       category: 'services',

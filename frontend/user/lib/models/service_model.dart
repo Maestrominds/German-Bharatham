@@ -146,6 +146,9 @@ class Service {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  String get serviceName => title;
+  String get providerName => provider ?? '';
+
   Service({
     required this.id,
     required this.title,

@@ -5,11 +5,13 @@ const prisma = require("../config/prisma");
 // Helper to map PostgreSQL Prisma accommodation to match frontend _id expectations
 const mapAccommodation = (item) => {
   if (!item) return null;
+  const linkVal = item.website || item.externalUrl || null;
   return {
     ...item,
     _id: String(item.id),
-    website: item.website || item.externalUrl || null,
-    externalUrl: item.externalUrl || item.website || null,
+    website: linkVal,
+    externalUrl: linkVal,
+    link: linkVal,
   };
 };
 

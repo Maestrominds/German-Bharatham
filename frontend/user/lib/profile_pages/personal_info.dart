@@ -1093,7 +1093,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       });
     }
   }
-  }
 }
 
 /// 🌟 Searchable, scrollable dropdown field with live filtering,

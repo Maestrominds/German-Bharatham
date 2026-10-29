@@ -45,6 +45,46 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
   String _servicePriceRange = '€€';
   String _deliveryOption = 'Shipping Possible';
 
+  // Event category selections
+  String _eventFormat = 'one_day';
+  String _eventCategory = 'festivals';
+  String _eventPriceType = 'paid';
+  bool _eventIsOnline = false;
+  bool _eventFamilyFriendly = false;
+  bool _eventOngoing = false;
+  String _eventLevel = 'all';
+  String _eventAgeGroup = 'all';
+  final List<int> _eventDaysOfWeek = [];
+
+  static const List<Map<String, String>> _eventFormats = [
+    {'value': 'one_day', 'label': 'One-day Event (Festival, Concert, Meetup)'},
+    {'value': 'multi_day', 'label': 'Multi-day (3-day mela or festival)'},
+    {'value': 'course', 'label': 'Course / Class (Weekly classes, ongoing)'},
+    {'value': 'workshop', 'label': 'Workshop (1–3 sessions, required)'},
+    {'value': 'screening', 'label': 'Movie Screening (Cinema showtimes)'},
+    {'value': 'deadline', 'label': 'Deadline (Contest, Call for entries)'},
+  ];
+
+  static const List<Map<String, String>> _eventCategories = [
+    {'value': 'festivals', 'label': 'Festivals & Celebrations'},
+    {'value': 'movies', 'label': 'Movies & Screenings'},
+    {'value': 'performing_arts', 'label': 'Music, Dance & Theatre'},
+    {'value': 'classes', 'label': 'Classes & Workshops'},
+    {'value': 'food', 'label': 'Food Events'},
+    {'value': 'markets', 'label': 'Melas & Markets'},
+    {'value': 'sports', 'label': 'Sports & Outdoors'},
+    {'value': 'meetups', 'label': 'Meetups & Networking'},
+    {'value': 'religious', 'label': 'Religious & Spiritual'},
+    {'value': 'contests', 'label': 'Contests & Calls'},
+    {'value': 'other', 'label': 'Other'},
+  ];
+
+  static const List<Map<String, String>> _eventPriceTypes = [
+    {'value': 'paid', 'label': 'Paid'},
+    {'value': 'free', 'label': 'Free Admission'},
+    {'value': 'donation', 'label': 'Donation / Pay What You Want'},
+  ];
+
   // Checkboxes for Food category
   bool _dineInAvailable = false;
   bool _deliveryAvailable = false;
@@ -223,16 +263,51 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     }
     else if (widget.category == 'Events' || widget.category == 'Event') {
       _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
-      _controllers['eventCategory'] = TextEditingController(text: data?['category']?.toString() ?? 'Community Event');
+      _controllers['shortDescription'] = TextEditingController(text: data?['shortDescription']?.toString() ?? '');
+
+      final langs = data?['languages'];
+      final langsStr = (langs is List) ? langs.join(', ') : (langs?.toString() ?? '');
+      _controllers['languages'] = TextEditingController(text: langsStr);
+
       _controllers['city'] = TextEditingController(text: data?['city']?.toString() ?? '');
-      _controllers['venue'] = TextEditingController(text: data?['venue']?.toString() ?? '');
-      _controllers['organizer'] = TextEditingController(text: data?['organizer']?.toString() ?? '');
+      _controllers['venue'] = TextEditingController(text: (data?['venue'] ?? data?['location'])?.toString() ?? '');
+      _controllers['address'] = TextEditingController(text: data?['address']?.toString() ?? '');
+      _controllers['onlineLink'] = TextEditingController(text: data?['onlineLink']?.toString() ?? '');
+      _controllers['organizer'] = TextEditingController(text: (data?['organizer'] ?? data?['organizerName'])?.toString() ?? '');
       _controllers['contact'] = TextEditingController(text: data?['contact']?.toString() ?? '');
-      _controllers['startsAt'] = TextEditingController(text: data?['startsAt']?.toString() ?? '');
-      _controllers['endsAt'] = TextEditingController(text: data?['endsAt']?.toString() ?? '');
-      _controllers['price'] = TextEditingController(text: data?['price']?.toString() ?? 'Free');
+
+      String startsAtStr = '';
+      if (data?['startsAt'] != null) {
+        startsAtStr = data!['startsAt'].toString().split('T')[0];
+      }
+      String endsAtStr = '';
+      if (data?['endsAt'] != null) {
+        endsAtStr = data!['endsAt'].toString().split('T')[0];
+      }
+      _controllers['startsAt'] = TextEditingController(text: startsAtStr);
+      _controllers['endsAt'] = TextEditingController(text: endsAtStr);
+      _controllers['timeText'] = TextEditingController(text: (data?['timeText'] ?? data?['time_text'])?.toString() ?? '');
+
+      _controllers['priceText'] = TextEditingController(text: (data?['priceText'] ?? data?['price'])?.toString() ?? '');
       _controllers['ticketUrl'] = TextEditingController(text: (data?['ticketUrl'] ?? data?['externalUrl'])?.toString() ?? '');
       _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
+
+      _eventFormat = data?['format']?.toString() ?? 'one_day';
+      _eventCategory = data?['category']?.toString() ?? 'festivals';
+      _eventPriceType = data?['priceType']?.toString() ?? (data?['price']?.toString().toLowerCase() == 'free' ? 'free' : 'paid');
+      _eventIsOnline = data?['isOnline'] == true || data?['isOnline'] == 'true';
+      _eventFamilyFriendly = data?['familyFriendly'] == true || data?['familyFriendly'] == 'true';
+      _eventOngoing = data?['ongoing'] == true || data?['ongoing'] == 'true';
+      _eventLevel = data?['level']?.toString() ?? 'all';
+      _eventAgeGroup = data?['ageGroup']?.toString() ?? 'all';
+
+      if (data?['daysOfWeek'] is List) {
+        _eventDaysOfWeek.clear();
+        for (final d in (data!['daysOfWeek'] as List)) {
+          final id = int.tryParse(d.toString());
+          if (id != null) _eventDaysOfWeek.add(id);
+        }
+      }
 
       final List<dynamic> initImgs = data?['images'] ?? data?['media']?['images'] ?? [];
       _existingImageUrls = List<String>.from(initImgs.whereType<String>().where((s) => s.startsWith('http')));
@@ -378,20 +453,66 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       };
     }
     else if (widget.category == 'Events' || widget.category == 'Event') {
+      final langs = (_controllers['languages']?.text.trim() ?? '')
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+
+      String? startsAtIso;
+      final startText = _controllers['startsAt']?.text.trim() ?? '';
+      if (startText.isNotEmpty) {
+        startsAtIso = startText.contains('T') ? startText : '${startText}T10:00:00';
+      }
+
+      String? endsAtIso;
+      final endText = _controllers['endsAt']?.text.trim() ?? '';
+      if (endText.isNotEmpty) {
+        endsAtIso = endText.contains('T') ? endText : '${endText}T23:59:59';
+      } else if (_eventFormat == 'one_day' && startsAtIso != null) {
+        endsAtIso = startsAtIso.replaceAll('T10:00:00', 'T23:59:59');
+      }
+
+      final priceText = _eventPriceType == 'free'
+          ? 'Free'
+          : (_controllers['priceText']?.text.trim().isNotEmpty == true
+              ? _controllers['priceText']!.text.trim()
+              : 'Paid');
+
       return {
         'title': _controllers['title']?.text.trim(),
-        'category': _controllers['eventCategory']?.text.trim().isNotEmpty == true
-            ? _controllers['eventCategory']!.text.trim()
-            : 'Community Event',
-        'city': _controllers['city']?.text.trim(),
-        'venue': _controllers['venue']?.text.trim(),
+        'format': _eventFormat,
+        'category': _eventCategory,
+        'shortDescription': _controllers['shortDescription']?.text.trim().isNotEmpty == true
+            ? _controllers['shortDescription']!.text.trim()
+            : null,
+        'languages': langs,
+        'startsAt': startsAtIso,
+        'endsAt': endsAtIso,
+        'timeText': _controllers['timeText']?.text.trim().isNotEmpty == true
+            ? _controllers['timeText']!.text.trim()
+            : null,
+        'isOnline': _eventIsOnline,
+        'onlineLink': _eventIsOnline ? _controllers['onlineLink']?.text.trim() : null,
+        'city': _eventIsOnline ? null : _controllers['city']?.text.trim(),
+        'venue': _eventIsOnline ? null : _controllers['venue']?.text.trim(),
+        'address': _eventIsOnline ? null : _controllers['address']?.text.trim(),
         'organizer': _controllers['organizer']?.text.trim(),
         'contact': _controllers['contact']?.text.trim(),
-        'startsAt': _controllers['startsAt']?.text.trim(),
-        'endsAt': _controllers['endsAt']?.text.trim(),
-        'price': _controllers['price']?.text.trim(),
-        'ticketUrl': _controllers['ticketUrl']?.text.trim(),
-        'externalUrl': _controllers['ticketUrl']?.text.trim(),
+        'familyFriendly': _eventFamilyFriendly,
+        'ongoing': _eventOngoing,
+        'daysOfWeek': _eventDaysOfWeek,
+        'level': _eventLevel,
+        'ageGroup': _eventAgeGroup,
+        'priceType': _eventPriceType,
+        'price': priceText,
+        'priceText': priceText,
+        'ticketUrl': _controllers['ticketUrl']?.text.trim().isNotEmpty == true
+            ? _controllers['ticketUrl']!.text.trim()
+            : null,
+        'externalUrl': _controllers['ticketUrl']?.text.trim().isNotEmpty == true
+            ? _controllers['ticketUrl']!.text.trim()
+            : null,
         'description': _controllers['description']?.text.trim(),
         'images': _existingImageUrls,
         'media': {'images': _existingImageUrls},
@@ -575,6 +696,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     required ValueChanged<String?> onChanged,
   }) {
     final values = itemValues ?? items;
+    final effectiveValue = values.contains(value) ? value : (values.isNotEmpty ? values.first : null);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -586,10 +708,15 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
           ),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
-            value: value,
+            value: effectiveValue,
+            isExpanded: true,
             items: List.generate(items.length, (i) => DropdownMenuItem(
               value: values[i],
-              child: Text(items[i]),
+              child: Text(
+                items[i],
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             )),
             onChanged: onChanged,
             decoration: InputDecoration(
@@ -599,6 +726,87 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDatePickerField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    bool required = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label ${required ? "*" : ""}',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+          ),
+          const SizedBox(height: 6),
+          InkWell(
+            onTap: () async {
+              DateTime initial = DateTime.now();
+              if (controller.text.trim().isNotEmpty) {
+                final parsed = DateTime.tryParse(controller.text.trim());
+                if (parsed != null) initial = parsed;
+              }
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: initial,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2035),
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.light(
+                        primary: primaryGreen,
+                        onPrimary: Colors.white,
+                        onSurface: Colors.black87,
+                      ),
+                    ),
+                    child: child!,
+                  );
+                },
+              );
+              if (picked != null) {
+                final y = picked.year.toString().padLeft(4, '0');
+                final m = picked.month.toString().padLeft(2, '0');
+                final d = picked.day.toString().padLeft(2, '0');
+                controller.text = '$y-$m-$d';
+                setState(() {});
+              }
+            },
+            child: IgnorePointer(
+              child: TextFormField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: hint,
+                  suffixIcon: const Icon(Icons.calendar_today_rounded, color: primaryGreen, size: 20),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+                validator: (val) {
+                  if (required && (val == null || val.trim().isEmpty)) {
+                    return '$label is required';
+                  }
+                  return null;
+                },
               ),
             ),
           ),
@@ -989,17 +1197,304 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
 
   List<Widget> _buildEventsForm() {
     return [
-      _buildField(key: 'title', label: 'Event Title', hint: 'e.g. Diwali Mela / Indian Tech Meetup', required: true, minLength: 3),
-      _buildField(key: 'eventCategory', label: 'Event Type / Category', hint: 'e.g. Festival, Meetup, Workshop, Concert', required: true),
-      _buildField(key: 'city', label: 'City', hint: 'e.g. Berlin, Munich, Frankfurt', required: true),
-      _buildField(key: 'venue', label: 'Venue / Address', hint: 'e.g. City Hall or Zoom / Online'),
-      _buildField(key: 'startsAt', label: 'Date & Time (Starts)', hint: 'YYYY-MM-DD HH:MM (e.g. 2026-11-15 18:00)', required: true),
-      _buildField(key: 'endsAt', label: 'Date & Time (Ends, Optional)', hint: 'YYYY-MM-DD HH:MM'),
-      _buildField(key: 'price', label: 'Entry Fee / Price', hint: 'e.g. Free or €10'),
-      _buildField(key: 'organizer', label: 'Organizer Name', hint: 'e.g. German Bharatham Club'),
-      _buildField(key: 'contact', label: 'Contact (Phone or Email)', hint: 'e.g. +49 176... or info@domain.de'),
-      _buildField(key: 'ticketUrl', label: 'Ticket / Registration Link (Optional)', hint: 'https://eventbrite.com/...'),
-      _buildField(key: 'description', label: 'Description', hint: 'Agenda, highlights, parking, dress code...', maxLines: 5, maxLength: 5000),
+      // 1. Event Format
+      _buildDropdown(
+        label: 'Event Format',
+        value: _eventFormat,
+        items: _eventFormats.map((f) => f['label']!).toList(),
+        itemValues: _eventFormats.map((f) => f['value']!).toList(),
+        onChanged: (val) {
+          if (val != null) {
+            setState(() {
+              _eventFormat = val;
+              if (val == 'screening') {
+                _eventCategory = 'movies';
+              } else if (val == 'course') {
+                _eventCategory = 'classes';
+              } else if (val == 'deadline') {
+                _eventCategory = 'contests';
+              }
+            });
+          }
+        },
+      ),
+
+      // 2. Category
+      _buildDropdown(
+        label: 'Category',
+        value: _eventCategory,
+        items: _eventCategories.map((c) => c['label']!).toList(),
+        itemValues: _eventCategories.map((c) => c['value']!).toList(),
+        onChanged: (val) {
+          if (val != null) {
+            setState(() => _eventCategory = val);
+          }
+        },
+      ),
+
+      // 3. Basic Information
+      _buildField(
+        key: 'title',
+        label: 'Event Title',
+        hint: 'e.g. Diwali Mela 2026 or Indian Film Screening',
+        required: true,
+        minLength: 3,
+        maxLength: 150,
+      ),
+
+      _buildField(
+        key: 'shortDescription',
+        label: 'Short Description (Card text, ≤160 chars)',
+        hint: 'Quick summary displayed on event cards',
+        required: false,
+        maxLength: 160,
+      ),
+
+      _buildField(
+        key: 'languages',
+        label: 'Languages (comma separated)',
+        hint: 'e.g. Tamil, English, Hindi, German',
+        required: false,
+        maxLength: 120,
+      ),
+
+      // 4. Date & Schedule (dynamic based on format)
+      if (_eventFormat == 'one_day') ...[
+        _buildDatePickerField(
+          label: 'Event Date',
+          controller: _controllers['startsAt']!,
+          hint: 'Select event date',
+          required: true,
+        ),
+        _buildField(
+          key: 'timeText',
+          label: 'Time Text (Card label)',
+          hint: 'e.g. from 11:30 or 10:00–14:00',
+          required: false,
+          maxLength: 60,
+        ),
+      ] else if (_eventFormat == 'multi_day' || _eventFormat == 'workshop') ...[
+        Row(
+          children: [
+            Expanded(
+              child: _buildDatePickerField(
+                label: 'Start Date',
+                controller: _controllers['startsAt']!,
+                hint: 'Start date',
+                required: true,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildDatePickerField(
+                label: 'End Date',
+                controller: _controllers['endsAt']!,
+                hint: 'End date',
+                required: true,
+              ),
+            ),
+          ],
+        ),
+      ] else if (_eventFormat == 'deadline') ...[
+        Row(
+          children: [
+            Expanded(
+              child: _buildDatePickerField(
+                label: 'Opens Date (Optional)',
+                controller: _controllers['startsAt']!,
+                hint: 'Opens date',
+                required: false,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildDatePickerField(
+                label: 'Submission Deadline',
+                controller: _controllers['endsAt']!,
+                hint: 'Deadline date',
+                required: true,
+              ),
+            ),
+          ],
+        ),
+      ] else if (_eventFormat == 'course') ...[
+        _buildDatePickerField(
+          label: 'Course Start Date',
+          controller: _controllers['startsAt']!,
+          hint: 'Start date',
+          required: true,
+        ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          activeColor: primaryGreen,
+          title: const Text('Ongoing Course (Join anytime, +90 days)', style: TextStyle(fontSize: 14)),
+          value: _eventOngoing,
+          onChanged: (val) => setState(() => _eventOngoing = val ?? false),
+        ),
+        const SizedBox(height: 6),
+        const Text('Days of Week Class Meets', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (int i = 1; i <= 7; i++)
+              FilterChip(
+                label: Text(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i - 1]),
+                selected: _eventDaysOfWeek.contains(i),
+                selectedColor: primaryGreen.withOpacity(0.2),
+                checkmarkColor: primaryGreen,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _eventDaysOfWeek.add(i);
+                    } else {
+                      _eventDaysOfWeek.remove(i);
+                    }
+                  });
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildDropdown(
+                label: 'Level',
+                value: _eventLevel,
+                items: const ['All Levels', 'Beginner', 'Intermediate', 'Advanced'],
+                itemValues: const ['all', 'beginner', 'intermediate', 'advanced'],
+                onChanged: (val) => setState(() => _eventLevel = val ?? 'all'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildDropdown(
+                label: 'Age Group',
+                value: _eventAgeGroup,
+                items: const ['All Ages', 'Kids', 'Teens', 'Adults'],
+                itemValues: const ['all', 'kids', 'teens', 'adults'],
+                onChanged: (val) => setState(() => _eventAgeGroup = val ?? 'all'),
+              ),
+            ),
+          ],
+        ),
+      ] else if (_eventFormat == 'screening') ...[
+        Row(
+          children: [
+            Expanded(
+              child: _buildDatePickerField(
+                label: 'Run Start Date',
+                controller: _controllers['startsAt']!,
+                hint: 'Start date',
+                required: true,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildDatePickerField(
+                label: 'Run End Date',
+                controller: _controllers['endsAt']!,
+                hint: 'End date',
+                required: true,
+              ),
+            ),
+          ],
+        ),
+      ],
+
+      // 5. Location
+      CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        activeColor: primaryGreen,
+        title: const Text('This is an Online Event / Contest (Zoom, YouTube, etc.)', style: TextStyle(fontSize: 14)),
+        value: _eventIsOnline,
+        onChanged: (val) => setState(() => _eventIsOnline = val ?? false),
+      ),
+      if (_eventIsOnline) ...[
+        _buildField(
+          key: 'onlineLink',
+          label: 'Online Link (Zoom / YouTube / Instagram)',
+          hint: 'https://zoom.us/j/... or https://...',
+          required: true,
+          keyboardType: TextInputType.url,
+        ),
+      ] else ...[
+        _buildField(
+          key: 'city',
+          label: 'City',
+          hint: 'e.g. Munich, Berlin, Frankfurt',
+          required: true,
+          minLength: 2,
+        ),
+        _buildField(
+          key: 'venue',
+          label: 'Venue / Hall Name',
+          hint: 'e.g. Stadt. Willi-Graf-Gymnasium',
+          required: false,
+        ),
+        _buildField(
+          key: 'address',
+          label: 'Full Address',
+          hint: 'e.g. Borschtallee 26, 80804 München',
+          required: false,
+        ),
+      ],
+
+      // 6. Organizer & Contact
+      _buildField(
+        key: 'organizer',
+        label: 'Organizer Name',
+        hint: 'e.g. Munich Tamil Kudumbam e.V.',
+        required: true,
+        minLength: 2,
+      ),
+      _buildField(
+        key: 'contact',
+        label: 'Contact (Phone / WhatsApp / Email)',
+        hint: 'e.g. +49 176... or info@...',
+        required: false,
+      ),
+      CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        activeColor: primaryGreen,
+        title: const Text('Family Friendly Event (Suitable for children and families)', style: TextStyle(fontSize: 14)),
+        value: _eventFamilyFriendly,
+        onChanged: (val) => setState(() => _eventFamilyFriendly = val ?? false),
+      ),
+
+      // 7. Pricing & Registration
+      _buildDropdown(
+        label: 'Price Type',
+        value: _eventPriceType,
+        items: _eventPriceTypes.map((p) => p['label']!).toList(),
+        itemValues: _eventPriceTypes.map((p) => p['value']!).toList(),
+        onChanged: (val) => setState(() => _eventPriceType = val ?? 'paid'),
+      ),
+      if (_eventPriceType != 'free') ...[
+        _buildField(
+          key: 'priceText',
+          label: 'Price / Fee Details',
+          hint: 'e.g. €15, kids free',
+          required: false,
+        ),
+      ],
+      _buildField(
+        key: 'ticketUrl',
+        label: 'Ticket / Registration Link (Optional)',
+        hint: 'https://eventbrite.com/... or https://...',
+        required: false,
+        keyboardType: TextInputType.url,
+      ),
+
+      // 8. Full Description
+      _buildField(
+        key: 'description',
+        label: 'Full Description',
+        hint: 'Full schedule, performer line-ups, dress code, instructions...',
+        maxLines: 5,
+        maxLength: 5000,
+      ),
 
       const SizedBox(height: 20),
       _buildImageSelector(),

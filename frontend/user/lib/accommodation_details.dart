@@ -59,6 +59,28 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     }
     _loadRatingData();
     _startSlideshow();
+    _fetchFreshDetails();
+  }
+
+  Future<void> _fetchFreshDetails() async {
+    final id = _data['id']?.toString() ?? _data['_id']?.toString();
+    if (id == null || id.isEmpty) return;
+    try {
+      final res = await http.get(Uri.parse('${ApiConfig.baseUrl}/api/accommodation/$id'));
+      if (res.statusCode == 200) {
+        final fresh = jsonDecode(res.body);
+        if (fresh is Map<String, dynamic> && mounted) {
+          setState(() {
+            final linkVal = fresh['link'] ?? fresh['externalUrl'] ?? fresh['website'];
+            if (linkVal != null && linkVal.toString().isNotEmpty) {
+              _data['link'] = linkVal.toString();
+              _data['externalUrl'] = fresh['externalUrl']?.toString() ?? linkVal.toString();
+              _data['website'] = fresh['website']?.toString() ?? linkVal.toString();
+            }
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   void _startSlideshow() {
@@ -124,6 +146,9 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
             'contactPhone': item.contactPhone,
             'averageRating': item.averageRating,
             'totalRatings': item.totalRatings,
+            'link': item.link,
+            'website': item.website,
+            'externalUrl': item.externalUrl,
           };
         } catch (_) {
           _data = {};
@@ -272,6 +297,22 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
       final rd = _data['rentDetails'];
       if (rd is Map) return rd;
     } catch (_) {}
+    return null;
+  }
+
+  String? get _rentString {
+    final rent = _rentDetails;
+    final double warm = _dbl(_safe(rent, 'warmRent'));
+    final double cold = _dbl(_safe(rent, 'coldRent'));
+    if (warm > 0) return '€${warm.toStringAsFixed(0)}/mo';
+    if (cold > 0) return '€${cold.toStringAsFixed(0)}/mo';
+    if (widget.item.warmRent != null && widget.item.warmRent! > 0) {
+      return '€${widget.item.warmRent}/mo';
+    }
+    if (widget.item.coldRent != null && widget.item.coldRent! > 0) {
+      return '€${widget.item.coldRent}/mo';
+    }
+    if (widget.item.price > 0) return '€${widget.item.price}/mo';
     return null;
   }
 
@@ -672,7 +713,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
 
                   // ── EXTERNAL LISTING ───────────────────────────────────────
                   if (externalLink.isNotEmpty) ...[
-                    _SectionTitle(text: '🔗 External Listing'),
+                    _SectionTitle(text: '🔗 External Listing / Website'),
                     const SizedBox(height: 8),
                     _InfoCard(
                       child: InkWell(
@@ -688,19 +729,42 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
                         },
                         child: Row(
                           children: [
-                            const Icon(Icons.link, color: primaryGreen, size: 20),
-                            const SizedBox(width: 10),
-                            const Expanded(
-                              child: Text(
-                                'View on Original Portal / Website',
-                                style: TextStyle(
-                                  color: primaryGreen,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: lightGreen,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.link, color: primaryGreen, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'View on Original Portal / Website',
+                                    style: TextStyle(
+                                      color: textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    externalLink,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: primaryGreen,
+                                      fontSize: 12,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const Icon(Icons.open_in_new, color: primaryGreen, size: 16),
+                            const Icon(Icons.open_in_new, color: primaryGreen, size: 18),
                           ],
                         ),
                       ),
@@ -739,6 +803,34 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (externalLink.isNotEmpty) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      String url = externalLink.trim();
+                      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                        url = 'https://' + url;
+                      }
+                      final uri = Uri.parse(url);
+                      try {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      } catch (_) {}
+                    },
+                    icon: const Icon(Icons.open_in_new, color: Colors.white, size: 18),
+                    label: const Text(
+                      'View Original Listing / Website',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryGreen,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
               if (contactPhone.isNotEmpty) ...[
                 Row(
                   children: [

@@ -23,6 +23,10 @@ class _JobsPageState extends State<JobsPage> {
   bool isLoading = true;
   String searchQuery = '';
   String activeDomainFilter = 'All';
+  String activeCountryFilter = 'All Countries';
+  String activeLocationFilter = '';
+  int activeJobTypeFilter = 0;
+  RangeValues activeSalaryRangeFilter = const RangeValues(0, 10000);
   List<String> domainOptions = [
     'All',
     'IT / Technology',
@@ -144,8 +148,7 @@ class _JobsPageState extends State<JobsPage> {
         if (!mounted) return;
         setState(() {
           allItems = parsed;
-          filterItems = allItems;
-          _applySearch();
+          _reapplyFilters();
           isLoading = false;
         });
       } else {
@@ -187,38 +190,97 @@ class _JobsPageState extends State<JobsPage> {
     }).toList();
   }
 
+  void _reapplyFilters() {
+    List<Job> result = List.from(allItems);
+
+    // 1) Domain
+    if (activeDomainFilter.isNotEmpty && activeDomainFilter != 'All') {
+      final domainLower = activeDomainFilter.toLowerCase();
+      final keywords = domainLower
+          .split(RegExp(r'[\s/]+'))
+          .map((s) => s.trim())
+          .where((s) => s.length > 2)
+          .toList();
+
+      result = result.where((job) {
+        final jobDomain = (job.domain ?? '').toLowerCase();
+        if (jobDomain.isNotEmpty) {
+          if (jobDomain.contains(domainLower) || domainLower.contains(jobDomain)) return true;
+          for (final kw in keywords) {
+            if (jobDomain.contains(kw)) return true;
+          }
+        }
+        for (final kw in keywords) {
+          if (job.title.toLowerCase().contains(kw) ||
+              (job.description ?? '').toLowerCase().contains(kw) ||
+              job.category.toLowerCase().contains(kw)) {
+            return true;
+          }
+        }
+        return false;
+      }).toList();
+    }
+
+    // 2) Country
+    if (activeCountryFilter.isNotEmpty && activeCountryFilter != 'All Countries') {
+      final cLower = activeCountryFilter.toLowerCase();
+      result = result.where((job) {
+        final jobCountry = job.country.toLowerCase();
+        final jobLocation = job.location.toLowerCase();
+        if (cLower.contains('remote') || cLower.contains('other')) {
+          return jobCountry.contains('remote') ||
+              jobCountry.contains('other') ||
+              jobLocation.contains('remote');
+        }
+        if (cLower == 'europe') {
+          const euKeywords = [
+            'europe', 'eu', 'austria', 'switzerland', 'netherlands',
+            'poland', 'france', 'spain', 'italy', 'ireland', 'belgium',
+            'sweden', 'norway', 'denmark', 'finland', 'portugal'
+          ];
+          return euKeywords.any((kw) => jobCountry.contains(kw) || jobLocation.contains(kw));
+        }
+        return jobCountry.contains(cLower) || jobLocation.contains(cLower);
+      }).toList();
+    }
+
+    // 3) Location (City)
+    final locQuery = activeLocationFilter.trim().toLowerCase();
+    if (locQuery.isNotEmpty) {
+      result = result.where((job) {
+        return job.city.toLowerCase().contains(locQuery) ||
+            job.location.toLowerCase().contains(locQuery) ||
+            job.title.toLowerCase().contains(locQuery) ||
+            job.company.toLowerCase().contains(locQuery);
+      }).toList();
+    }
+
+    // 4) Job Type
+    const jobTypeKeys = ['', 'full', 'part', 'contract', 'intern'];
+    if (activeJobTypeFilter > 0 && activeJobTypeFilter < jobTypeKeys.length) {
+      final key = jobTypeKeys[activeJobTypeFilter];
+      result = result.where((job) => job.jobType.toLowerCase().contains(key)).toList();
+    }
+
+    // 5) Salary Range
+    if (activeSalaryRangeFilter.start > 0 || activeSalaryRangeFilter.end < 10000) {
+      result = result.where((job) {
+        if (job.salary == null || job.salary!.isEmpty) return true;
+        final match = RegExp(r'\d+').firstMatch(job.salary!.replaceAll(',', '').replaceAll('.', ''));
+        if (match == null) return true;
+        final amount = double.tryParse(match.group(0) ?? '0') ?? 0;
+        return amount >= activeSalaryRangeFilter.start && amount <= activeSalaryRangeFilter.end;
+      }).toList();
+    }
+
+    filterItems = result;
+    _applySearch();
+  }
+
   void _selectDomain(String domain) {
     setState(() {
       activeDomainFilter = domain;
-      if (domain == 'All') {
-        filterItems = List.from(allItems);
-      } else {
-        final domainLower = domain.toLowerCase();
-        final keywords = domainLower
-            .split(RegExp(r'[\s/]+'))
-            .map((s) => s.trim())
-            .where((s) => s.length > 2)
-            .toList();
-
-        filterItems = allItems.where((job) {
-          final jobDomain = (job.domain ?? '').toLowerCase();
-          if (jobDomain.isNotEmpty) {
-            if (jobDomain.contains(domainLower) || domainLower.contains(jobDomain)) return true;
-            for (final kw in keywords) {
-              if (jobDomain.contains(kw)) return true;
-            }
-          }
-          for (final kw in keywords) {
-            if (job.title.toLowerCase().contains(kw) ||
-                (job.description ?? '').toLowerCase().contains(kw) ||
-                job.category.toLowerCase().contains(kw)) {
-              return true;
-            }
-          }
-          return false;
-        }).toList();
-      }
-      _applySearch();
+      _reapplyFilters();
     });
   }
 
@@ -229,6 +291,10 @@ class _JobsPageState extends State<JobsPage> {
         builder: (_) => JobsFilterPage(
           allItems: allItems,
           initialDomain: activeDomainFilter,
+          initialCountry: activeCountryFilter,
+          initialLocation: activeLocationFilter,
+          initialJobType: activeJobTypeFilter,
+          initialSalaryRange: activeSalaryRangeFilter,
         ),
       ),
     );
@@ -238,8 +304,17 @@ class _JobsPageState extends State<JobsPage> {
     if (result is Map) {
       final filtered = result['filtered'] as List<Job>?;
       final selectedDomain = result['selectedDomain'] as String?;
+      final selectedCountry = result['selectedCountry'] as String?;
+      final selectedLocation = result['selectedLocation'] as String?;
+      final selectedJobType = result['selectedJobType'] as int?;
+      final selectedSalaryRange = result['selectedSalaryRange'] as RangeValues?;
+
       setState(() {
         if (selectedDomain != null) activeDomainFilter = selectedDomain;
+        if (selectedCountry != null) activeCountryFilter = selectedCountry;
+        if (selectedLocation != null) activeLocationFilter = selectedLocation;
+        if (selectedJobType != null) activeJobTypeFilter = selectedJobType;
+        if (selectedSalaryRange != null) activeSalaryRangeFilter = selectedSalaryRange;
         if (filtered != null) filterItems = filtered;
         _applySearch();
       });

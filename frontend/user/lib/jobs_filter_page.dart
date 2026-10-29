@@ -8,12 +8,18 @@ class JobsFilterPage extends StatefulWidget {
   final List<Job> allItems;
   final String? initialDomain;
   final String? initialCountry;
+  final String? initialLocation;
+  final int? initialJobType;
+  final RangeValues? initialSalaryRange;
 
   const JobsFilterPage({
     super.key,
     required this.allItems,
     this.initialDomain,
     this.initialCountry,
+    this.initialLocation,
+    this.initialJobType,
+    this.initialSalaryRange,
   });
 
   @override
@@ -94,6 +100,15 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
         },
       );
       _selectedCountry = match;
+    }
+    if (widget.initialLocation != null && widget.initialLocation!.isNotEmpty) {
+      _locationController.text = widget.initialLocation!;
+    }
+    if (widget.initialJobType != null && widget.initialJobType! >= 0 && widget.initialJobType! < jobTypeLabels.length) {
+      selectedJobType = widget.initialJobType!;
+    }
+    if (widget.initialSalaryRange != null) {
+      _salaryRange = widget.initialSalaryRange!;
     }
     _fetchDomainOptions();
   }
@@ -232,6 +247,9 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
       'filtered': result,
       'selectedDomain': _selectedDomain,
       'selectedCountry': _selectedCountry,
+      'selectedLocation': _locationController.text.trim(),
+      'selectedJobType': selectedJobType,
+      'selectedSalaryRange': _salaryRange,
     });
   }
 
@@ -543,9 +561,26 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
               ),
             ),
 
-            const SizedBox(height: 36),
-
-            Row(
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
@@ -553,13 +588,13 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                       backgroundColor: const Color(0xFFE5E7EB),
                       foregroundColor: Colors.black,
                       elevation: 0,
-                      minimumSize: const Size.fromHeight(50),
+                      minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -568,7 +603,7 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4E7F6D),
                       elevation: 0,
-                      minimumSize: const Size.fromHeight(50),
+                      minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -586,7 +621,7 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

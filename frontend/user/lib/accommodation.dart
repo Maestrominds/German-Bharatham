@@ -50,6 +50,9 @@ class Accommodation {
   final String? address;
   final String? postalCode;
   final String? area;
+  final String? link;
+  final String? website;
+  final String? externalUrl;
 
   Accommodation({
     required this.id,
@@ -86,6 +89,9 @@ class Accommodation {
     this.address,
     this.postalCode,
     this.area,
+    this.link,
+    this.website,
+    this.externalUrl,
   });
 
   factory Accommodation.fromJson(Map<String, dynamic> json) {
@@ -199,6 +205,9 @@ class Accommodation {
       address: json['address']?.toString(),
       postalCode: json['zipCode']?.toString(),
       area: json['state']?.toString(),
+      link: json['link']?.toString() ?? json['externalUrl']?.toString() ?? json['website']?.toString(),
+      website: json['website']?.toString() ?? json['link']?.toString(),
+      externalUrl: json['externalUrl']?.toString() ?? json['link']?.toString() ?? json['website']?.toString(),
     );
   }
 
@@ -238,6 +247,9 @@ class Accommodation {
       'address': address,
       'postalCode': postalCode,
       'area': area,
+      'link': link,
+      'website': website,
+      'externalUrl': externalUrl,
     };
   }
 
@@ -281,6 +293,9 @@ class Accommodation {
       address: json['address']?.toString(),
       postalCode: json['postalCode']?.toString(),
       area: json['area']?.toString(),
+      link: json['link']?.toString() ?? json['externalUrl']?.toString() ?? json['website']?.toString(),
+      website: json['website']?.toString() ?? json['link']?.toString(),
+      externalUrl: json['externalUrl']?.toString() ?? json['link']?.toString() ?? json['website']?.toString(),
     );
   }
 }
