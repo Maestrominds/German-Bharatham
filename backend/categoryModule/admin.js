@@ -1,6 +1,6 @@
 const express = require('express');
-const router  = express.Router();
-const prisma  = require('../config/prisma');
+const router = express.Router();
+const prisma = require('../config/prisma');
 
 const adminCheck = (req, res, next) => {
   if (req.user?.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
@@ -26,7 +26,7 @@ const mapListing = (l) => {
 
 // ── CATEGORIES ──────────────────────────────────────────────────────────────
 
-// GET all custom categories
+// GET  all custom categories
 router.get('/', adminCheck, async (req, res) => {
   const start = Date.now();
   console.log(`🚀 [START] GET /categories called at ${new Date().toISOString()}`);
@@ -35,9 +35,9 @@ router.get('/', adminCheck, async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
     res.json(cats.map(mapCategory));
-  } catch (e) { 
+  } catch (e) {
     console.error(`❌ [ERROR] GET /categories failed: ${e.message} after ${Date.now() - start}ms`);
-    res.status(500).json({ message: e.message }); 
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -51,7 +51,7 @@ router.post('/', adminCheck, async (req, res) => {
 
     const cleanName = name.trim();
     const BUILT_IN = ['Accommodation', 'Food', 'Services', 'Jobs', 'Community', 'Help Center'];
-    
+
     if (BUILT_IN.some(c => c.toLowerCase() === cleanName.toLowerCase())) {
       return res.status(400).json({ message: `Category '${cleanName}' is a built-in category and cannot be duplicated` });
     }
@@ -59,7 +59,7 @@ router.post('/', adminCheck, async (req, res) => {
     const existing = await prisma.category.findFirst({
       where: { name: { equals: cleanName, mode: 'insensitive' } }
     });
-    
+
     if (existing) {
       return res.status(400).json({ message: `Category '${cleanName}' already exists` });
     }
@@ -73,9 +73,9 @@ router.post('/', adminCheck, async (req, res) => {
       }
     });
     res.status(201).json(mapCategory(cat));
-  } catch (e) { 
+  } catch (e) {
     console.error(`❌ [ERROR] POST /categories failed: ${e.message} after ${Date.now() - start}ms`);
-    res.status(500).json({ message: e.message }); 
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -96,9 +96,9 @@ router.put('/:id', adminCheck, async (req, res) => {
       data: updateData
     });
     res.json(mapCategory(cat));
-  } catch (e) { 
+  } catch (e) {
     console.error(`❌ [ERROR] PUT /categories/:id failed: ${e.message} after ${Date.now() - start}ms`);
-    res.status(500).json({ message: e.message }); 
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -114,9 +114,9 @@ router.delete('/:id', adminCheck, async (req, res) => {
       where: { id: numericId }
     });
     res.json({ message: 'Category and its listings deleted' });
-  } catch (e) { 
+  } catch (e) {
     console.error(`❌ [ERROR] DELETE /categories/:id failed: ${e.message} after ${Date.now() - start}ms`);
-    res.status(500).json({ message: e.message }); 
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -147,9 +147,9 @@ router.get('/:id/listings', adminCheck, async (req, res) => {
 
     const mapped = listings.map(mapListing);
     res.json({ data: mapped, count: mapped.length, totalCount: totalCount || 0, page, limit });
-  } catch (e) { 
+  } catch (e) {
     console.error(`❌ [ERROR] GET /categories/:id/listings failed: ${e.message} after ${Date.now() - start}ms`);
-    res.status(500).json({ message: e.message }); 
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -184,9 +184,9 @@ router.post('/:id/listings', adminCheck, async (req, res) => {
     });
 
     res.status(201).json(mapListing(listing));
-  } catch (e) { 
+  } catch (e) {
     console.error(`❌ [ERROR] POST /categories/:id/listings failed: ${e.message} after ${Date.now() - start}ms`);
-    res.status(500).json({ message: e.message }); 
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -209,9 +209,9 @@ router.put('/:id/listings/:lid', adminCheck, async (req, res) => {
       data: updateData
     });
     res.json(mapListing(listing));
-  } catch (e) { 
+  } catch (e) {
     console.error(`❌ [ERROR] PUT /categories/:id/listings/:lid failed: ${e.message} after ${Date.now() - start}ms`);
-    res.status(500).json({ message: e.message }); 
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -233,9 +233,9 @@ router.patch('/:id/listings/:lid/status', adminCheck, async (req, res) => {
       data: { status }
     });
     res.json(mapListing(listing));
-  } catch (e) { 
+  } catch (e) {
     console.error(`❌ [ERROR] PATCH /categories/:id/listings/:lid/status failed: ${e.message} after ${Date.now() - start}ms`);
-    res.status(500).json({ message: e.message }); 
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -252,9 +252,9 @@ router.delete('/:id/listings/:lid', adminCheck, async (req, res) => {
       where: { id: numericLid }
     });
     res.json({ message: 'Deleted' });
-  } catch (e) { 
+  } catch (e) {
     console.error(`❌ [ERROR] DELETE /categories/:id/listings/:lid failed: ${e.message} after ${Date.now() - start}ms`);
-    res.status(500).json({ message: e.message }); 
+    res.status(500).json({ message: e.message });
   }
 });
 
