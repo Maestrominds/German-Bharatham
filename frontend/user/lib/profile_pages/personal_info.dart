@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import '../user_session.dart';
 import '../services/api_config.dart';
+import 'profile_card_preview.dart';
 
 class PersonalInformationPage extends StatefulWidget {
   final bool isInitialSetup;
@@ -42,6 +43,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   final TextEditingController stateOfOrigin = TextEditingController();
   final TextEditingController motherTongue = TextEditingController();
   final TextEditingController linkedinUrl = TextEditingController();
+  final TextEditingController instagramUrl = TextEditingController();
   final TextEditingController industry = TextEditingController();
 
   // Career level dropdown
@@ -129,6 +131,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     stateOfOrigin.dispose();
     motherTongue.dispose();
     linkedinUrl.dispose();
+    instagramUrl.dispose();
     industry.dispose();
     super.dispose();
   }
@@ -188,6 +191,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       stateOfOrigin.text = prefs.getString(key('stateOfOrigin')) ?? '';
       motherTongue.text = prefs.getString(key('motherTongue')) ?? '';
       linkedinUrl.text = prefs.getString(key('linkedinUrl')) ?? '';
+      instagramUrl.text = prefs.getString(key('instagramUrl')) ?? '';
       _selectedCareerLevel = prefs.getString(key('careerLevel'));
       industry.text = prefs.getString(key('industry')) ?? '';
       _photoBase64 = prefs.getString(key('photo')) ?? UserSession.instance.photoBase64;
@@ -217,6 +221,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
           stateOfOrigin.text = data['stateOfOrigin'] ?? stateOfOrigin.text;
           motherTongue.text = data['motherTongue'] ?? motherTongue.text;
           linkedinUrl.text = data['linkedinUrl'] ?? linkedinUrl.text;
+          instagramUrl.text = data['instagramUrl'] ?? instagramUrl.text;
           _selectedCareerLevel = data['careerLevel'] as String? ?? _selectedCareerLevel;
           industry.text = data['industry'] ?? industry.text;
           _photoBase64 = data['photo'] ?? _photoBase64;
@@ -235,6 +240,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
         await prefs.setString(key('stateOfOrigin'), stateOfOrigin.text);
         await prefs.setString(key('motherTongue'), motherTongue.text);
         await prefs.setString(key('linkedinUrl'), linkedinUrl.text);
+        await prefs.setString(key('instagramUrl'), instagramUrl.text);
         await prefs.setString(key('careerLevel'), _selectedCareerLevel ?? '');
         await prefs.setString(key('industry'), industry.text);
         await prefs.setString(key('photo'), _photoBase64 ?? '');
@@ -268,6 +274,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
               'stateOfOrigin': stateOfOrigin.text.trim(),
               'motherTongue': motherTongue.text.trim(),
               'linkedinUrl': linkedinUrl.text.trim(),
+              'instagramUrl': instagramUrl.text.trim(),
               'careerLevel': _selectedCareerLevel ?? '',
               'industry': industry.text.trim(),
               'photo': _photoBase64 ?? '',
@@ -306,6 +313,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       await prefs.setString(key('stateOfOrigin'), stateOfOrigin.text.trim());
       await prefs.setString(key('motherTongue'), motherTongue.text.trim());
       await prefs.setString(key('linkedinUrl'), linkedinUrl.text.trim());
+      await prefs.setString(key('instagramUrl'), instagramUrl.text.trim());
       await prefs.setString(key('careerLevel'), _selectedCareerLevel ?? '');
       await prefs.setString(key('industry'), industry.text.trim());
       await prefs.setString(key('photo'), _photoBase64 ?? '');
@@ -413,6 +421,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
                       // Compulsory: LinkedIn URL
                       _linkedinInput(),
+
+                      // Optional: Instagram URL
+                      _instagramInput(),
 
                       const SizedBox(height: 20),
 
@@ -805,6 +816,61 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     );
   }
 
+  /// Instagram URL field (Optional)
+  Widget _instagramInput() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Instagram URL (Optional)',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: instagramUrl,
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              hintText: 'https://instagram.com/yourhandle or @yourhandle',
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.grey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: PersonalInformationPage.primaryGreen, width: 1.5),
+              ),
+              prefixIcon: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                child: Icon(Icons.camera_alt_outlined, color: PersonalInformationPage.primaryGreen, size: 20),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return null; // Optional
+              }
+              final cleaned = value.trim();
+              if (!cleaned.startsWith('@') && !cleaned.startsWith('http') && !cleaned.contains('instagram')) {
+                return 'Enter a valid handle (e.g. @handle) or URL';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Career Level dropdown
   Widget _careerLevelDropdown() {
     return Padding(
@@ -916,47 +982,117 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     }
 
     return Center(
-      child: GestureDetector(
-        onTap: _pickImage,
-        child: Stack(
-          children: [
-            CircleAvatar(
-              radius: 56,
-              backgroundColor: Colors.grey.shade300,
-              backgroundImage: imageProvider,
-              child: imageProvider == null
-                  ? const Icon(Icons.person, size: 60, color: Colors.white)
-                  : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: _pickImage,
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 56,
+                  backgroundColor: Colors.grey.shade300,
+                  backgroundImage: imageProvider,
+                  child: imageProvider == null
+                      ? const Icon(Icons.person, size: 60, color: Colors.white)
+                      : null,
+                ),
+                const Positioned(
+                  bottom: 0,
+                  right: 4,
+                  child: CircleAvatar(
+                    backgroundColor: PersonalInformationPage.primaryGreen,
+                    radius: 16,
+                    child: Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                  ),
+                ),
+              ],
             ),
-            const Positioned(
-              bottom: 0,
-              right: 4,
-              child: CircleAvatar(
-                backgroundColor: PersonalInformationPage.primaryGreen,
-                radius: 16,
-                child: Icon(Icons.camera_alt, color: Colors.white, size: 16),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: _openCardPreview,
+            icon: const Icon(Icons.remove_red_eye_outlined, size: 16, color: PersonalInformationPage.primaryGreen),
+            label: const Text(
+              'Preview Profile Card',
+              style: TextStyle(
+                color: PersonalInformationPage.primaryGreen,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Future<void> _pickImage() async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 60);
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1200,
+        maxHeight: 1200,
+      );
       if (image != null) {
         final bytes = await image.readAsBytes();
-        setState(() {
-          _photoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-        });
+        final tempBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+
+        if (!mounted) return;
+        // Preview screen lets user inspect photo framing and quality before confirming
+        final confirmedPhoto = await Navigator.push<String?>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProfileCardPreviewPage(
+              photoBase64: tempBase64,
+              name: name.text.trim().isNotEmpty ? name.text.trim() : 'Your Name',
+              domain: industry.text.trim(),
+              city: preferredCity.text.trim().isNotEmpty ? preferredCity.text.trim() : location.text.trim(),
+              motherTongue: motherTongue.text.trim(),
+              linkedinUrl: linkedinUrl.text.trim(),
+              instagramUrl: instagramUrl.text.trim(),
+              isNewPhoto: true,
+            ),
+          ),
+        );
+
+        if (confirmedPhoto != null && mounted) {
+          setState(() {
+            _photoBase64 = confirmedPhoto;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
       }
     }
+  }
+
+  Future<void> _openCardPreview() async {
+    final confirmedPhoto = await Navigator.push<String?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileCardPreviewPage(
+          photoBase64: _photoBase64,
+          name: name.text.trim().isNotEmpty ? name.text.trim() : 'Your Name',
+          domain: industry.text.trim(),
+          city: preferredCity.text.trim().isNotEmpty ? preferredCity.text.trim() : location.text.trim(),
+          motherTongue: motherTongue.text.trim(),
+          linkedinUrl: linkedinUrl.text.trim(),
+          instagramUrl: instagramUrl.text.trim(),
+          isNewPhoto: false,
+        ),
+      ),
+    );
+
+    if (confirmedPhoto != null && mounted) {
+      setState(() {
+        _photoBase64 = confirmedPhoto;
+      });
+    }
+  }
   }
 }
 

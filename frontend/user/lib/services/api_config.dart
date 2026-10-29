@@ -52,6 +52,7 @@ class ApiConfig {
   static String get registerEndpoint => '$baseUrl/api/user/register';
   static String get jobsEndpoint => '$baseUrl/api/jobs/user';
   static String get accommodationEndpoint => '$baseUrl/api/accommodation/user';
+  static String get eventsEndpoint => '$baseUrl/api/events/user';
 
   static String get settingsPublicEndpoint => '$baseUrl/api/admin/settings/public';
   static String get profileEndpoint => '$baseUrl/api/user/profile';

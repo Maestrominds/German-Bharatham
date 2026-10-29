@@ -30,6 +30,7 @@ class PublicUserProfile {
   final String? motherTongue;
   final String? industry;
   final String? linkedinUrl;
+  final String? instagramUrl;
 
   PublicUserProfile({
     required this.id,
@@ -44,6 +45,7 @@ class PublicUserProfile {
     this.motherTongue,
     this.industry,
     this.linkedinUrl,
+    this.instagramUrl,
   });
 
   factory PublicUserProfile.fromJson(Map<String, dynamic> json) {
@@ -74,6 +76,7 @@ class PublicUserProfile {
       motherTongue: _nonEmpty(json['motherTongue']?.toString()),
       industry: _nonEmpty(json['industry']?.toString()),
       linkedinUrl: _nonEmpty(json['linkedinUrl']?.toString()),
+      instagramUrl: _nonEmpty(json['instagramUrl']?.toString()),
     );
   }
 
@@ -125,6 +128,65 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   final Set<String> _fetchedUserIds = {};
   bool _allSeenOnce = false;
 
+  // ── Filter state ──
+  String? _filterDomain;
+  String? _filterLanguage;
+  String? _filterCity;
+
+  bool get _hasActiveFilters =>
+      (_filterDomain != null && _filterDomain!.trim().isNotEmpty) ||
+      (_filterLanguage != null && _filterLanguage!.trim().isNotEmpty) ||
+      (_filterCity != null && _filterCity!.trim().isNotEmpty);
+
+  List<String> _availableDomains = [
+    'IT / Technology',
+    'Computer Science / Software',
+    'Biotechnology / Life Sciences',
+    'Healthcare / Medicine',
+    'Finance / Banking',
+    'Mechanical / Automotive',
+    'Engineering / Manufacturing',
+    'Marketing / Sales',
+    'Business / Management',
+    'Legal / Law',
+    'Education / Academia',
+    'Other'
+  ];
+
+  List<String> _availableLanguages = [
+    'English',
+    'German',
+    'Tamil',
+    'Hindi',
+    'Telugu',
+    'Malayalam',
+    'Kannada',
+    'Marathi',
+    'Bengali',
+    'Gujarati',
+    'Punjabi',
+    'Other'
+  ];
+
+  List<String> _availableCities = [
+    'Berlin',
+    'Munich',
+    'Frankfurt',
+    'Hamburg',
+    'Stuttgart',
+    'Düsseldorf',
+    'Cologne',
+    'Leipzig',
+    'Dresden',
+    'Nuremberg',
+    'Hanover',
+    'Bonn',
+    'Mannheim',
+    'Karlsruhe',
+    'Aachen',
+    'Other'
+  ];
+
   // ─────────── Lifecycle ───────────
 
   @override
@@ -143,6 +205,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     }
 
     _loadSeenIds().then((_) => _loadUsers());
+    _loadFilterOptions();
   }
 
   @override
@@ -170,6 +233,41 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList(_seenPrefsKey, _seenUserIds.toList());
+    } catch (_) {}
+  }
+
+  Future<void> _loadFilterOptions() async {
+    try {
+      final res = await http
+          .get(Uri.parse('${ApiConfig.baseUrl}/api/profile-options'))
+          .timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        if (!mounted) return;
+        setState(() {
+          if (data['domains'] is List) {
+            final list = (data['domains'] as List)
+                .map((e) => e is Map ? e['name']?.toString().trim() ?? '' : e.toString().trim())
+                .where((s) => s.isNotEmpty)
+                .toList();
+            if (list.isNotEmpty) _availableDomains = list;
+          }
+          if (data['languages'] is List) {
+            final list = (data['languages'] as List)
+                .map((e) => e is Map ? e['name']?.toString().trim() ?? '' : e.toString().trim())
+                .where((s) => s.isNotEmpty)
+                .toList();
+            if (list.isNotEmpty) _availableLanguages = list;
+          }
+          if (data['cities'] is List) {
+            final list = (data['cities'] as List)
+                .map((e) => e is Map ? e['name']?.toString().trim() ?? '' : e.toString().trim())
+                .where((s) => s.isNotEmpty)
+                .toList();
+            if (list.isNotEmpty) _availableCities = list;
+          }
+        });
+      }
     } catch (_) {}
   }
 
@@ -209,12 +307,16 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       _isDismissingCard = false;
       _pulseNewTopCard = false;
       _fetchedUserIds.clear();
-      // Seed fetchedUserIds with previously seen users so they are excluded from API
-      _fetchedUserIds.addAll(_seenUserIds);
+      // Seed fetchedUserIds with previously seen users so they are excluded from API (only if no filter active)
+      if (!_hasActiveFilters) {
+        _fetchedUserIds.addAll(_seenUserIds);
+      }
       users = [];
     });
 
-    await _loadUsersFromCache();
+    if (!_hasActiveFilters) {
+      await _loadUsersFromCache();
+    }
     await _fetchNextBatch();
   }
 
@@ -260,10 +362,13 @@ class _UserProfilesPageState extends State<UserProfilesPage>
       const int limit = 10;
       // Exclude everything we've already fetched so the DB only returns completely new users
       final excludeParam = _fetchedUserIds.isNotEmpty ? '&exclude=${_fetchedUserIds.join(',')}' : '';
+      final cityParam = (_filterCity != null && _filterCity!.trim().isNotEmpty) ? '&city=${Uri.encodeComponent(_filterCity!.trim())}' : '';
+      final langParam = (_filterLanguage != null && _filterLanguage!.trim().isNotEmpty) ? '&language=${Uri.encodeComponent(_filterLanguage!.trim())}' : '';
+      final domainParam = (_filterDomain != null && _filterDomain!.trim().isNotEmpty) ? '&domain=${Uri.encodeComponent(_filterDomain!.trim())}' : '';
       
       final response = await http.get(
         // ALWAYS use page=1 because we are dynamically shrinking the dataset via exclude
-        Uri.parse('${ApiConfig.baseUrl}/api/user/public-users?page=1&limit=$limit$excludeParam'),
+        Uri.parse('${ApiConfig.baseUrl}/api/user/public-users?page=1&limit=$limit$excludeParam$cityParam$langParam$domainParam'),
       );
 
       if (response.statusCode != 200) {
@@ -286,7 +391,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           .where((u) => currentUserId == null ? true : u.id != currentUserId)
           .toList();
 
-      if (users.isEmpty && fresh.isNotEmpty) {
+      if (users.isEmpty && fresh.isNotEmpty && !_hasActiveFilters) {
         await CacheService.set(_usersCacheKey, jsonEncode(items));
       }
 
@@ -354,6 +459,20 @@ class _UserProfilesPageState extends State<UserProfilesPage>
   void _openLinkedIn(String url) async {
     String cleaned = url.trim();
     if (!cleaned.startsWith('http')) cleaned = 'https://$cleaned';
+    final uri = Uri.tryParse(cleaned);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _openInstagram(String url) async {
+    String cleaned = url.trim();
+    if (cleaned.startsWith('@')) {
+      cleaned = 'https://instagram.com/${cleaned.substring(1)}';
+    } else if (!cleaned.startsWith('http')) {
+      cleaned = 'https://$cleaned';
+    }
     final uri = Uri.tryParse(cleaned);
     if (uri == null) return;
     if (await canLaunchUrl(uri)) {
@@ -522,6 +641,33 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           centerTitle: true,
           automaticallyImplyLeading: false,
           actions: [
+            IconButton(
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    _hasActiveFilters ? Icons.filter_alt_rounded : Icons.filter_alt_outlined,
+                    color: _hasActiveFilters ? primaryGreen : Colors.black87,
+                    size: 22,
+                  ),
+                  if (_hasActiveFilters)
+                    Positioned(
+                      top: -1,
+                      right: -1,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: primaryGreen,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              onPressed: _showFilterBottomSheet,
+              tooltip: 'Filter Profiles',
+            ),
             if (_undoHistory.isNotEmpty)
               IconButton(
                 icon: const Icon(Icons.undo_rounded, color: primaryGreen),
@@ -555,6 +701,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: Column(
                   children: [
+                    if (_hasActiveFilters) _activeFiltersBar(),
                     Expanded(
                       child: isLoading
                           ? const Center(
@@ -568,10 +715,45 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                                       style: const TextStyle(
                                           color: Colors.grey)))
                               : (users.isEmpty || !_hasActiveUser)
-                                  ? const Center(
-                                      child: Text('No users available',
-                                          style: TextStyle(
-                                              color: Colors.grey)))
+                                  ? Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _hasActiveFilters
+                                                ? Icons.filter_alt_off_rounded
+                                                : Icons.people_outline_rounded,
+                                            size: 54,
+                                            color: Colors.grey.shade400,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            _hasActiveFilters
+                                                ? 'No profiles match your filter criteria'
+                                                : 'No users available',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade700,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          if (_hasActiveFilters) ...[
+                                            const SizedBox(height: 14),
+                                            OutlinedButton.icon(
+                                              onPressed: _clearFilters,
+                                              icon: const Icon(Icons.refresh_rounded, size: 16),
+                                              label: const Text('Clear Filters'),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: primaryGreen,
+                                                side: const BorderSide(color: primaryGreen),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    )
                                   : _allSeenOnce
                                       ? _seenEveryoneWidget()
                                       : Align(
@@ -878,6 +1060,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
     final motherTongue = user.motherTongue;
     final industry = user.industry;
     final linkedinUrl = user.linkedinUrl;
+    final instagramUrl = user.instagramUrl;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -902,7 +1085,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            flex: 58,
+            flex: 55,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -939,9 +1122,9 @@ class _UserProfilesPageState extends State<UserProfilesPage>
             ),
           ),
           Expanded(
-            flex: 42,
+            flex: 45,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -965,7 +1148,7 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                       style: const TextStyle(color: primaryGreen, fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                   ],
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
@@ -977,15 +1160,15 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                     ],
                   ),
 
-                  // LinkedIn premium button — only on top interactive card
+                  // LinkedIn button — only on top interactive card
                   if (linkedinUrl != null && onLikePressed != null) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
-                      height: 40,
+                      height: 38,
                       child: ElevatedButton.icon(
                         onPressed: () => _openLinkedIn(linkedinUrl),
-                        icon: const Icon(Icons.work_rounded, size: 16, color: Colors.white),
+                        icon: const Icon(Icons.work_rounded, size: 15, color: Colors.white),
                         label: const Text(
                           'View LinkedIn Profile',
                           style: TextStyle(
@@ -1000,6 +1183,46 @@ class _UserProfilesPageState extends State<UserProfilesPage>
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  // Instagram button — in the empty space below LinkedIn button
+                  if (instagramUrl != null && onLikePressed != null) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 38,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF833AB4), Color(0xFFFD1D1D), Color(0xFFFCAF45)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: () => _openInstagram(instagramUrl),
+                          icon: const Icon(Icons.camera_alt_rounded, size: 15, color: Colors.white),
+                          label: const Text(
+                            'View Instagram Profile',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
                       ),
@@ -1078,6 +1301,287 @@ class _UserProfilesPageState extends State<UserProfilesPage>
           ),
         ],
       ),
+    );
+  }
+
+  // ─────────── Filter UI & Logic ───────────
+
+  Widget _activeFiltersBar() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            if (_filterDomain != null && _filterDomain!.isNotEmpty)
+              _filterChip(
+                label: 'Domain: $_filterDomain',
+                onDeleted: () {
+                  setState(() => _filterDomain = null);
+                  _loadUsers(resetSeen: true);
+                },
+              ),
+            if (_filterLanguage != null && _filterLanguage!.isNotEmpty)
+              _filterChip(
+                label: 'Language: $_filterLanguage',
+                onDeleted: () {
+                  setState(() => _filterLanguage = null);
+                  _loadUsers(resetSeen: true);
+                },
+              ),
+            if (_filterCity != null && _filterCity!.isNotEmpty)
+              _filterChip(
+                label: 'City: $_filterCity',
+                onDeleted: () {
+                  setState(() => _filterCity = null);
+                  _loadUsers(resetSeen: true);
+                },
+              ),
+            TextButton(
+              onPressed: _clearFilters,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(50, 30),
+              ),
+              child: const Text(
+                'Clear All',
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _filterChip({required String label, required VoidCallback onDeleted}) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: Chip(
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: primaryGreen,
+          ),
+        ),
+        deleteIcon: const Icon(Icons.close_rounded, size: 14, color: primaryGreen),
+        onDeleted: onDeleted,
+        backgroundColor: primaryGreen.withOpacity(0.12),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: primaryGreen.withOpacity(0.3)),
+        ),
+      ),
+    );
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _filterDomain = null;
+      _filterLanguage = null;
+      _filterCity = null;
+    });
+    _loadUsers(resetSeen: true);
+  }
+
+  void _showFilterBottomSheet() {
+    String? tempDomain = _filterDomain;
+    String? tempLanguage = _filterLanguage;
+    String? tempCity = _filterCity;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Handle bar
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Filter Profiles',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setSheetState(() {
+                              tempDomain = null;
+                              tempLanguage = null;
+                              tempCity = null;
+                            });
+                          },
+                          child: const Text(
+                            'Reset',
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Domain (Industry) filter
+                    _filterDropdown(
+                      label: 'Domain / Industry',
+                      value: tempDomain,
+                      hint: 'All Domains',
+                      items: _availableDomains,
+                      onChanged: (val) => setSheetState(() => tempDomain = val),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Language filter
+                    _filterDropdown(
+                      label: 'Language / Mother Tongue',
+                      value: tempLanguage,
+                      hint: 'All Languages',
+                      items: _availableLanguages,
+                      onChanged: (val) => setSheetState(() => tempLanguage = val),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // City filter
+                    _filterDropdown(
+                      label: 'City',
+                      value: tempCity,
+                      hint: 'All Cities',
+                      items: _availableCities,
+                      onChanged: (val) => setSheetState(() => tempCity = val),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Apply Button
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          setState(() {
+                            _filterDomain = tempDomain;
+                            _filterLanguage = tempLanguage;
+                            _filterCity = tempCity;
+                          });
+                          _loadUsers(resetSeen: true);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryGreen,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Apply Filters',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _filterDropdown({
+    required String label,
+    required String? value,
+    required String hint,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final effectiveValue = (value != null && items.contains(value)) ? value : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+            color: Colors.grey.shade50,
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: effectiveValue,
+              hint: Text(hint, style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryGreen),
+              items: [
+                DropdownMenuItem<String>(
+                  value: null,
+                  child: Text(hint, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                ),
+                ...items.map(
+                  (item) => DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(item, style: const TextStyle(fontSize: 14)),
+                  ),
+                ),
+              ],
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

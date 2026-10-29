@@ -10,6 +10,7 @@ import 'jobs.dart';
 import 'services.dart';
 import 'community.dart';
 import 'second_hand_store.dart';
+import 'events.dart';
 import 'search.dart';
 import 'user_session.dart';
 import 'user_profiles_page.dart';
@@ -23,6 +24,7 @@ import 'services/api_config.dart';
 import 'services/prefetch_service.dart';
 import 'utils/open_subscriptions_page.dart';
 import 'utils/account_status_utils.dart';
+import 'services/deep_link_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -51,6 +53,7 @@ class _HomePageState extends State<HomePage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeShowSubscriptionPrompt();
+      DeepLinkService.instance.checkAndHandlePending();
     });
   }
 
@@ -252,18 +255,6 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
 
             CategoryTile(
-              imagePath: 'assets/images/accommodation.png',
-              title: "Accommodation",
-              subtitle: "Rooms & apartments for rent",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AccommodationPage()),
-                );
-              },
-            ),
-
-            CategoryTile(
               imagePath: 'assets/images/job-search.png',
               title: "Jobs",
               subtitle: "Part-time & full-time jobs",
@@ -276,13 +267,25 @@ class _HomePageState extends State<HomePage> {
             ),
 
             CategoryTile(
-              imagePath: 'assets/images/shift.png',
-              title: "Expat Services",
-              subtitle: "Relocation & documentation help",
+              imagePath: 'assets/images/accommodation.png',
+              title: "Accommodation",
+              subtitle: "Rooms & apartments for rent",
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ServicesPage()),
+                  MaterialPageRoute(builder: (_) => const AccommodationPage()),
+                );
+              },
+            ),
+
+            CategoryTile(
+              icon: Icons.celebration_rounded,
+              title: "Events",
+              subtitle: "Cultural festivals, meetups & gatherings",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EventsPage()),
                 );
               },
             ),
@@ -596,14 +599,16 @@ class _HomePageState extends State<HomePage> {
 
 // 🔹 CATEGORY TILE
 class CategoryTile extends StatelessWidget {
-  final String imagePath;
+  final String? imagePath;
+  final IconData? icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
   const CategoryTile({
     super.key,
-    required this.imagePath,
+    this.imagePath,
+    this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -625,12 +630,23 @@ class CategoryTile extends StatelessWidget {
             CircleAvatar(
               radius: 22,
               backgroundColor: HomePage.primaryGreen.withOpacity(0.15),
-              child: Image.asset(
-                imagePath,
-                width: 22,
-                height: 22,
-                color: HomePage.primaryGreen,
-              ),
+              child: icon != null
+                  ? Icon(
+                      icon,
+                      size: 22,
+                      color: HomePage.primaryGreen,
+                    )
+                  : Image.asset(
+                      imagePath ?? 'assets/images/social.png',
+                      width: 22,
+                      height: 22,
+                      color: HomePage.primaryGreen,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.celebration_rounded,
+                        size: 22,
+                        color: HomePage.primaryGreen,
+                      ),
+                    ),
             ),
             const SizedBox(width: 14),
             Expanded(

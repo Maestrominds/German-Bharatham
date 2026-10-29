@@ -115,7 +115,7 @@ router.post("/", adminCheck, upload.array('images', 5), async (req, res) => {
     const title = (req.body.title || '').trim();
     const city = (req.body.city || '').trim();
     const contactPhone = (req.body.contactPhone || req.body.phone || '').trim();
-    const externalLink = (req.body.externalUrl || req.body.website || '').trim();
+    const externalLink = (req.body.externalUrl || req.body.website || req.body.link || '').trim();
 
     if (!title || !city) {
       return res.status(400).json({ message: 'Title and City are required' });
@@ -305,8 +305,8 @@ router.put("/:id", adminCheck, async (req, res) => {
     if (b.type != null) updateData.type = String(b.type).trim() || null;
     if (b.description != null) updateData.description = String(b.description).trim() || null;
     if (b.status != null) updateData.status = b.status;
-    if (b.externalUrl !== undefined || b.website !== undefined) {
-      const urlVal = String((b.externalUrl !== undefined ? b.externalUrl : b.website) || '').trim() || null;
+    if (b.externalUrl !== undefined || b.website !== undefined || b.link !== undefined) {
+      const urlVal = String((b.externalUrl !== undefined ? b.externalUrl : (b.website !== undefined ? b.website : b.link)) || '').trim() || null;
       updateData.externalUrl = urlVal;
       updateData.website = urlVal;
     }

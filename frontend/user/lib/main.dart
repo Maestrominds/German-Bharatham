@@ -6,7 +6,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:country_code_picker/country_code_picker.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -33,6 +32,7 @@ import 'blocked_account_page.dart';
 import 'utils/account_status_utils.dart';
 import 'welcome_screen.dart';
 import 'services/version_check_service.dart';
+import 'services/deep_link_service.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -126,6 +126,9 @@ Future<void> main() async {
 
   // Enables OS-level notification popups + tap-to-open.
   await NotificationManager.instance.init(navigatorKey: rootNavigatorKey);
+
+  // Initialize Deep Linking listener
+  DeepLinkService.instance.init(navigatorKey: rootNavigatorKey);
 
   runApp(const MyApp());
 }
@@ -479,10 +482,7 @@ class _AuthPageState extends State<AuthPage> {
         PrefetchService.warmUpAndPrefetch(token: token);
 
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
-          );
+          await processPostAuthNavigation(context);
         }
       } else {
         String message;
@@ -544,10 +544,7 @@ class _AuthPageState extends State<AuthPage> {
       );
       PrefetchService.warmUpAndPrefetch(token: data['token']?.toString());
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
-        );
+        await processPostAuthNavigation(context);
       }
       return;
     }
@@ -1071,10 +1068,7 @@ class _SignupPageState extends State<SignupPage> {
         );
         SavedManager.instance.switchUser(user['_id'].toString());
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
-          );
+          await processPostAuthNavigation(context);
         }
       } else {
         String message;
@@ -1362,47 +1356,73 @@ class _SignupPageState extends State<SignupPage> {
   }
 }
 
-// ===== LOCATION PERMISSION PAGE =====
-
-class LocationPermissionPage extends StatefulWidget {
-  const LocationPermissionPage({super.key});
-
-  static const Color primaryGreen = Color(0xFF4E7F6D);
+// ===== PROFILE SKELETON TRANSITION PAGE =====
+// Displays a smooth skeleton UI resembling the profile card screen while verifying
+// profile completeness and subscription status in the background.
+class ProfileResolvingTransitionPage extends StatefulWidget {
+  const ProfileResolvingTransitionPage({super.key});
 
   @override
-  State<LocationPermissionPage> createState() => _LocationPermissionPageState();
+  State<ProfileResolvingTransitionPage> createState() => _ProfileResolvingTransitionPageState();
 }
 
-class _LocationPermissionPageState extends State<LocationPermissionPage> {
-  bool _enabling = false;
-  bool _skipping = false;
+class _ProfileResolvingTransitionPageState extends State<ProfileResolvingTransitionPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _shimmerAnim;
 
-  Future<void> _goNext() async {
-    if (_enabling || _skipping) return;
-    setState(() => _skipping = true);
-    try {
-      await _processNavigation();
-    } finally {
-      if (mounted) setState(() => _skipping = false);
-    }
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
+    _shimmerAnim = Tween<double>(begin: 0.35, end: 0.85).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _executeNavigationCheck();
+    });
   }
 
-  Future<void> _processNavigation() async {
-    final token = UserSession.instance.token;
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
 
-    // First check if profile is complete
+  Future<void> _executeNavigationCheck() async {
+    final stopwatch = Stopwatch()..start();
+
+    final token = UserSession.instance.token;
     if (token != null) {
       try {
         final profileRes = await http.get(
           Uri.parse(ApiConfig.profileEndpoint),
           headers: {'Authorization': 'Bearer $token'},
         ).timeout(const Duration(seconds: 10));
+
+        if (profileRes.statusCode == 403) {
+          final data = jsonDecode(profileRes.body);
+          if (data['code'] == 'ACCOUNT_DEACTIVATED' ||
+              data['message']?.toString().toLowerCase().contains('deactivated') == true) {
+            if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const BlockedAccountPage()),
+            );
+            return;
+          }
+        }
+
         if (profileRes.statusCode == 200) {
           final data = jsonDecode(profileRes.body) as Map<String, dynamic>;
           bool hasMissingMandatory = false;
 
-          // Check all text fields (excluding photo)
-          final textFields = [
+          const textFields = [
             'name', 'phone', 'dob', 'gender', 'location',
             'preferredCity', 'education', 'profession',
             'germanLevel', 'industry', 'motherTongue', 'linkedinUrl',
@@ -1414,8 +1434,6 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
             }
           }
 
-          // Photo must be a real user-uploaded base64 image (data:image/...) or a Cloudinary URL (http...)
-          // Google/social login URLs do NOT count as a valid profile photo.
           if (!hasMissingMandatory) {
             final photoVal = data['photo']?.toString().trim() ?? '';
             if (!photoVal.startsWith('data:image') && !photoVal.startsWith('http')) {
@@ -1424,6 +1442,8 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
           }
 
           if (hasMissingMandatory) {
+            final elapsed = stopwatch.elapsedMilliseconds;
+            if (elapsed < 600) await Future.delayed(Duration(milliseconds: 600 - elapsed));
             if (!mounted) return;
             Navigator.pushReplacement(
               context,
@@ -1440,13 +1460,13 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
       } catch (_) {}
     }
 
+    final elapsed = stopwatch.elapsedMilliseconds;
+    if (elapsed < 600) await Future.delayed(Duration(milliseconds: 600 - elapsed));
+    if (!mounted) return;
     await _checkSubscriptionAndNavigate(context);
   }
 
-  Future<void> _checkSubscriptionAndNavigate(
-    BuildContext currentContext,
-  ) async {
-    // Load user subscription status to decide where to go next
+  Future<void> _checkSubscriptionAndNavigate(BuildContext currentContext) async {
     final token = UserSession.instance.token;
     if (token != null) {
       try {
@@ -1482,144 +1502,149 @@ class _LocationPermissionPageState extends State<LocationPermissionPage> {
     );
   }
 
-  Future<void> _enableLocation() async {
-    if (_enabling || _skipping) return;
-    setState(() => _enabling = true);
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        await Geolocator.openLocationSettings();
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
-      if (permission == LocationPermission.denied) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permission denied')),
-          );
-        }
-        return;
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        await Geolocator.openAppSettings();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Enable location permission from Settings'),
-            ),
-          );
-        }
-        return;
-      }
-
-      await _processNavigation();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Location error: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _enabling = false);
-    }
+  Widget _buildShimmerBox({required double width, required double height, double borderRadius = 8}) {
+    return AnimatedBuilder(
+      animation: _shimmerAnim,
+      builder: (context, _) {
+        return Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade300.withOpacity(_shimmerAnim.value),
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final imageHeight = (MediaQuery.sizeOf(context).height * 0.32).clamp(
-      160.0,
-      260.0,
-    );
-    final isLocked = _enabling || _skipping;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final cardHeight = (screenHeight * 0.65).clamp(380.0, 520.0);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F8FA),
       body: SafeArea(
-        child: Stack(
-          children: [
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 24),
-
-                    Image.asset(
-                      'assets/images/loc.jpeg',
-                      height: imageHeight,
-                      fit: BoxFit.contain,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    const Text(
-                      'Location',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Allow location access to discover nearby accommodation, services, jobs, and community resources around you.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.black54,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: isLocked ? null : _enableLocation,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: LocationPermissionPage.primaryGreen,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                        child: Text(
-                          _enabling ? 'Enabling…' : 'Enable Location',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    TextButton(
-                      onPressed: isLocked ? null : _goNext,
-                      child: Text(
-                        _skipping ? 'Skipping…' : 'Not now',
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Header Skeleton Bar
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildShimmerBox(width: 120, height: 28, borderRadius: 6),
+                  _buildShimmerBox(width: 40, height: 40, borderRadius: 20),
+                ],
               ),
-            ),
-            if (isLocked)
-              Container(
-                color: Colors.black.withOpacity(0.15),
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      LocationPermissionPage.primaryGreen,
+              const SizedBox(height: 20),
+
+              // Main Profile Card Skeleton
+              Expanded(
+                child: Center(
+                  child: Container(
+                    width: double.infinity,
+                    constraints: BoxConstraints(maxHeight: cardHeight),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        )
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Large Avatar / Photo Shimmer
+                          Expanded(
+                            flex: 3,
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: _buildShimmerBox(
+                                width: double.infinity,
+                                height: double.infinity,
+                                borderRadius: 14,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Name Shimmer
+                          _buildShimmerBox(width: 180, height: 22, borderRadius: 6),
+                          const SizedBox(height: 10),
+
+                          // Profession & City Shimmer
+                          _buildShimmerBox(width: 240, height: 14, borderRadius: 4),
+                          const SizedBox(height: 14),
+
+                          // Badges Shimmer
+                          Row(
+                            children: [
+                              _buildShimmerBox(width: 70, height: 24, borderRadius: 12),
+                              const SizedBox(width: 8),
+                              _buildShimmerBox(width: 85, height: 24, borderRadius: 12),
+                              const SizedBox(width: 8),
+                              _buildShimmerBox(width: 60, height: 24, borderRadius: 12),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Status message
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4E7F6D)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Setting up your community cards…',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+// Backwards-compatible alias for any remaining references
+typedef LocationPermissionPage = ProfileResolvingTransitionPage;
+
+Future<void> processPostAuthNavigation(BuildContext context) async {
+  if (!context.mounted) return;
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (_) => const ProfileResolvingTransitionPage()),
+  );
 }
 
 class SplashScreen extends StatefulWidget {
@@ -1819,6 +1844,7 @@ class _SplashScreenState extends State<SplashScreen>
         if (vCtx != null && vCtx.mounted) {
           await VersionCheckService.checkForUpdate(vCtx);
         }
+        DeepLinkService.instance.checkAndHandlePending();
       });
     }
   }
@@ -2005,10 +2031,7 @@ class _EmailCodePageState extends State<EmailCodePage> {
 
           if (mounted) {
             setState(() => _verifying = false);
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const LocationPermissionPage()),
-            );
+            await processPostAuthNavigation(context);
           }
         } catch (e) {
           if (mounted) {

@@ -6,6 +6,7 @@ class SecondHandStoreItem {
   final String contactPhone;
   final String contactEmail;
   final String deliveryOption;
+  final String? link;
   final List<String> images;
   final String status;
   final String creatorType;
@@ -20,6 +21,7 @@ class SecondHandStoreItem {
     this.contactPhone = '',
     this.contactEmail = '',
     this.deliveryOption = '',
+    this.link,
     this.images = const [],
     this.status = 'Pending',
     this.creatorType = 'admin',
@@ -51,6 +53,7 @@ class SecondHandStoreItem {
       contactPhone: json['contactPhone']?.toString() ?? '',
       contactEmail: json['contactEmail']?.toString() ?? '',
       deliveryOption: json['deliveryOption']?.toString() ?? '',
+      link: (json['link'] ?? json['externalUrl'] ?? json['website'])?.toString(),
       images: parseImages(json['images']),
       status: json['status']?.toString() ?? 'Pending',
       creatorType: json['creatorType']?.toString() ?? 'admin',

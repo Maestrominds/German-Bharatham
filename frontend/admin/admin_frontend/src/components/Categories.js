@@ -7,6 +7,7 @@ const DEFAULT_CATEGORIES = [
   { id: 'accommodation', name: 'Accommodation', icon: '🏠', description: 'Housing, apartments, student housing, and shared accommodations', api: `${API_URL}/api/accommodation/admin`, route: '/accommodation-listings', status: 'active' },
   { id: 'services', name: 'Services', icon: '🔧', description: 'Immigration, legal, financial, and consultation services', api: `${API_URL}/api/services/admin`, route: '/services-listings', status: 'active' },
   { id: 'jobs', name: 'Jobs', icon: '💼', description: 'Job listings, career opportunities, and employment services', api: `${API_URL}/api/jobs/admin`, route: '/jobs-listings', status: 'active' },
+  { id: 'events', name: 'Events', icon: '🎉', description: 'Community events, cultural festivals, and meetups', api: `${API_URL}/api/events/admin`, route: '/events-listings', status: 'active' },
 ];
 
 const CategoryFormModal = ({ title, initial, onClose, onSave }) => {
@@ -162,6 +163,7 @@ const Categories = () => {
                 if (name === 'accommodation') next.accommodation = extractCount(item);
                 if (name === 'services') next.services = extractCount(item);
                 if (name === 'jobs') next.jobs = extractCount(item);
+                if (name === 'events' || name === 'event') next.events = extractCount(item);
               }
               return next;
             });

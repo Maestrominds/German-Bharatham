@@ -29,7 +29,7 @@ router.get('/:category/:id', async (req, res) => {
 
   let title = APP_NAME;
   let description = 'Discover community listings, jobs, accommodations, and events for Indian expats in Germany.';
-  let imageUrl = 'https://germanbharatham.de/Logo_V2.png';
+  let imageUrl = 'https://germanbharatham.cloud/Logo_V2.png';
   let categoryLabel = 'Listing';
   let location = '';
 
@@ -57,9 +57,9 @@ router.get('/:category/:id', async (req, res) => {
       const item = await prisma.event.findUnique({ where: { id: numericId } });
       if (item) {
         title = item.title ? `${item.title} - ${APP_NAME}` : title;
-        description = item.description || description;
-        imageUrl = (item.images && item.images[0]) || imageUrl;
-        location = item.city || item.venue || '';
+        description = item.shortDescription || item.description || description;
+        imageUrl = item.posterUrl || (item.images && item.images[0]) || imageUrl;
+        location = item.city || item.venue || (item.isOnline ? 'Online' : '');
       }
     } else if (catLower.includes('second') || catLower.includes('store')) {
       categoryLabel = 'Second Hand Item';
@@ -137,7 +137,7 @@ router.get('/:category/:id', async (req, res) => {
 </head>
 <body>
   <div class="card">
-    <img class="hero-img" src="${safeImageUrl}" alt="${safeTitle}" onerror="this.src='https://germanbharatham.de/Logo_V2.png';">
+    <img class="hero-img" src="${safeImageUrl}" alt="${safeTitle}" onerror="this.src='https://germanbharatham.cloud/Logo_V2.png';">
     <div class="content">
       <span class="badge">${categoryLabel}</span>
       <h1>${safeTitle}</h1>

@@ -95,7 +95,7 @@ tmp_*.json
 .wip_*.patch
 .wip_unmerged_files.txt
 *.md
-
+*.pdf
 
 
 # Google Services JSON files

@@ -16,6 +16,7 @@ import 'services/rating_service.dart';
 import 'models/rating_model.dart';
 import 'saved_manager.dart';
 import 'services/api_config.dart';
+import 'widgets/listing_share_modal.dart';
 
 class AccommodationDetailPage extends StatefulWidget {
   final dynamic item;
@@ -392,6 +393,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
     final String address = _str(_data['address'], '');
     final String zipCode = _str(_data['zipCode'] ?? _data['postalCode'], '');
     final String contactPhone = _str(_data['contactPhone'] ?? _data['phone'], '');
+    final String externalLink = _str(_data['link'] ?? _data['externalUrl'] ?? _data['website'], '');
     final String description = _str(_data['description'], '');
     final double? lat = _data['latitude'] is num ? (_data['latitude'] as num).toDouble() : null;
     final double? lon = _data['longitude'] is num ? (_data['longitude'] as num).toDouble() : null;
@@ -431,7 +433,26 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
             ),
             actions: [
               Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.only(top: 8, bottom: 8, left: 8, right: 4),
+                child: GestureDetector(
+                  onTap: _shareAccommodation,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6)],
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: const Icon(
+                      Icons.share_outlined,
+                      color: primaryGreen,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 8, left: 4, right: 8),
                 child: GestureDetector(
                   onTap: _toggleSave,
                   child: Container(
@@ -649,6 +670,44 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
                     const SizedBox(height: 14),
                   ],
 
+                  // ── EXTERNAL LISTING ───────────────────────────────────────
+                  if (externalLink.isNotEmpty) ...[
+                    _SectionTitle(text: '🔗 External Listing'),
+                    const SizedBox(height: 8),
+                    _InfoCard(
+                      child: InkWell(
+                        onTap: () async {
+                          String url = externalLink.trim();
+                          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                            url = 'https://' + url;
+                          }
+                          final uri = Uri.parse(url);
+                          try {
+                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          } catch (_) {}
+                        },
+                        child: Row(
+                          children: [
+                            const Icon(Icons.link, color: primaryGreen, size: 20),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text(
+                                'View on Original Portal / Website',
+                                style: TextStyle(
+                                  color: primaryGreen,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.open_in_new, color: primaryGreen, size: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
                   // ── CONTACT INFO ───────────────────────────────────────────
                   if (contactPhone.isNotEmpty) ...[
                     _SectionTitle(text: 'Contact'),
@@ -660,10 +719,12 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
                   ],
 
                   // ── MAP ────────────────────────────────────────────────────
-                  _SectionTitle(text: '📍 Location'),
-                  const SizedBox(height: 8),
-                  _buildMapSection(context, lat, lon, [area, city].where((s) => s.isNotEmpty).join(', ')),
-                  const SizedBox(height: 24),
+                  if (lat != null || lon != null || area.isNotEmpty || city.isNotEmpty) ...[
+                    _SectionTitle(text: '📍 Location'),
+                    const SizedBox(height: 8),
+                    _buildMapSection(context, lat, lon, [area, city].where((s) => s.isNotEmpty).join(', ')),
+                    const SizedBox(height: 24),
+                  ],
                 ],
               ),
             ),
@@ -678,28 +739,30 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionButton(
-                      icon: const Icon(Icons.call, color: Colors.white, size: 18),
-                      label: 'Call',
-                      color: primaryGreen,
-                      onPressed: () => _makePhoneCall(context, contactPhone),
+              if (contactPhone.isNotEmpty) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionButton(
+                        icon: const Icon(Icons.call, color: Colors.white, size: 18),
+                        label: 'Call',
+                        color: primaryGreen,
+                        onPressed: () => _makePhoneCall(context, contactPhone),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _ActionButton(
-                      icon: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 18),
-                      label: 'WhatsApp',
-                      color: const Color(0xFF25D366),
-                      onPressed: () => _openWhatsApp(context, contactPhone),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ActionButton(
+                        icon: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 18),
+                        label: 'WhatsApp',
+                        color: const Color(0xFF25D366),
+                        onPressed: () => _openWhatsApp(context, contactPhone),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
+                  ],
+                ),
+                const SizedBox(height: 10),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -814,6 +877,18 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
       }
     } catch (_) {}
     return null;
+  }
+
+  void _shareAccommodation() {
+    ListingShareModal.show(
+      context: context,
+      category: 'accommodation',
+      id: (_data['id'] ?? '').toString(),
+      title: (_data['title'] ?? 'Accommodation').toString(),
+      subtitle: (_data['city'] ?? _data['address'] ?? 'Germany').toString(),
+      imageUrl: _allImages.isNotEmpty ? _allImages.first : null,
+      price: _rentString,
+    );
   }
 
   void _toggleSave() {

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'models/job_model.dart';
+import 'services/api_config.dart';
 
 class JobsFilterPage extends StatefulWidget {
   final List<Job> allItems;
+  final String? initialDomain;
 
-  const JobsFilterPage({super.key, required this.allItems});
+  const JobsFilterPage({super.key, required this.allItems, this.initialDomain});
 
   @override
   State<JobsFilterPage> createState() => _JobsFilterPageState();
@@ -12,6 +16,26 @@ class JobsFilterPage extends StatefulWidget {
 
 class _JobsFilterPageState extends State<JobsFilterPage> {
   final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
+
+  // Field / Domain selection (matches profile setup)
+  String _selectedDomain = 'All';
+  List<String> _domainOptions = [
+    'All',
+    'IT / Technology',
+    'Computer Science / Software',
+    'Biotechnology / Life Sciences',
+    'Healthcare / Medicine',
+    'Finance / Banking',
+    'Mechanical / Automotive',
+    'Electrical / Electronics',
+    'Engineering / Manufacturing',
+    'Marketing / Sales',
+    'Business / Management',
+    'Legal / Law',
+    'Education / Academia',
+    'Other',
+  ];
 
   // Job Type: 0=All,1=Full-time,2=Part-time,3=Contract,4=Internship
   int selectedJobType = 0;
@@ -37,15 +61,86 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.initialDomain != null && widget.initialDomain!.isNotEmpty) {
+      _selectedDomain = widget.initialDomain!;
+    }
+    _fetchDomainOptions();
+  }
+
+  Future<void> _fetchDomainOptions() async {
+    try {
+      final res = await http
+          .get(Uri.parse('${ApiConfig.baseUrl}/api/profile-options'))
+          .timeout(const Duration(seconds: 6));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        if (!mounted) return;
+        if (data['domains'] is List) {
+          final list = (data['domains'] as List)
+              .map((e) => e is Map ? e['name']?.toString().trim() ?? '' : e.toString().trim())
+              .where((name) => name.isNotEmpty)
+              .toList();
+          if (list.isNotEmpty) {
+            setState(() {
+              _domainOptions = ['All', ...list];
+            });
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  @override
   void dispose() {
     _locationController.dispose();
+    _countryController.dispose();
     super.dispose();
   }
 
   void _applyFilters() {
     List<Job> result = List.from(widget.allItems);
 
-    // 1) Location filter
+    // 1) Domain / Field filter (matches profile setup)
+    if (_selectedDomain.isNotEmpty && _selectedDomain != 'All') {
+      final domainLower = _selectedDomain.toLowerCase();
+      final keywords = domainLower
+          .split(RegExp(r'[\s/]+'))
+          .map((s) => s.trim())
+          .where((s) => s.length > 2)
+          .toList();
+
+      result = result.where((job) {
+        final jobDomain = (job.domain ?? '').toLowerCase();
+        if (jobDomain.isNotEmpty) {
+          if (jobDomain.contains(domainLower) || domainLower.contains(jobDomain)) return true;
+          for (final kw in keywords) {
+            if (jobDomain.contains(kw)) return true;
+          }
+        }
+        // Also match against job title, description, or category for seamless discovery
+        for (final kw in keywords) {
+          if (job.title.toLowerCase().contains(kw) ||
+              (job.description ?? '').toLowerCase().contains(kw) ||
+              job.category.toLowerCase().contains(kw)) {
+            return true;
+          }
+        }
+        return false;
+      }).toList();
+    }
+
+    // 2) Country filter
+    final countryQuery = _countryController.text.trim().toLowerCase();
+    if (countryQuery.isNotEmpty) {
+      result = result.where((job) {
+        return job.country.toLowerCase().contains(countryQuery) ||
+            job.location.toLowerCase().contains(countryQuery);
+      }).toList();
+    }
+
+    // 3) Location filter (City / Area)
     final locationQuery = _locationController.text.trim().toLowerCase();
     if (locationQuery.isNotEmpty) {
       result = result.where((job) {
@@ -56,7 +151,7 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
       }).toList();
     }
 
-    // 2) Job type filter
+    // 4) Job type filter
     if (selectedJobType != 0) {
       final key = jobTypeKeys[selectedJobType];
       result = result.where((job) {
@@ -64,7 +159,7 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
       }).toList();
     }
 
-    // 3) Salary range filter (extract first number from salary string)
+    // 5) Salary range filter
     if (_salaryRange.start > 0 || _salaryRange.end < _maxSalary) {
       result = result.where((job) {
         if (job.salary == null || job.salary!.isEmpty) return true;
@@ -75,12 +170,17 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
       }).toList();
     }
 
-    Navigator.pop(context, result);
+    Navigator.pop(context, {
+      'filtered': result,
+      'selectedDomain': _selectedDomain,
+    });
   }
 
   void _resetFilters() {
     setState(() {
       _locationController.clear();
+      _countryController.clear();
+      _selectedDomain = 'All';
       selectedJobType = 0;
       _salaryRange = const RangeValues(0, _maxSalary);
     });
@@ -128,6 +228,80 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Field / Domain filter (matching Profile setup)
+            Row(
+              children: [
+                const Icon(Icons.category_rounded, size: 18, color: Color(0xFF4E7F6D)),
+                const SizedBox(width: 6),
+                const Text(
+                  'Field / Domain',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tailored to domains from profile setup',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _domainOptions.map((domain) {
+                final isSelected = _selectedDomain.toLowerCase() == domain.toLowerCase();
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedDomain = domain),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF4E7F6D) : const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      domain,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+
+            const SizedBox(height: 28),
+
+            // Country Filter
+            Row(
+              children: [
+                const Icon(Icons.public, size: 18, color: Color(0xFF4E7F6D)),
+                const SizedBox(width: 6),
+                const Text(
+                  'Country',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _countryController,
+              decoration: InputDecoration(
+                hintText: 'e.g. Germany, India, Austria',
+                prefixIcon: const Icon(Icons.flag_outlined, color: Color(0xFF4E7F6D), size: 20),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 28),
+
+            // City / Location
             Row(
               children: [
                 Image.asset(
@@ -139,7 +313,7 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                 ),
                 const SizedBox(width: 6),
                 const Text(
-                  'Location',
+                  'City / Location',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
               ],
@@ -167,7 +341,10 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                 ),
               ),
             ),
+
             const SizedBox(height: 28),
+
+            // Job Type
             Row(
               children: [
                 Image.asset(
@@ -192,12 +369,9 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                 return GestureDetector(
                   onTap: () => setState(() => selectedJobType = index),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFF4E7F6D)
-                          : const Color(0xFFE5E7EB),
+                      color: isSelected ? const Color(0xFF4E7F6D) : const Color(0xFFE5E7EB),
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: Text(
@@ -212,7 +386,10 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                 );
               }),
             ),
+
             const SizedBox(height: 28),
+
+            // Salary Range
             Row(
               children: [
                 const Icon(Icons.euro, size: 16, color: Color(0xFF4E7F6D)),
@@ -255,7 +432,9 @@ class _JobsFilterPageState extends State<JobsFilterPage> {
                 onChanged: (v) => setState(() => _salaryRange = v),
               ),
             ),
+
             const SizedBox(height: 40),
+
             Row(
               children: [
                 Expanded(

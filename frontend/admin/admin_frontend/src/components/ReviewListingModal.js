@@ -38,7 +38,7 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       contactPhone: raw.contactPhone || raw.contact || raw.phone || raw.email || '',
       city: raw.city || raw.location || raw.address || '',
       area: raw.state ? String(raw.state) : (typeof raw.area === 'string' ? raw.area : ''),
-      
+
       // Accommodation details
       propertyType: raw.propertyType || raw.type || 'Apartment',
       postalCode: (raw.zipCode !== undefined && raw.zipCode !== null) ? String(raw.zipCode) : (raw.postalCode ? String(raw.postalCode) : ''),
@@ -60,7 +60,12 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
 
 
 
+      // Link (Accommodation & Second Hand Store)
+      link: raw.link || raw.externalUrl || raw.website || '',
+
       // Jobs
+      country: raw.country || 'Germany',
+      domain: raw.domain || raw.industry || '',
       companyName: raw.companyName || raw.company || '',
       contact: raw.contact || raw.phone || '',
       jobType: raw.jobType || raw.type || 'Full Time',
@@ -82,7 +87,24 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       // Second Hand Store
       price: raw.price || '',
       contactEmail: raw.contactEmail || '',
-      deliveryOption: raw.deliveryOption || ''
+      deliveryOption: raw.deliveryOption || '',
+
+      // Events
+      eventCategory: raw.category || 'festivals',
+      eventFormat: raw.format || 'one_day',
+      venue: raw.venue || '',
+      address: raw.address || '',
+      isOnline: !!raw.isOnline,
+      onlineLink: raw.onlineLink || '',
+      organizer: raw.organizer || '',
+      timeText: raw.timeText || '',
+      startsAt: raw.startsAt ? String(raw.startsAt).slice(0, 16) : '',
+      endsAt: raw.endsAt ? String(raw.endsAt).slice(0, 16) : '',
+      ticketUrl: raw.ticketUrl || raw.externalUrl || raw.onlineLink || '',
+      shortDescription: raw.shortDescription || '',
+      priceType: raw.priceType || 'paid',
+      priceText: raw.priceText || raw.price || '',
+      familyFriendly: !!raw.familyFriendly,
     };
   });
 
@@ -181,6 +203,8 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         postalCode: formData.postalCode?.trim() || null,
         zipCode: formData.postalCode?.trim() || null,
         type: formData.propertyType || null,
+        website: formData.link?.trim() || null,
+        externalUrl: formData.link?.trim() || null,
         rentDetails: {
           coldRent: formData.rentDetails.coldRent !== '' ? parseFloat(formData.rentDetails.coldRent) : null,
           warmRent: formData.rentDetails.warmRent !== '' ? parseFloat(formData.rentDetails.warmRent) : null,
@@ -202,6 +226,8 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
       return {
         ...common,
         location: formData.city?.trim() || '',
+        country: formData.country?.trim() || 'Germany',
+        domain: formData.domain?.trim() || null,
         contact: formData.contactPhone?.trim() || null,
         companyName: formData.companyName?.trim() || null,
         companyLogo: resolvedImages.length > 0 ? resolvedImages[0] : null,
@@ -241,6 +267,37 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
         contactPhone: formData.contactPhone?.trim() || null,
         contactEmail: formData.contactEmail?.trim() || null,
         deliveryOption: formData.deliveryOption?.trim() || null,
+        externalUrl: formData.link?.trim() || null,
+      };
+    }
+
+    if (listing.category === 'Events') {
+      const format = formData.eventFormat || 'one_day';
+      let endsAt = formData.endsAt;
+      if (format === 'one_day' && formData.startsAt && !endsAt) {
+        endsAt = formData.startsAt;
+      }
+      return {
+        ...common,
+        category: formData.eventCategory || 'festivals',
+        format,
+        city: formData.city?.trim() || null,
+        venue: formData.venue?.trim() || null,
+        address: formData.address?.trim() || null,
+        isOnline: !!formData.isOnline,
+        onlineLink: formData.onlineLink?.trim() || null,
+        organizer: formData.organizer?.trim() || null,
+        contact: formData.contactPhone?.trim() || null,
+        timeText: formData.timeText?.trim() || null,
+        startsAt: formData.startsAt ? new Date(formData.startsAt).toISOString() : null,
+        endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+        price: formData.price?.trim() || null,
+        priceType: formData.priceType || 'paid',
+        priceText: formData.priceText?.trim() || formData.price?.trim() || null,
+        ticketUrl: formData.ticketUrl?.trim() || null,
+        externalUrl: formData.ticketUrl?.trim() || null,
+        shortDescription: formData.shortDescription?.trim() || null,
+        familyFriendly: !!formData.familyFriendly,
       };
     }
 
@@ -335,6 +392,10 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
               </label>
             ))}
           </div>
+          <div style={{ marginTop: '14px' }}>
+            <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Link / Website (Optional)</label>
+            <input type="text" name="link" value={formData.link || ''} onChange={handleFieldChange} placeholder="https://..." style={inputStyle} />
+          </div>
         </div>
       );
     }
@@ -357,6 +418,16 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
                 <option value="Internship">Internship</option>
                 <option value="Freelance">Freelance</option>
               </select>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Country</label>
+              <input type="text" name="country" value={formData.country || 'Germany'} onChange={handleFieldChange} placeholder="Germany" style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Field / Domain</label>
+              <input type="text" name="domain" value={formData.domain || ''} onChange={handleFieldChange} placeholder="e.g. IT / Technology" style={inputStyle} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
@@ -485,6 +556,149 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
             <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Contact Email</label>
             <input type="text" name="contactEmail" value={formData.contactEmail} onChange={handleFieldChange} style={inputStyle} />
           </div>
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Link / Website (Optional)</label>
+            <input type="text" name="link" value={formData.link || ''} onChange={handleFieldChange} placeholder="https://..." style={inputStyle} />
+          </div>
+        </div>
+      );
+    }
+    if (listing.category === 'Events') {
+      return (
+        <div style={{ marginTop: '20px', borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#111827', fontSize: '15px', fontWeight: '600' }}>Event Details</h4>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Format *</label>
+              <select name="eventFormat" value={formData.eventFormat || 'one_day'} onChange={handleFieldChange} style={inputStyle}>
+                <option value="one_day">One-Day Event</option>
+                <option value="multi_day">Multi-Day Festival</option>
+                <option value="course">Course / Multi-Week</option>
+                <option value="workshop">Single Workshop</option>
+                <option value="screening">Movie Screening (Multiple Cinemas)</option>
+                <option value="deadline">Deadline / Application Close</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Category *</label>
+              <select name="eventCategory" value={formData.eventCategory || 'festivals'} onChange={handleFieldChange} style={inputStyle}>
+                <option value="festivals">Festivals & Celebrations</option>
+                <option value="screenings">Movies & Screenings</option>
+                <option value="standup">Standup Comedy</option>
+                <option value="concerts">Concerts & Music</option>
+                <option value="workshops">Workshops & Masterclasses</option>
+                <option value="networking">Professional & Networking</option>
+                <option value="sports">Sports & Fitness</option>
+                <option value="kids">Kids & Family</option>
+                <option value="food">Food & Pop-ups</option>
+                <option value="spiritual">Spiritual & Community</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>
+              Short Description (max 160 chars) - {(formData.shortDescription || '').length}/160
+            </label>
+            <input
+              type="text"
+              name="shortDescription"
+              maxLength={160}
+              value={formData.shortDescription || ''}
+              onChange={handleFieldChange}
+              placeholder="One punchy sentence for cards (e.g. Diwali mela with live stalls and dhol)"
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="checkbox"
+              id="rev_isOnline"
+              name="isOnline"
+              checked={!!formData.isOnline}
+              onChange={handleFieldChange}
+              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <label htmlFor="rev_isOnline" style={{ fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+              This is an Online / Virtual Event (available across Germany)
+            </label>
+          </div>
+
+          {formData.isOnline ? (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Online Meeting / Stream Link</label>
+              <input type="text" name="onlineLink" value={formData.onlineLink || ''} onChange={handleFieldChange} placeholder="https://zoom.us/j/... or Google Meet" style={inputStyle} />
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Venue Name</label>
+                <input type="text" name="venue" value={formData.venue || ''} onChange={handleFieldChange} placeholder="e.g. Meistersingerhalle" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Street Address</label>
+                <input type="text" name="address" value={formData.address || ''} onChange={handleFieldChange} placeholder="e.g. Münchener Str. 101, 90478" style={inputStyle} />
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Starts At *</label>
+              <input type="datetime-local" name="startsAt" value={formData.startsAt || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Ends At</label>
+              <input type="datetime-local" name="endsAt" value={formData.endsAt || ''} onChange={handleFieldChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Time Text (Display)</label>
+              <input type="text" name="timeText" value={formData.timeText || ''} onChange={handleFieldChange} placeholder="e.g. 18:00 - 22:00" style={inputStyle} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Price Type</label>
+              <select name="priceType" value={formData.priceType || 'paid'} onChange={handleFieldChange} style={inputStyle}>
+                <option value="free">Free</option>
+                <option value="paid">Paid</option>
+                <option value="donation">Donation / Pay what you want</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Price Display Text</label>
+              <input type="text" name="priceText" value={formData.priceText || ''} onChange={handleFieldChange} placeholder="e.g. €15 early bird, Free entry" style={inputStyle} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Organizer / Host</label>
+              <input type="text" name="organizer" value={formData.organizer || ''} onChange={handleFieldChange} placeholder="e.g. Bharat Club e.V." style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Ticket / Booking URL</label>
+              <input type="text" name="ticketUrl" value={formData.ticketUrl || ''} onChange={handleFieldChange} placeholder="https://eventbrite.com/..." style={inputStyle} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="checkbox"
+              id="rev_familyFriendly"
+              name="familyFriendly"
+              checked={!!formData.familyFriendly}
+              onChange={handleFieldChange}
+              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <label htmlFor="rev_familyFriendly" style={{ fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+              Family Friendly / Kids Welcome
+            </label>
+          </div>
         </div>
       );
     }
@@ -546,12 +760,12 @@ const ReviewListingModal = ({ listing, onClose, onApprove, onReject, onSavePendi
                 <label style={{ fontSize: '12px', color: '#4b5563', fontWeight: '600' }}>
                   {listing.category === 'Jobs' ? 'Contact Details' : 'Contact Phone *'}
                 </label>
-                <input 
-                  type="text" 
-                  name="contactPhone" 
-                  value={formData.contactPhone} 
-                  onChange={handleFieldChange} 
-                  style={inputStyle} 
+                <input
+                  type="text"
+                  name="contactPhone"
+                  value={formData.contactPhone}
+                  onChange={handleFieldChange}
+                  style={inputStyle}
                 />
               </div>
             </div>

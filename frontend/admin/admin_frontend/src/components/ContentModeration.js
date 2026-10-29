@@ -9,6 +9,7 @@ const PATCH_URLS = {
   Jobs:          (id) => `${API_URL}/api/jobs/admin/${id}/status`,
   Services:      (id) => `${API_URL}/api/services/admin/${id}/status`,
   'Second Hand Store': (id) => `${API_URL}/api/second-hand/admin/${id}/status`,
+  Events:        (id) => `${API_URL}/api/events/admin/${id}/status`,
 };
 
 const DELETE_URLS = {
@@ -16,6 +17,7 @@ const DELETE_URLS = {
   Jobs:          (id) => `${API_URL}/api/jobs/admin/${id}`,
   Services:      (id) => `${API_URL}/api/services/admin/${id}`,
   'Second Hand Store': (id) => `${API_URL}/api/second-hand/admin/${id}`,
+  Events:        (id) => `${API_URL}/api/events/admin/${id}`,
 };
 
 const ContentModeration = () => {
@@ -61,6 +63,7 @@ const ContentModeration = () => {
         ...(data.Jobs          || []).map(r => mapListing('Jobs', r)),
         ...(data.Services      || []).map(r => mapListing('Services', r)),
         ...(data['Second Hand Store'] || []).map(r => mapListing('Second Hand Store', r)),
+        ...(data.Events        || []).map(r => mapListing('Events', r)),
       ];
       console.log('📋 Total pending listings:', all.length);
       setPendingListings(all);

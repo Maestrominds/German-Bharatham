@@ -7,6 +7,7 @@ import Categories from './components/Categories';
 import AccommodationListings from './components/AccommodationListings';
 import JobsListings from './components/JobsListings';
 import ServicesListings from './components/ServicesListings';
+import EventsListings from './components/EventsListings';
 import Users from './components/Users';
 import CustomCategoryListings from './components/CustomCategoryListings';
 import ContentModeration from './components/ContentModeration';
@@ -51,6 +52,7 @@ function ProtectedLayout({ onLogout }) {
         <Route path="/accommodation-listings" element={<ProtectedRoute><AccommodationListings /></ProtectedRoute>} />
         <Route path="/jobs-listings" element={<ProtectedRoute><JobsListings /></ProtectedRoute>} />
         <Route path="/services-listings" element={<ProtectedRoute><ServicesListings /></ProtectedRoute>} />
+        <Route path="/events-listings" element={<ProtectedRoute><EventsListings /></ProtectedRoute>} />
         <Route path="/custom-category/:id" element={<ProtectedRoute><CustomCategoryListings /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
         <Route path="/content-moderation" element={<ProtectedRoute><ContentModeration /></ProtectedRoute>} />

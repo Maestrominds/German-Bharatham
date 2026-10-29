@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../user_session.dart';
 import '../services/api_config.dart';
 import 'ui_common.dart';
+import 'personal_info.dart' show SearchableDropdownInput;
 import 'package:flutter/services.dart';
 
 class CreateListingFormPage extends StatefulWidget {
@@ -62,10 +63,50 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
   final TextEditingController _cuisineInputCtrl = TextEditingController();
   final TextEditingController _specialtyInputCtrl = TextEditingController();
 
+  List<String> _domainOptions = [
+    'IT / Technology',
+    'Computer Science / Software',
+    'Biotechnology / Life Sciences',
+    'Healthcare / Medicine',
+    'Finance / Banking',
+    'Mechanical / Automotive',
+    'Electrical / Electronics',
+    'Engineering / Manufacturing',
+    'Marketing / Sales',
+    'Business / Management',
+    'Legal / Law',
+    'Education / Academia',
+    'Other',
+  ];
+
   @override
   void initState() {
     super.initState();
     _initFields();
+    _fetchDropdownOptions();
+  }
+
+  Future<void> _fetchDropdownOptions() async {
+    try {
+      final res = await http
+          .get(Uri.parse('${ApiConfig.baseUrl}/api/profile-options'))
+          .timeout(const Duration(seconds: 6));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        if (!mounted) return;
+        if (data['domains'] is List) {
+          final list = (data['domains'] as List)
+              .map((e) => e is Map ? e['name']?.toString().trim() ?? '' : e.toString().trim())
+              .where((name) => name.isNotEmpty)
+              .toList();
+          if (list.isNotEmpty) {
+            setState(() {
+              _domainOptions = list;
+            });
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   @override
@@ -87,6 +128,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       _controllers['area'] = TextEditingController(text: data?['state']?.toString() ?? '');
       _controllers['address'] = TextEditingController(text: data?['address']?.toString() ?? '');
       _controllers['contactPhone'] = TextEditingController(text: (data?['contactPhone'] ?? data?['phone'])?.toString() ?? '');
+      _controllers['link'] = TextEditingController(text: (data?['website'] ?? data?['externalUrl'] ?? data?['link'])?.toString() ?? '');
       _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
       _controllers['coldRent'] = TextEditingController(text: data?['rentDetails']?['coldRent']?.toString() ?? '');
       _controllers['warmRent'] = TextEditingController(text: data?['rentDetails']?['warmRent']?.toString() ?? '');
@@ -114,6 +156,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     } else if (widget.category == 'Jobs') {
       _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
       _controllers['location'] = TextEditingController(text: data?['location']?.toString() ?? '');
+      _controllers['country'] = TextEditingController(text: data?['country']?.toString() ?? 'Germany');
+      _controllers['domain'] = TextEditingController(text: (data?['domain'] ?? data?['industry'])?.toString() ?? '');
       _controllers['contact'] = TextEditingController(text: (data?['contact'] ?? data?['phone'])?.toString() ?? '');
       _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
       _controllers['salary'] = TextEditingController(text: data?['salary']?.toString() ?? '');
@@ -170,9 +214,26 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       _controllers['price'] = TextEditingController(text: data?['price']?.toString() ?? '');
       _controllers['contactPhone'] = TextEditingController(text: data?['contactPhone']?.toString() ?? '');
       _controllers['contactEmail'] = TextEditingController(text: data?['contactEmail']?.toString() ?? '');
+      _controllers['link'] = TextEditingController(text: (data?['externalUrl'] ?? data?['website'] ?? data?['link'])?.toString() ?? '');
       _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
       _deliveryOption = data?['deliveryOption'] ?? 'Shipping Possible';
       
+      final List<dynamic> initImgs = data?['images'] ?? data?['media']?['images'] ?? [];
+      _existingImageUrls = List<String>.from(initImgs.whereType<String>().where((s) => s.startsWith('http')));
+    }
+    else if (widget.category == 'Events' || widget.category == 'Event') {
+      _controllers['title'] = TextEditingController(text: data?['title']?.toString() ?? '');
+      _controllers['eventCategory'] = TextEditingController(text: data?['category']?.toString() ?? 'Community Event');
+      _controllers['city'] = TextEditingController(text: data?['city']?.toString() ?? '');
+      _controllers['venue'] = TextEditingController(text: data?['venue']?.toString() ?? '');
+      _controllers['organizer'] = TextEditingController(text: data?['organizer']?.toString() ?? '');
+      _controllers['contact'] = TextEditingController(text: data?['contact']?.toString() ?? '');
+      _controllers['startsAt'] = TextEditingController(text: data?['startsAt']?.toString() ?? '');
+      _controllers['endsAt'] = TextEditingController(text: data?['endsAt']?.toString() ?? '');
+      _controllers['price'] = TextEditingController(text: data?['price']?.toString() ?? 'Free');
+      _controllers['ticketUrl'] = TextEditingController(text: (data?['ticketUrl'] ?? data?['externalUrl'])?.toString() ?? '');
+      _controllers['description'] = TextEditingController(text: data?['description']?.toString() ?? '');
+
       final List<dynamic> initImgs = data?['images'] ?? data?['media']?['images'] ?? [];
       _existingImageUrls = List<String>.from(initImgs.whereType<String>().where((s) => s.startsWith('http')));
     }
@@ -226,6 +287,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         'address': _controllers['address']?.text.trim().isEmpty == true ? null : _controllers['address']?.text.trim(),
         'contactPhone': _controllers['contactPhone']?.text.trim(),
         'description': _controllers['description']?.text.trim().isEmpty == true ? null : _controllers['description']?.text.trim(),
+        'website': _controllers['link']?.text.trim().isEmpty == true ? null : _controllers['link']?.text.trim(),
+        'externalUrl': _controllers['link']?.text.trim().isEmpty == true ? null : _controllers['link']?.text.trim(),
         'rentDetails': {
           'coldRent': double.tryParse(_controllers['coldRent']?.text ?? '0') ?? 0,
           'warmRent': double.tryParse(_controllers['warmRent']?.text ?? '0') ?? 0,
@@ -250,6 +313,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         'title': _controllers['title']?.text.trim(),
         'location': _controllers['location']?.text.trim(),
         'city': _controllers['location']?.text.trim(),
+        'country': _controllers['country']?.text.trim().isEmpty == true ? 'Germany' : _controllers['country']?.text.trim(),
+        'domain': _controllers['domain']?.text.trim().isEmpty == true ? null : _controllers['domain']?.text.trim(),
         'contact': _controllers['contact']?.text.trim(),
         'phone': _controllers['contact']?.text.trim(),
         'description': _controllers['description']?.text.trim().isEmpty == true ? null : _controllers['description']?.text.trim(),
@@ -306,6 +371,28 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         'contactPhone': _controllers['contactPhone']?.text.trim(),
         'contactEmail': _controllers['contactEmail']?.text.trim(),
         'deliveryOption': _deliveryOption,
+        'externalUrl': _controllers['link']?.text.trim().isEmpty == true ? null : _controllers['link']?.text.trim(),
+        'website': _controllers['link']?.text.trim().isEmpty == true ? null : _controllers['link']?.text.trim(),
+        'images': _existingImageUrls,
+        'media': {'images': _existingImageUrls},
+      };
+    }
+    else if (widget.category == 'Events' || widget.category == 'Event') {
+      return {
+        'title': _controllers['title']?.text.trim(),
+        'category': _controllers['eventCategory']?.text.trim().isNotEmpty == true
+            ? _controllers['eventCategory']!.text.trim()
+            : 'Community Event',
+        'city': _controllers['city']?.text.trim(),
+        'venue': _controllers['venue']?.text.trim(),
+        'organizer': _controllers['organizer']?.text.trim(),
+        'contact': _controllers['contact']?.text.trim(),
+        'startsAt': _controllers['startsAt']?.text.trim(),
+        'endsAt': _controllers['endsAt']?.text.trim(),
+        'price': _controllers['price']?.text.trim(),
+        'ticketUrl': _controllers['ticketUrl']?.text.trim(),
+        'externalUrl': _controllers['ticketUrl']?.text.trim(),
+        'description': _controllers['description']?.text.trim(),
         'images': _existingImageUrls,
         'media': {'images': _existingImageUrls},
       };
@@ -673,6 +760,7 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+]'))],
       ),
       _buildField(key: 'description', label: 'Description', hint: 'Detailed description…', maxLines: 4, maxLength: 5000, minLength: 2),
+      _buildField(key: 'link', label: 'Link / Website (Optional)', hint: 'https://...', required: false, maxLength: 500),
       
       const Padding(
         padding: EdgeInsets.symmetric(vertical: 10),
@@ -732,7 +820,15 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
     return [
       _buildField(key: 'title', label: 'Job Title', hint: 'Software Engineer', maxLength: 100, minLength: 2),
       _buildField(key: 'companyName', label: 'Company Name', hint: 'Tech Solutions GmbH', maxLength: 100, minLength: 1),
+      _buildField(key: 'country', label: 'Country', hint: 'Germany', required: false, maxLength: 60),
       _buildField(key: 'location', label: 'Location (City)', hint: 'Munich', maxLength: 100, minLength: 1),
+      SearchableDropdownInput(
+        label: "Field / Domain",
+        controller: _controllers['domain']!,
+        options: _domainOptions,
+        hintText: "Type or select domain (e.g. IT, Healthcare)",
+        isRequired: false,
+      ),
       _buildField(
         key: 'contact',
         label: 'Contact Details',
@@ -871,6 +967,26 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
         keyboardType: TextInputType.emailAddress
       ),
       _buildField(key: 'description', label: 'Description', hint: 'Item condition, details, reasons for selling...', maxLines: 4, maxLength: 5000),
+      _buildField(key: 'link', label: 'Link / Website (Optional)', hint: 'https://...', required: false, maxLength: 500),
+
+      const SizedBox(height: 20),
+      _buildImageSelector(),
+    ];
+  }
+
+  List<Widget> _buildEventsForm() {
+    return [
+      _buildField(key: 'title', label: 'Event Title', hint: 'e.g. Diwali Mela / Indian Tech Meetup', required: true, minLength: 3),
+      _buildField(key: 'eventCategory', label: 'Event Type / Category', hint: 'e.g. Festival, Meetup, Workshop, Concert', required: true),
+      _buildField(key: 'city', label: 'City', hint: 'e.g. Berlin, Munich, Frankfurt', required: true),
+      _buildField(key: 'venue', label: 'Venue / Address', hint: 'e.g. City Hall or Zoom / Online'),
+      _buildField(key: 'startsAt', label: 'Date & Time (Starts)', hint: 'YYYY-MM-DD HH:MM (e.g. 2026-11-15 18:00)', required: true),
+      _buildField(key: 'endsAt', label: 'Date & Time (Ends, Optional)', hint: 'YYYY-MM-DD HH:MM'),
+      _buildField(key: 'price', label: 'Entry Fee / Price', hint: 'e.g. Free or €10'),
+      _buildField(key: 'organizer', label: 'Organizer Name', hint: 'e.g. German Bharatham Club'),
+      _buildField(key: 'contact', label: 'Contact (Phone or Email)', hint: 'e.g. +49 176... or info@domain.de'),
+      _buildField(key: 'ticketUrl', label: 'Ticket / Registration Link (Optional)', hint: 'https://eventbrite.com/...'),
+      _buildField(key: 'description', label: 'Description', hint: 'Agenda, highlights, parking, dress code...', maxLines: 5, maxLength: 5000),
 
       const SizedBox(height: 20),
       _buildImageSelector(),
@@ -888,6 +1004,8 @@ class _CreateListingFormPageState extends State<CreateListingFormPage> {
       formFields = _buildServicesForm();
     } else if (widget.category == 'Second Hand Store') {
       formFields = _buildSecondHandStoreForm();
+    } else if (widget.category == 'Events' || widget.category == 'Event') {
+      formFields = _buildEventsForm();
     }
 
     final isEditing = widget.initialData != null;

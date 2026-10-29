@@ -7,6 +7,7 @@ import 'saved_job_manager.dart';
 import 'widgets/star_rating_widget.dart';
 import 'widgets/rating_dialog.dart';
 import 'widgets/optimized_image.dart';
+import 'widgets/listing_share_modal.dart';
 import 'services/rating_service.dart';
 import 'models/rating_model.dart';
 
@@ -61,6 +62,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
       ),
     );
   }
+
   Future<void> _toggleSave() async {
     final nowSaved = await SavedJobManager.instance.toggle(widget.item);
     if (!mounted) return;
@@ -79,20 +81,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
     if (widget.onRefresh != null) {
       widget.onRefresh!();
-    }
-  }
-
-  Future<void> _makePhoneCall() async {
-    if (widget.item.phone == null || widget.item.phone!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone number not available'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    final Uri phoneUri = Uri(scheme: 'tel', path: widget.item.phone);
-    if (await canLaunchUrl(phoneUri)) {
-      await launchUrl(phoneUri);
     }
   }
 
@@ -116,12 +104,30 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           }
         }
       }
-    } else if (widget.item.email != null && widget.item.email!.trim().isNotEmpty) {
-      final Uri emailUri = Uri(scheme: 'mailto', path: widget.item.email!.trim());
-      if (await canLaunchUrl(emailUri)) await launchUrl(emailUri);
-    } else {
+      return;
+    }
+
+    final email = (widget.item.email ?? (widget.item.phone?.contains('@') == true ? widget.item.phone : '') ?? '').trim();
+    if (email.isNotEmpty) {
+      final Uri emailUri = Uri(scheme: 'mailto', path: email);
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri);
+        return;
+      }
+    }
+
+    final phone = (widget.item.phone ?? '').trim();
+    if (phone.isNotEmpty && !phone.contains('@')) {
+      final Uri phoneUri = Uri(scheme: 'tel', path: phone);
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+        return;
+      }
+    }
+
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Application link not available'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('No application link or contact method provided'), backgroundColor: Colors.orange),
       );
     }
   }
@@ -139,7 +145,24 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
         ),
         title: const Text("Job Details", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
         centerTitle: true,
-        actions: const [],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: Color(0xFF4E7F6D)),
+            onPressed: () {
+              ListingShareModal.show(
+                context: context,
+                category: 'jobs',
+                id: widget.item.id,
+                title: widget.item.title,
+                subtitle: widget.item.company + (widget.item.location.isNotEmpty ? ' • ${widget.item.location}' : ''),
+                imageUrl: widget.item.companyLogo,
+                price: widget.item.salary,
+              );
+            },
+            tooltip: 'Share Job',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -149,7 +172,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Logo | (Title + Company) | (Share + Posted)
+              // Header: Logo | (Title + Company) | (Save + Posted)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -159,34 +182,61 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Fully expandable title without truncation or "..."
                         Text(
                           widget.item.title,
-                          maxLines: 2,
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.item.company,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
-                        ),
-                        const SizedBox(height: 8),
-                        // JobType badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5F0),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFF4E7F6D).withOpacity(0.4)),
+                        if (widget.item.company.trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.item.company.trim(),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
                           ),
-                          child: Text(
-                            widget.item.jobType,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF4E7F6D),
-                            ),
+                        ],
+                        if (widget.item.jobType.trim().isNotEmpty || (widget.item.domain != null && widget.item.domain!.trim().isNotEmpty)) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              if (widget.item.jobType.trim().isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE8F5F0),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: const Color(0xFF4E7F6D).withOpacity(0.4)),
+                                  ),
+                                  child: Text(
+                                    widget.item.jobType.trim(),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF4E7F6D),
+                                    ),
+                                  ),
+                                ),
+                              if (widget.item.domain != null && widget.item.domain!.trim().isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3F4F6),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.grey.shade300),
+                                  ),
+                                  child: Text(
+                                    widget.item.domain!.trim(),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF374151),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -206,10 +256,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                         constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                         tooltip: 'Save',
                       ),
-                      Text(
-                        _postedAgo(widget.item.createdAt),
-                        style: const TextStyle(fontSize: 11, color: Colors.grey),
-                      ),
+                      if (widget.item.createdAt != null)
+                        Text(
+                          _postedAgo(widget.item.createdAt),
+                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                        ),
                     ],
                   ),
                 ],
@@ -240,40 +291,56 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                   ),
                 ),
 
-              // Row 3: Location (left), Salary (right)
-              Row(
-                children: [
-                  Image.asset(
-                    'assets/images/location.png',
-                    width: 18,
-                    height: 18,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      _locationLine(widget.item),
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (widget.item.salary != null && widget.item.salary!.trim().isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        widget.item.salary!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF4E7F6D),
-                          fontWeight: FontWeight.w700,
+              // Location and Salary Row (Hidden completely if neither is provided)
+              (() {
+                final loc = _locationLine(widget.item).trim();
+                final hasLoc = loc.isNotEmpty;
+                final hasSalary = widget.item.salary != null && widget.item.salary!.trim().isNotEmpty;
+
+                if (!hasLoc && !hasSalary) return const SizedBox.shrink();
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (hasLoc) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Image.asset(
+                            'assets/images/location.png',
+                            width: 16,
+                            height: 16,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-               const SizedBox(height: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            loc,
+                            style: const TextStyle(color: Colors.grey, fontSize: 13, height: 1.3),
+                          ),
+                        ),
+                      ] else ...[
+                        const Spacer(),
+                      ],
+                      if (hasSalary) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.item.salary!.trim(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF4E7F6D),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              })(),
+
               if (widget.item.description != null && widget.item.description!.trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
                 const Text('Description', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
                 Text(
@@ -282,6 +349,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                 ),
                 const SizedBox(height: 16),
               ],
+
               if (widget.item.phone != null && widget.item.phone!.trim().isNotEmpty) ...[
                 (() {
                   final isEmail = widget.item.phone!.contains('@');
@@ -308,10 +376,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                           }
                         },
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(icon, color: const Color(0xFF4E7F6D), size: 18),
                             const SizedBox(width: 8),
-                            Flexible(
+                            Expanded(
                               child: Text(
                                 widget.item.phone!.trim(),
                                 style: const TextStyle(
@@ -320,7 +389,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                                   fontWeight: FontWeight.w600,
                                   decoration: TextDecoration.underline,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -331,35 +399,61 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                 })(),
                 const SizedBox(height: 16),
               ],
-              if (widget.item.requirements.isNotEmpty) ...[
+
+              if (widget.item.requirements.any((r) => r.trim().isNotEmpty)) ...[
                 const Text('Requirements', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 10),
                 _PillWrap(items: widget.item.requirements),
                 const SizedBox(height: 16),
               ],
-              if (widget.item.benefits.isNotEmpty) ...[
+
+              if (widget.item.benefits.any((b) => b.trim().isNotEmpty)) ...[
                 const Text('Benefits', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 10),
                 _PillWrap(items: widget.item.benefits),
                 const SizedBox(height: 20),
               ],
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _applyNow,
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0,
-                    backgroundColor: const Color(0xFF4F7F67),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: const Text(
-                    'Apply Now',
-                    style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
 
+              // Apply / Contact Button (Hidden if no apply URL, email, or phone is provided)
+              (() {
+                final hasApplyUrl = (widget.item.applyUrl ?? '').trim().isNotEmpty;
+                final hasEmail = (widget.item.email ?? (widget.item.phone?.contains('@') == true ? widget.item.phone : '') ?? '').trim().isNotEmpty;
+                final hasPhone = (widget.item.phone ?? '').trim().isNotEmpty && !widget.item.phone!.contains('@');
+
+                if (!hasApplyUrl && !hasEmail && !hasPhone) {
+                  return const SizedBox.shrink();
+                }
+
+                String buttonLabel = 'Apply Now';
+                IconData buttonIcon = Icons.arrow_forward;
+                if (!hasApplyUrl) {
+                  if (hasEmail) {
+                    buttonLabel = 'Email Employer';
+                    buttonIcon = Icons.email_outlined;
+                  } else if (hasPhone) {
+                    buttonLabel = 'Call Employer';
+                    buttonIcon = Icons.phone_outlined;
+                  }
+                }
+
+                return SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: _applyNow,
+                    icon: Icon(buttonIcon, color: Colors.white, size: 20),
+                    label: Text(
+                      buttonLabel,
+                      style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: const Color(0xFF4F7F67),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                );
+              })(),
             ],
           ),
         ),
@@ -380,8 +474,9 @@ String _locationLine(Job job) {
   final parts = <String>[];
   if (job.city.trim().isNotEmpty) parts.add(job.city.trim());
   if ((job.state ?? '').trim().isNotEmpty) parts.add(job.state!.trim());
+  if (job.country.trim().isNotEmpty && !parts.contains(job.country.trim())) parts.add(job.country.trim());
   if (parts.isNotEmpty) return parts.join(', ');
-  return job.location;
+  return job.location.trim();
 }
 
 class _PillWrap extends StatelessWidget {

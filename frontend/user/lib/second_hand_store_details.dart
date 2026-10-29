@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'models/second_hand_store_model.dart';
 import 'widgets/optimized_image.dart';
+import 'widgets/listing_share_modal.dart';
 
 class SecondHandStoreDetailsPage extends StatelessWidget {
   final SecondHandStoreItem item;
@@ -19,8 +20,31 @@ class SecondHandStoreDetailsPage extends StatelessWidget {
     }
   }
 
+  Future<void> _openExternalLink(BuildContext context, String rawUrl) async {
+    String url = rawUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://$url';
+    }
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open external link'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasPhone = item.contactPhone.trim().isNotEmpty;
+    final hasEmail = item.contactEmail.trim().isNotEmpty;
+    final hasDelivery = item.deliveryOption.trim().isNotEmpty;
+    final hasDescription = item.description.trim().isNotEmpty;
+    final hasLink = item.link != null && item.link!.trim().isNotEmpty;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
@@ -30,6 +54,24 @@ class SecondHandStoreDetailsPage extends StatelessWidget {
         foregroundColor: Colors.black87,
         elevation: 0,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: Color(0xFF4E7F6D)),
+            onPressed: () {
+              ListingShareModal.show(
+                context: context,
+                category: 'secondhand',
+                id: item.id.toString(),
+                title: item.title,
+                subtitle: hasDelivery ? 'Delivery: ${item.deliveryOption}' : null,
+                imageUrl: item.images.isNotEmpty ? item.images.first : null,
+                price: item.price.isNotEmpty ? '€${item.price}' : null,
+              );
+            },
+            tooltip: 'Share Item',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 100),
@@ -44,6 +86,7 @@ class SecondHandStoreDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Full title without truncation
                   Text(
                     item.title,
                     style: const TextStyle(
@@ -54,7 +97,7 @@ class SecondHandStoreDetailsPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (item.price.isNotEmpty)
+                  if (item.price.trim().isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -62,7 +105,7 @@ class SecondHandStoreDetailsPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        item.price,
+                        item.price.startsWith('€') ? item.price : '€${item.price}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -70,46 +113,87 @@ class SecondHandStoreDetailsPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader('Description'),
-                  const SizedBox(height: 12),
-                  Text(
-                    item.description.isNotEmpty ? item.description : 'No description provided.',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.black87,
-                      height: 1.6,
+                  
+                  if (hasDescription) ...[
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('Description'),
+                    const SizedBox(height: 12),
+                    Text(
+                      item.description.trim(),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black87,
+                        height: 1.6,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader('Delivery Option'),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
+                  ],
+
+                  if (hasDelivery) ...[
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('Delivery Option'),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.local_shipping_outlined, color: Colors.blue, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            item.deliveryOption.trim(),
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  if (hasLink) ...[
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('External Listing'),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () => _openExternalLink(context, item.link!),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF4E7F6D).withOpacity(0.3)),
                         ),
-                        child: const Icon(Icons.local_shipping_outlined, color: Colors.blue, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          item.deliveryOption.isNotEmpty ? item.deliveryOption : 'Not specified',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.link, color: Color(0xFF4E7F6D), size: 20),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text(
+                                'View on External Website / Portal',
+                                style: TextStyle(
+                                  color: Color(0xFF4E7F6D),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.open_in_new, color: Color(0xFF4E7F6D), size: 16),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomActions(),
+      bottomNavigationBar: _buildBottomActions(hasPhone, hasEmail),
     );
   }
 
@@ -149,10 +233,7 @@ class SecondHandStoreDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomActions() {
-    final hasPhone = item.contactPhone.isNotEmpty;
-    final hasEmail = item.contactEmail.isNotEmpty;
-
+  Widget _buildBottomActions(bool hasPhone, bool hasEmail) {
     if (!hasPhone && !hasEmail) return const SizedBox.shrink();
 
     return Container(
@@ -173,7 +254,7 @@ class SecondHandStoreDetailsPage extends StatelessWidget {
             if (hasEmail)
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _launchUrl('mailto', item.contactEmail),
+                  onPressed: () => _launchUrl('mailto', item.contactEmail.trim()),
                   icon: const Icon(Icons.email_outlined, size: 20),
                   label: const Text('Email'),
                   style: OutlinedButton.styleFrom(
@@ -188,7 +269,7 @@ class SecondHandStoreDetailsPage extends StatelessWidget {
             if (hasPhone)
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => _launchUrl('tel', item.contactPhone),
+                  onPressed: () => _launchUrl('tel', item.contactPhone.trim()),
                   icon: const Icon(Icons.phone_outlined, size: 20),
                   label: const Text('Call Now'),
                   style: ElevatedButton.styleFrom(

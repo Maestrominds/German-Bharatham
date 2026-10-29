@@ -22,15 +22,56 @@ class _JobsPageState extends State<JobsPage> {
   List<Job> filteredItems = [];
   bool isLoading = true;
   String searchQuery = '';
+  String activeDomainFilter = 'All';
+  List<String> domainOptions = [
+    'All',
+    'IT / Technology',
+    'Computer Science / Software',
+    'Biotechnology / Life Sciences',
+    'Healthcare / Medicine',
+    'Finance / Banking',
+    'Mechanical / Automotive',
+    'Electrical / Electronics',
+    'Engineering / Manufacturing',
+    'Marketing / Sales',
+    'Business / Management',
+    'Legal / Law',
+    'Education / Academia',
+    'Other',
+  ];
 
   @override
   void initState() {
     super.initState();
     SavedJobManager.instance.initialize();
+    _fetchDomainOptions();
     // Cache-first: Load from cache immediately
     _loadJobsFromCache();
     // Then fetch fresh data in background
     _loadJobs();
+  }
+
+  Future<void> _fetchDomainOptions() async {
+    try {
+      final res = await http
+          .get(Uri.parse('${ApiConfig.baseUrl}/api/profile-options'))
+          .timeout(const Duration(seconds: 6));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        if (!mounted) return;
+        if (data['domains'] is List) {
+          final list = (data['domains'] as List)
+              .map((e) => e is Map ? e['name']?.toString().trim() ?? '' : e.toString().trim())
+              .where((name) => name.isNotEmpty)
+              .toList();
+          if (list.isNotEmpty) {
+            setState(() {
+              domainOptions = ['All', ...list];
+            });
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   /// Load jobs from cache (instant)
@@ -146,16 +187,63 @@ class _JobsPageState extends State<JobsPage> {
     }).toList();
   }
 
+  void _selectDomain(String domain) {
+    setState(() {
+      activeDomainFilter = domain;
+      if (domain == 'All') {
+        filterItems = List.from(allItems);
+      } else {
+        final domainLower = domain.toLowerCase();
+        final keywords = domainLower
+            .split(RegExp(r'[\s/]+'))
+            .map((s) => s.trim())
+            .where((s) => s.length > 2)
+            .toList();
+
+        filterItems = allItems.where((job) {
+          final jobDomain = (job.domain ?? '').toLowerCase();
+          if (jobDomain.isNotEmpty) {
+            if (jobDomain.contains(domainLower) || domainLower.contains(jobDomain)) return true;
+            for (final kw in keywords) {
+              if (jobDomain.contains(kw)) return true;
+            }
+          }
+          for (final kw in keywords) {
+            if (job.title.toLowerCase().contains(kw) ||
+                (job.description ?? '').toLowerCase().contains(kw) ||
+                job.category.toLowerCase().contains(kw)) {
+              return true;
+            }
+          }
+          return false;
+        }).toList();
+      }
+      _applySearch();
+    });
+  }
+
   Future<void> _openFilter() async {
-    final result = await Navigator.push<List<Job>>(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => JobsFilterPage(allItems: allItems),
+        builder: (_) => JobsFilterPage(
+          allItems: allItems,
+          initialDomain: activeDomainFilter,
+        ),
       ),
     );
 
-    if (!mounted) return;
-    if (result != null) {
+    if (!mounted || result == null) return;
+
+    if (result is Map) {
+      final filtered = result['filtered'] as List<Job>?;
+      final selectedDomain = result['selectedDomain'] as String?;
+      setState(() {
+        if (selectedDomain != null) activeDomainFilter = selectedDomain;
+        if (filtered != null) filterItems = filtered;
+        _applySearch();
+      });
+    } else if (result is List<Job>) {
       setState(() {
         filterItems = result;
         _applySearch();
@@ -238,7 +326,46 @@ class _JobsPageState extends State<JobsPage> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+
+            /// 🏷️ Domain / Field filter chips
+            SizedBox(
+              height: 36,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: domainOptions.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final domain = domainOptions[index];
+                  final isSelected = activeDomainFilter.toLowerCase() == domain.toLowerCase();
+                  return GestureDetector(
+                    onTap: () => _selectDomain(domain),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF4E7F6D) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF4E7F6D) : Colors.grey.shade300,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          domain,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 14),
 
             /// 📋 Job list
             Expanded(
@@ -423,9 +550,15 @@ class _JobCardState extends State<JobCard> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          widget.item.location.isNotEmpty
-                              ? widget.item.location
-                              : widget.item.city,
+                          (() {
+                            final parts = <String>[];
+                            if (widget.item.city.trim().isNotEmpty) parts.add(widget.item.city.trim());
+                            if (widget.item.country.trim().isNotEmpty && !parts.contains(widget.item.country.trim())) parts.add(widget.item.country.trim());
+                            if (parts.isNotEmpty) return parts.join(', ');
+                            return widget.item.location.isNotEmpty
+                                ? widget.item.location
+                                : widget.item.city;
+                          })(),
                           style: const TextStyle(color: Color(0xFF555555), fontSize: 12),
                         ),
                       ),
@@ -435,19 +568,43 @@ class _JobCardState extends State<JobCard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF5F1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          widget.item.jobType,
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontSize: 12,
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF5F1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              widget.item.jobType,
+                              style: const TextStyle(
+                                color: Color(0xFF4E7F6D),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
+                          if (widget.item.domain != null && widget.item.domain!.trim().isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: Text(
+                                widget.item.domain!.trim(),
+                                style: const TextStyle(
+                                  color: Color(0xFF374151),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       if (widget.item.salary != null)
                         Flexible(

@@ -417,28 +417,49 @@ model SecondHandStore {
 }
 
 model Event {
-  id           Int       @id @default(autoincrement())
-  title        String
-  description  String?
-  category     String    @default("Event")
-  city         String?
-  venue        String?
-  organizer    String?
-  contact      String?
-  startsAt     DateTime?
-  endsAt       DateTime?
-  price        String?
-  ticketUrl    String?
-  externalUrl  String?
-  images       String[]
-  status       String    @default("Pending") // Active, Pending, Inactive, Rejected
-  featured     Boolean   @default(false)
-  createdById  Int?
-  createdBy    User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  creatorType  String    @default("admin") // admin, user
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id               Int       @id @default(autoincrement())
+  title            String
+  description      String?
+  shortDescription String?
+  category         String    @default("festivals") // festivals, movies, performing_arts, classes, food, markets, sports, meetups, religious, contests
+  format           String    @default("one_day")   // one_day, multi_day, course, workshop, screening, deadline
+  city             String?
+  venue            String?
+  address          String?
+  isOnline         Boolean   @default(false)
+  onlineLink       String?
+  organizer        String?
+  contact          String?
+  timeText         String?
+  startsAt         DateTime?
+  endsAt           DateTime?
+  price            String?
+  priceType        String?   @default("paid")     // free, paid, donation
+  priceText        String?
+  ticketUrl        String?
+  externalUrl      String?
+  posterUrl        String?
+  images           String[]
+  languages        String[]  @default([])
+  familyFriendly   Boolean   @default(false)
+  daysOfWeek       Int[]     @default([])
+  ongoing          Boolean   @default(false)
+  level            String?   // beginner, intermediate, advanced, all
+  ageGroup         String?   // kids, teens, adults, all
+  sessions         Json?     // [{ date, time, label, address, language, subtitles, link }]
+  subtitles        String?   // none, english, german
+  status           String    @default("Active")   // Active, Pending, Inactive, Rejected, cancelled
+  featured         Boolean   @default(false)
+  createdById      Int?
+  createdBy        User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  creatorType      String    @default("admin")    // admin, user
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
+  @@index([status, endsAt, startsAt])
+  @@index([city])
+  @@index([category])
+  @@index([format])
   @@map("events")
 }
 

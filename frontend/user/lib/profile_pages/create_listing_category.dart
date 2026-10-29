@@ -110,6 +110,12 @@ class CreateListingCategoryPage extends StatelessWidget {
             "assets/images/grocery-store.png",
             "Buy and sell pre-loved items",
           ),
+          _categoryCard(
+            context,
+            "Events",
+            "assets/images/social.png",
+            "Cultural festivals, workshops, meetups or gatherings",
+          ),
         ],
       ),
     );

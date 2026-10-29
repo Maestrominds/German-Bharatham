@@ -23,11 +23,12 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
   List<dynamic> _jobs = [];
   List<dynamic> _services = [];
   List<dynamic> _secondHand = [];
+  List<dynamic> _events = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _fetchListings();
   }
 
@@ -63,6 +64,7 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
           _jobs = data['Jobs'] ?? [];
           _services = data['Services'] ?? [];
           _secondHand = data['Second Hand Store'] ?? [];
+          _events = data['Events'] ?? [];
           _loading = false;
         });
       } else {
@@ -320,6 +322,7 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
                         color: Colors.white,
                         child: TabBar(
                           controller: _tabController,
+                          isScrollable: true,
                           labelColor: primaryGreen,
                           unselectedLabelColor: Colors.grey,
                           indicatorColor: primaryGreen,
@@ -328,6 +331,7 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
                             Tab(text: "Jobs"),
                             Tab(text: "Expat Services"),
                             Tab(text: "Second Hand Store"),
+                            Tab(text: "Events"),
                           ],
                         ),
                       ),
@@ -339,6 +343,7 @@ class _SubmittedListingsPageState extends State<SubmittedListingsPage>
                             _listingsList("Jobs", _jobs),
                             _listingsList("Services", _services),
                             _listingsList("Second Hand Store", _secondHand),
+                            _listingsList("Events", _events),
                           ],
                         ),
                       ),

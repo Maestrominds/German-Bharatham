@@ -68,6 +68,8 @@ class Job {
   final String jobType; // Full-time, Part-time, Contract, Internship
   final String location;
   final String city;
+  final String country;
+  final String? domain;
   final String? state;
   final bool remote;
   final String? salary;
@@ -98,6 +100,8 @@ class Job {
     required this.jobType,
     required this.location,
     required this.city,
+    this.country = 'Germany',
+    this.domain,
     this.state,
     required this.remote,
     this.salary,
@@ -130,6 +134,8 @@ class Job {
       jobType: _safeStr(json['jobType']) ?? '',
       location: _safeStr(json['location']) ?? '',
       city: _safeStr(json['city']) ?? _safeStr(json['location']) ?? '',
+      country: _safeStr(json['country']) ?? 'Germany',
+      domain: _safeStr(json['domain']) ?? _safeStr(json['industry']),
       state: _safeStr(json['state']),
       remote: _safeBool(json['remote']),
       salary: _safeStr(json['salary']),
@@ -163,6 +169,8 @@ class Job {
       'jobType': jobType,
       'location': location,
       'city': city,
+      'country': country,
+      'domain': domain,
       'state': state,
       'remote': remote,
       'salary': salary,

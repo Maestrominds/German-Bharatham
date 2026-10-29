@@ -15,6 +15,7 @@ import 'models/rating_model.dart';
 import 'widgets/rating_dialog.dart';
 import 'services/api_config.dart';
 import 'widgets/optimized_image.dart';
+import 'widgets/listing_share_modal.dart';
 
 Widget _buildServiceImage(
   String src, {
@@ -183,6 +184,20 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
           widget.onRefresh?.call();
         },
       ),
+    );
+  }
+
+  void _shareService() {
+    final title = widget.item.serviceName.isNotEmpty ? widget.item.serviceName : widget.item.title;
+    final subtitle = widget.item.providerName.isNotEmpty ? widget.item.providerName : widget.item.city;
+    ListingShareModal.show(
+      context: context,
+      category: 'services',
+      id: widget.item.id.toString(),
+      title: title,
+      subtitle: subtitle,
+      imageUrl: widget.item.images.isNotEmpty ? widget.item.images.first : null,
+      price: widget.item.priceRange,
     );
   }
 
@@ -494,22 +509,44 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                       Positioned(
                         top: 12,
                         right: 12,
-                        child: GestureDetector(
-                          onTap: _toggleSave,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6)],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            GestureDetector(
+                              onTap: _shareService,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6)],
+                                ),
+                                padding: const EdgeInsets.all(8),
+                                child: const Icon(
+                                  Icons.share_outlined,
+                                  size: 22,
+                                  color: Color(0xFF4E7F6D),
+                                ),
+                              ),
                             ),
-                            padding: const EdgeInsets.all(8),
-                            child: Image.asset(
-                              'assets/images/bookmark.png',
-                              height: 22,
-                              width: 22,
-                              color: _isSaved ? const Color(0xFF4E7F6D) : Colors.grey,
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: _toggleSave,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6)],
+                                ),
+                                padding: const EdgeInsets.all(8),
+                                child: Image.asset(
+                                  'assets/images/bookmark.png',
+                                  height: 22,
+                                  width: 22,
+                                  color: _isSaved ? const Color(0xFF4E7F6D) : Colors.grey,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ],
@@ -550,7 +587,6 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                                           fontSize: 13,
                                           color: Colors.grey,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
