@@ -161,7 +161,8 @@ exports.getDashboardStats = async (req, res) => {
         { name: 'Food', count: foodCount, icon: '🍴' },
         { name: 'Services', count: serviceCount, icon: '🔧' },
         { name: 'Jobs', count: jobCount, icon: '💼' },
-        { name: 'Second Hand Store', count: secondHandStoreCount, icon: '🛍️' }
+        { name: 'Second Hand Store', count: secondHandStoreCount, icon: '🛍️' },
+        { name: 'Events', count: eventCount, icon: '🎉' }
       ],
       recentListings: topRecentListings
     });

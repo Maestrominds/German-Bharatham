@@ -549,44 +549,48 @@ class _JobCardState extends State<JobCard> {
               width: 64,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: Colors.grey.shade200,
+                color: Colors.white,
+                border: Border.all(color: Colors.grey.shade200),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: () {
-                  Widget buildFallback() {
-                    return Container(
-                      color: Colors.grey.shade200,
-                      child: const Center(
-                        child: Icon(Icons.work, color: Colors.grey),
-                      ),
-                    );
-                  }
-
-                  final logo = widget.item.companyLogo;
-                  if (logo != null && logo.isNotEmpty) {
-                    if (logo.startsWith('data:')) {
-                      try {
-                        final bytes = base64Decode(logo.split(',').last);
-                        return Image.memory(
-                          bytes,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => buildFallback(),
-                        );
-                      } catch (_) {
-                        return buildFallback();
-                      }
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: () {
+                    Widget buildFallback() {
+                      return Container(
+                        color: Colors.white,
+                        child: const Center(
+                          child: Icon(Icons.work, color: Colors.grey),
+                        ),
+                      );
                     }
-                    final url = ApiConfig.getImageUrl(logo);
-                    return OptimizedImage(
-                      imageUrl: url,
-                      fit: BoxFit.cover,
-                      errorWidget: buildFallback(),
-                      placeholder: buildFallback(),
-                    );
-                  }
-                  return buildFallback();
-                }(),
+
+                    final logo = widget.item.companyLogo;
+                    if (logo != null && logo.isNotEmpty) {
+                      if (logo.startsWith('data:')) {
+                        try {
+                          final bytes = base64Decode(logo.split(',').last);
+                          return Image.memory(
+                            bytes,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => buildFallback(),
+                          );
+                        } catch (_) {
+                          return buildFallback();
+                        }
+                      }
+                      final url = ApiConfig.getImageUrl(logo);
+                      return OptimizedImage(
+                        imageUrl: url,
+                        fit: BoxFit.contain,
+                        errorWidget: buildFallback(),
+                        placeholder: buildFallback(),
+                      );
+                    }
+                    return buildFallback();
+                  }(),
+                ),
               ),
             ),
             const SizedBox(width: 12),

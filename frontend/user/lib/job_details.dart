@@ -521,46 +521,53 @@ class _CompanyLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        height: 60,
-        width: 60,
-        color: Colors.grey.shade200,
-        child: () {
-          Widget buildFallback() {
-            return Container(
-              color: Colors.grey.shade200,
-              child: const Center(
-                child: Icon(Icons.work, color: Colors.grey),
-              ),
-            );
-          }
-
-          final logo = logoPathOrUrl;
-          if (logo != null && logo.isNotEmpty) {
-            if (logo.startsWith('data:')) {
-              try {
-                final bytes = base64Decode(logo.split(',').last);
-                return Image.memory(
-                  bytes,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => buildFallback(),
-                );
-              } catch (_) {
-                return buildFallback();
-              }
+    return Container(
+      height: 60,
+      width: 60,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: () {
+            Widget buildFallback() {
+              return Container(
+                color: Colors.white,
+                child: const Center(
+                  child: Icon(Icons.work, color: Colors.grey),
+                ),
+              );
             }
-            final url = ApiConfig.getImageUrl(logo);
-            return OptimizedImage(
-              imageUrl: url,
-              fit: BoxFit.cover,
-              errorWidget: buildFallback(),
-              placeholder: buildFallback(),
-            );
-          }
-          return buildFallback();
-        }(),
+
+            final logo = logoPathOrUrl;
+            if (logo != null && logo.isNotEmpty) {
+              if (logo.startsWith('data:')) {
+                try {
+                  final bytes = base64Decode(logo.split(',').last);
+                  return Image.memory(
+                    bytes,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => buildFallback(),
+                  );
+                } catch (_) {
+                  return buildFallback();
+                }
+              }
+              final url = ApiConfig.getImageUrl(logo);
+              return OptimizedImage(
+                imageUrl: url,
+                fit: BoxFit.contain,
+                errorWidget: buildFallback(),
+                placeholder: buildFallback(),
+              );
+            }
+            return buildFallback();
+          }(),
+        ),
       ),
     );
   }
