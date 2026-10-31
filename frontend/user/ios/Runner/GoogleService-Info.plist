@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>382722331036-3hlti2bjhdi3amotf2gmingqrc0der68.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.382722331036-3hlti2bjhdi3amotf2gmingqrc0der68</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>382722331036-j4jmptbruek01mc8cs57254t5vddfegr.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDbi2ICoFJpEJh_fMhFxYnmZgdVYDm_5ts</string>
+	<key>GCM_SENDER_ID</key>
+	<string>382722331036</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.maestrominds.app.germanBharathamUsers</string>
+	<key>PROJECT_ID</key>
+	<string>german-bharatham</string>
+	<key>STORAGE_BUCKET</key>
+	<string>german-bharatham.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:382722331036:ios:1e1f9587404c9d08b5b859</string>
+</dict>
+</plist>

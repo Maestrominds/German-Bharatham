@@ -4,7 +4,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kDebugMode, kIsWeb, TargetPlatform;
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -575,7 +576,11 @@ class _AuthPageState extends State<AuthPage> {
 
     try {
       GoogleSignIn buildGoogleSignIn({required bool includeServerClientId}) {
-        final serverClientId = ApiConfig.googleServerClientId.trim();
+        final serverClientId =
+            (defaultTargetPlatform == TargetPlatform.iOS
+                    ? ApiConfig.googleIosServerClientId
+                    : ApiConfig.googleServerClientId)
+                .trim();
         final webClientId = ApiConfig.googleWebClientId.trim();
         return GoogleSignIn(
           scopes: const ['email', 'profile'],

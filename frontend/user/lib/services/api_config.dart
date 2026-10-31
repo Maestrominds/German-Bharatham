@@ -31,6 +31,19 @@ class ApiConfig {
     return googleWebClientId;
   }
 
+  // Web OAuth client used as the server audience for iOS Google ID tokens.
+  static const String _defaultGoogleIosServerClientId =
+      '382722331036-jp1q47pl0dulinfgukjqp2tee2vd22uj.apps.googleusercontent.com';
+
+  static String get googleIosServerClientId {
+    const override = String.fromEnvironment(
+      'GOOGLE_IOS_SERVER_CLIENT_ID',
+      defaultValue: '',
+    );
+    if (override.trim().isNotEmpty) return override.trim();
+    return _defaultGoogleIosServerClientId;
+  }
+
   // Default backend in debug.
   // You can override at build/run time with:
   //   flutter run --dart-define=API_BASE_URL=<YOUR_BACKEND_BASE_URL>
