@@ -123,6 +123,7 @@ const verifyGoogle = async ({ idToken, accessToken }) => {
       ...parseCsv(process.env.GOOGLE_WEB_CLIENT_ID),
       ...parseCsv(process.env.GOOGLE_ANDROID_CLIENT_ID),
       ...parseCsv(process.env.GOOGLE_IOS_CLIENT_ID),
+      ...parseCsv(process.env.GOOGLE_IOS_WEB_CLIENT_ID),
     ])
   );
   if (allowedClientIds.length === 0) {
@@ -137,10 +138,20 @@ const verifyGoogle = async ({ idToken, accessToken }) => {
   if (trimmedIdToken) {
     const { OAuth2Client } = googleAuthLib;
     const client = new OAuth2Client();
-    const ticket = await client.verifyIdToken({
-      idToken: trimmedIdToken,
-      audience: allowedClientIds,
-    });
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken: trimmedIdToken,
+        audience: allowedClientIds,
+      });
+    } catch (err) {
+      const decoded = jwt.decode(trimmedIdToken);
+      console.error(
+        `❌ [GOOGLE AUTH ERROR] ${err.message}. Token audience (aud): "${decoded?.aud}". Allowed audiences on backend:`,
+        allowedClientIds
+      );
+      throw err;
+    }
     const payload = ticket.getPayload() || {};
 
     return {
